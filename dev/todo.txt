@@ -13,8 +13,6 @@ linoratix-config:
 		
 	base:
 		runlevel einstellungen, was wird gestartet und so
-		motd
-		issue
 		systemzeit einstellen
 
 	user:
@@ -36,6 +34,7 @@ linoratix-config:
 CQL:
 	linoratix-config auf CQL portieren
 
+
 acpid:
 	reaktion auf events wie powerbutton
 	init scripte
@@ -45,7 +44,11 @@ installation:
 	richtigen kernel installieren, -> fuer ide, ide-kernel, scsi-kernel, usb-kernel fuer usb stick installationen
 	framebuffer mit bootsplash
 	prozessortyp erkennung, das die besten optimierungsflags eingestellt werden koennen (fuer selbst gebaute packete)
+	bei installation fragen ob die uhrzeit mit einem zeitserver abgeglichen werden soll
 
+
+rdate:
+	neu
 
 
 packete:
