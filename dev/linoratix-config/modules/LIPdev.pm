@@ -46,7 +46,7 @@ sub new
 	$base = Linoratix::LIPbase->new();
 
 	$self->get_installed_packages();
-	
+
 	$self->{"path"} = getcwd();
 
 	$bin_dir = $self->param("bin-dir");
@@ -68,14 +68,14 @@ sub get_installed_packages
 	if(-f $self->param("prefix") . "/var/cache/lip/installed_packages.cache") {
 		$installed_packages = retrieve($self->param("prefix") . "/var/cache/lip/installed_packages.cache");
 	}
-	
+
 print "done.\n";
 }
 
 sub help
 {
 	my $self = shift;
-	
+
 	$self->message("linoratix-config $BASE_VERSION\n");
 	$self->message("	module: LIPdev $MOD_VERSION\n\n");
 	print "	--rebuild <package> [--spec buildfile]	rebuild a Linoratix package from source\n";
@@ -96,7 +96,7 @@ sub read_spec_file
 	} else {
 		$rebuild_file    = $self->param("rebuild");
 	}
-	
+
 	if($_[1]) {
 		$spec_file = $_[1];
 	} else {
@@ -114,7 +114,7 @@ sub read_spec_file
 	my @build_required;
 	my @download_urls;
 
-	
+
 	$self->warning("see tty8 for output and tty9 for errors\n\n");
 
 
@@ -216,7 +216,7 @@ sub read_spec_file
 		}
 		eval("\@build_required = ".$build_script{"build-required"});
 	}
-	# abhaengikeiten ueberpruefen die fuer den 
+	# abhaengikeiten ueberpruefen die fuer den
 	# build prozess gebraucht werden
 	foreach my $d(@build_required) {
 		chomp($d);
@@ -243,7 +243,7 @@ sub read_spec_file
 		$self->get_installed_packages();
 	}
 
-	my $count = 0;	
+	my $count = 0;
 	my @orig_required = @required;
 	foreach my $del (@required)
 	{
@@ -261,7 +261,7 @@ sub read_spec_file
 	# aber nur bei der option --install
 	if($self->option("install"))
 	{
-		foreach my $d(@required) 
+		foreach my $d(@required)
 		{
 			chomp($d);
 			my($n,$v) = split(/ /, $d);
@@ -341,7 +341,7 @@ sub read_spec_file
 	} else {
 		system("/bin/cp -R " . $ENV{"PORTS_PATH"} . "/" . $self->param("ports-build") . "/PATCHES /var/cache/lip/build") if(-d $ENV{"PORTS_PATH"} . "/" . $self->param("ports-build") . "/PATCHES" );
 	}
-	
+
 	$self->execute_build_script(%build_script);
 
 #	$self->message("Searching new files\n");
@@ -356,7 +356,7 @@ use File::Find;
 	} else {
 		chdir("/var/cache/lip/mklip");
 	}
-	
+
 	# stripping
 	$self->message("stripping debug symbols.\n");
 	system("find /var/cache/lip/mklip -type f -exec strip --strip-debug '{}' ';'");
@@ -417,7 +417,7 @@ sub mkcd
 	system("rm -rf $cd_path/*");
 	system("mkdir -p $cd_path/Linoratix");
 
-	open(FH, "<$ENV{PORTS_PATH}/$from_port/REBUILD") or sub { print "--".$!; }; 
+	open(FH, "<$ENV{PORTS_PATH}/$from_port/REBUILD") or sub { print "--".$!; };
 	chomp(@content = <FH>);
 	close(FH);
 
@@ -496,9 +496,9 @@ sub mkcd
 
 	$self->message("Rebuilding package-cache...\n");
 	system("cd $cd_path/Linoratix; linoratix-config --plugin LIPdev --rebuild-package-cache . > /dev/null 2>&1");
-	
+
 	$self->message("Virtually tweaking the install-tree.\n");
-	
+
 	$base->load_caches($cd_path . "/Linoratix/packages.cache");
 
 	my $package = $base->find_package_by_name($this_name);
@@ -557,8 +557,8 @@ sub mkcd
 	$self->message("Installing needed perl modules...\n\n");
 	system("linoratix-config --plugin LIP --install curses-ui --prefix $cd_path");
 	die if($? ne "0");
-	
-	
+
+
 	print "\n\n";
 	$self->message("Installing mingetty for autologin...\n\n");
 	system("linoratix-config --plugin LIP --install mingetty --prefix $cd_path");
@@ -644,7 +644,7 @@ sub mkcd
 	open(FH, ">$cd_path/etc/shadow");
 		print FH "root:ZUpDME1T0vuUk:12789:0:99999:7:::\n";
 	close(FH);
-	
+
 	#open(FH, ">$cd_path/setrootpw");
 	#	print FH "#!/bin/bash\n\n";
 	#	print FH "echo root: |/usr/sbin/chpasswd\n";
@@ -664,7 +664,7 @@ sub mkcd
 	open(FH, ">$cd_path/install/flavors");
 		print FH "$this_name|$this_description\n";
 	close(FH);
-	
+
 	mkdir("$cd_path/install/setup");
 	system("cp -R /usr/share/linoratix/bootcd/setup $cd_path/install");
 	chmod(0755, "$cd_path/install/setup/setup.pl");
@@ -711,10 +711,33 @@ sub execute_build_script
 {
 	my $self         = shift;
 	my $build_script = { @_ };
-	my @script       = split(/\n/, $build_script->{"build"});
 	my $function;
 	my $parameter;
 	my $dummy;
+
+	my $script       = $build_script->{"build"};
+
+	# kucken ob was included wird, wenn ja das einbinden
+	my @script       = split(/\n/, $script);
+	my $zaehler = 0;
+	foreach my $line (@script)
+	{
+		if($line =~ m/^include (.*)$/)
+		{
+			open(FH, $ENV{"PORTS_PATH"} . "/include/$1") or die($!);
+			{
+				local $/;
+				my $inhalt = <FH>;
+				$script[$zaehler] = $inhalt;
+			}
+			close(FH);
+		}
+		
+		$zaehler++;
+	}
+
+	$build_script->{"build"} = join("\n", @script);
+	@script       = split(/\n/, $build_script->{"build"});
 
 	$start_date      = time();
 
@@ -763,7 +786,7 @@ sub lip_get_file
 	$parameter = $self->parse_parameter($parameter);
 
 	$self->message("Extracting $parameter\n");
-	
+
 	($file, $to)  = split(/ /, $parameter);
 	if($self->param("ports-build"))
 	{
@@ -856,7 +879,7 @@ sub lip_copy
 	$parameter = $self->parse_parameter($parameter);
 
 	$self->message("Copy $parameter\n");
-	
+
 	system("cp -v $parameter ");
 	if($? ne "0") {
 		$self->error("error in function lip_cp, line ".$REBUILD_LINE);
@@ -869,11 +892,11 @@ sub lip_patch
 {
 	my $self = shift;
 	my $parameter = shift;
-	
+
 	$parameter = $self->parse_parameter($parameter);
-	
+
 	$self->message("Patching $parameter\n");
-		
+
 	system("patch $parameter ");
 	if($? ne "0") {
 		$self->error("error in function lip_patch, line ".$REBUILD_LINE);
@@ -886,7 +909,7 @@ sub lip_configure
 {
 	my $self      = shift;
 	my $parameter = shift;
-	
+
 	$parameter = $self->parse_parameter($parameter);
 
 	$self->message("configure $parameter\n");
@@ -955,7 +978,7 @@ sub lip_cd
 	my $dir  = shift;
 
 	$dir = $self->parse_parameter($dir);
-	
+
 	$self->message("cd '$dir'\n");
 	chdir($dir);
 	if($!) {
@@ -972,7 +995,7 @@ sub lip_add_file
 	my $parameter = shift;
 
 	$parameter = $self->parse_parameter($parameter);
-	
+
 	my ($file, $content) = split(/ (.*)/ms, $parameter);
 	$self->message("Adding file $file\n");
 	$content =~ s^\\n^\n^gms;
@@ -1046,7 +1069,7 @@ sub changes
 	my $file = getcwd() . "/$_";
 	my @stat = stat($file);
 	my $target;
-	
+
 	#skip some directories
 	return if($file =~ m:^/var/log:);
 #	return if($file =~ m:^/usr/src:);
@@ -1060,7 +1083,7 @@ sub changes
 		if(-d "$file") {
 			system("mkdir -p -v /var/cache/lip/mklip/FILES$file ");
 			chmod($stat[2], "/var/cache/lip/mklip$file");
-		} 
+		}
 		else {
 			my $d = dirname($file);
 			unless(-d "/var/cache/lip/mklip/FILES$d") {
@@ -1161,7 +1184,7 @@ sub build_package_cache
 	# set header for cache file
 	$packages->{"__global-information"}->{"cache-version"} = $MOD_VERSION;
 	$packages->{"__global-information"}->{"cache-compatible"} = \@COMPATIBLE;
-	
+
 	foreach(@files) {
 		print "$_\n";
 		my @manifest        = `$exec_get_manifest/$_ 2> /dev/tty9`;
@@ -1182,7 +1205,7 @@ sub build_package_cache
 			$status = "-";
 		}
 		$sub =~ s/ [-!?]$//;
-		
+
 		@manifest = grep {/^\/FILES/} @manifest;
 		my @md5sum = `/usr/bin/md5sum $_`;
 		my @md5    = split(/\s+/, $md5sum[0]);
