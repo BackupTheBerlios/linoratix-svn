@@ -1,0 +1,43 @@
+#
+#rebuild file for jpeg
+#
+%author: ogu
+%package-group: sys-libs -
+%sub-group: jpeg -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: Library of JPEG support functions
+%name: libjpeg
+%version: 6b
+%build: $DATA
+%sourcefile: jpegsrc.v6b.tar.gz
+%source-url: ("ftp://ftp.uu.net/graphics/jpeg")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+#lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib
+#lip_make
+
+lip_configure --enable-shared --enable-static
+lip_make
+lip_mkdir -p %include_dir
+lip_mkdir -p %install_dir/usr/lib
+lip_mkdir -p %install_dir/usr/bin
+lip_mkdir -p %install_dir/usr/share/man
+lip_install prefix=%install_dir/usr libdir=%lib_dir mandir=%man_dir
+
+# und die includes
+#lip_mkdir %install_dir/usr/include
+#lip_cp jpegint.h %include_dir
+
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__
