@@ -11,6 +11,8 @@
 //#include <exception>
 #include "sqlite3/sqlite3.h"
 
+#include "sqlite.h"
+
 // DEBUG macro
 #ifdef _DO_DEBUG_
 #  define DEBUG(text) cout << "DEBUG: " << text << endl;
@@ -23,20 +25,18 @@
 
 using namespace std;
 
-static bool m_isconnected = false;
-static sqlite3 *db;
-static sqlite3_stmt *stmt;
+bool m_isconnected = false;
+sqlite3 *db;
+sqlite3_stmt *stmt;
 
 
-extern "C" bool l_is_driver() // for extern test that this is a linoratix db backend driver
-{ 
+extern "C" bool l_is_driver() { // for extern test that this is a linoratix db backend driver
    DEBUG("this is the sqlite3-backend")
    return true; 
 } 
 
 
-extern "C" bool l_connect(map <string, string> con_data) // this does make the db connection
-{
+extern "C" bool l_connect(map <string, string> con_data) { // this does make the db connection
    if(m_isconnected) return true; // its allready ready :-)
 
    if(con_data.find("database") == con_data.end()) { 
@@ -57,6 +57,21 @@ extern "C" bool l_connect(map <string, string> con_data) // this does make the d
    }
 }
 
+
+extern "C" bool l_disconnect() {
+   if(!m_isconnected) return true; // not connected so disconnect is good =)
+
+   if(sqlite3_close(db) == SQLITE_OK) {
+      DEBUG("disconnect from database succeded")
+      return true;
+   } else {
+      clearstmt();
+      DEBUG(sqlite3_errmsg(db))
+      return false;
+   }
+}
+
+
 // deletes the precompiled statement 
 bool clearstmt() {
    if(stmt != NULL) { 
@@ -67,7 +82,8 @@ bool clearstmt() {
          DEBUG("precompiled statement deleted")
          return true;
       }
-   } 
+   } else 
+      return true; // no statement in there so its ready to take a statement :P
 }
 
 
@@ -81,7 +97,7 @@ bool stmtok(string& sql_query) {
    }
 }
 
-int fetch() {
+extern "C" int l_execute() {
       switch (sqlite3_step(stmt)) {
          case SQLITE_ROW:
             DEBUG("query successfully executed")
@@ -109,6 +125,9 @@ int fetch() {
             break;
       }
 }
+
+
+
 
 // builds the sql_query content to pass them into the l_query function
 extern "C" bool l_select(map<string, string>& query, string& sql_query)
@@ -190,18 +209,18 @@ extern "C" bool l_create(map<string, string>& con_data, string& sql_query) {
 // this function does execute the statement... call this function for all results
 extern "C" int l_query(string database, string sql_query) { // database var is not used here
    if(sqlite3_prepare(db, sql_query.c_str(), sizeof(sql_query.c_str()), &stmt, NULL) != SQLITE_OK) {
-      DEBUG("preparing of statement failed [" + string(sqlite3_errmsg(db)) + "]")
+      DEBUG("precompiling of statement failed [" + string(sqlite3_errmsg(db)) + "]")
       return -1;
    } else {
-      DEBUG("statement is prepared")
-      return fetch();
+      DEBUG("statement is precompiled")
+      return 1;
    }
 }
 
 
 extern "C" int l_num_rows() {
    if(stmt != NULL) {
-      return sqlite3_column_count(stmt);
+      return 0; // TODO !!!!
    } else {
       DEBUG("no statement precompiled");
       return -1;
@@ -209,3 +228,19 @@ extern "C" int l_num_rows() {
 }
 
 
+extern "C" int l_next_record(map<string, string>& record) {
+   if(stmt == NULL) {
+      DEBUG("no statement precompiled")
+      return -1;
+   }
+      int rc = l_execute();
+      if(rc <= 0) return rc;
+
+      int spaltenanz = sqlite3_column_count(stmt);
+      
+      for(int x = 0; x < spaltenanz; x++) {
+         record[sqlite3_column_name(stmt, x)] = "test"; //TODO value
+         DEBUG(string(sqlite3_column_name(stmt, x)) + " => " + "test")
+      }
+      return true;
+}

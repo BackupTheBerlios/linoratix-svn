@@ -34,13 +34,14 @@ int main(int argc, char **argv)
       // create test
       my_query["table"] = "test";
       my_query["fields"] = "zahl int, text varchar(128)";
-      cout << "The create test has returned: '" << datenbank->Create(my_query) << "'" << endl;
+      if(! datenbank->Create(my_query))
+         cout << "The create test has returned: '" << datenbank->Execute() << "'" << endl;
       
 //	   my_query["table"] = "blocks";
 	   my_query["table"] = "test";
 	   my_query["fields"]= "*";
 
-	   if(! datenbank->Select(my_query))
+	   if(datenbank->Select(my_query))
 	   {
 	   	cout << "Anzahl: " << datenbank->NumRows() << endl;
 	   	while(datenbank->NextRecord())

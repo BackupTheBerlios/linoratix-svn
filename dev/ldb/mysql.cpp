@@ -1,3 +1,5 @@
+// this backend doesnt work @ this time
+
 #include <iostream>
 #include <map>
 #include <string>
@@ -100,7 +102,7 @@ extern "C" int l_query(string database, string sql_query)
 		return mysql_real_query(&con, sql_query.c_str(), strlen(sql_query.c_str()));
 	}
 
-	return -1;
+	return 0;
 }
 
 // jibbd die anzahl der erjebnisse zurueck
@@ -135,10 +137,10 @@ extern "C" int l_next_record(map<string,string>& record)
 			field = mysql_fetch_field_direct(result, i);
 			record[field->name] = row[i];
 		}
-		return 0;
+		return true;
 	}
 	
-	return -1;
+	return false;
 }
 
 extern "C" bool l_insert(map<string,string>& query, map<string,string>& _set, string& sql_query)

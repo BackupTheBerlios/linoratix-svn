@@ -13,10 +13,12 @@ class db
 		db(char*);
 		~db();
 		bool Connect(map<string,string>);
+      bool Disconnect();
 		
 		int Select(map<string,string>&);
       int Create(map<string, string>&);
 		int Insert(map<string,string>&, map<string,string>&);
+      int Execute();
 
 		bool NextRecord();
 		int NumRows();
@@ -32,6 +34,9 @@ class db
 		typedef bool (*connect_t)(map<string,string>);
 		connect_t _connect;
 
+      typedef bool (*disconnect_t)();
+      disconnect_t _disconnect;
+
 		typedef int (*next_record_t)(map<string,string>&);
 		next_record_t _next_record;
 
@@ -43,6 +48,9 @@ class db
 
 		typedef bool (*insert_t)(map<string,string>, map<string,string>, string&);
 		insert_t _insert;
+
+      typedef int (*execute_t)();
+      execute_t _execute;
 		
 		typedef int (*query_t)(string, string);
 		query_t _query;
