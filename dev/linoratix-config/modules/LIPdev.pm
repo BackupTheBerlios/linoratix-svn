@@ -93,6 +93,7 @@ sub read_spec_file
 	my $dummy;
 	my @required;
 	my @build_required;
+	my @download_urls;
 
 	
 	$self->warning(">>> see tty8 for output and tty9 for errors\n\n");
@@ -147,14 +148,42 @@ sub read_spec_file
 
 	# REQUIRED
 	if($build_script{"required"} ne "undef") {
+		unless($build_script{"required"} =~ m/^\(/) {
+			$self->error("Wrong required!\n");
+			exit 2;
+		}
 		eval("\@required = ".$build_script{"required"});
 		open(FH, ">/var/cache/lip/mklip/REQUIRED") or exit 300;
 		print FH join("\n", @required);
 		close(FH);
 	}
 
+	# Download servers
+	if($build_script{"source-url"} ne "undef") {
+		unless($build_script{"source-url"} =~ m/^\(/) {
+			$self->error("Wrong source-url!\n");
+			exit 2;
+		}
+		eval("\@download_urls = ".$build_script{"source-url"});
+		my $success_dl = 0;
+		my $count_server = 0;
+		while($success_dl eq "0" or $count_server eq scalar()) {
+			system("/usr/bin/wget --passive-ftp -c -O " . $ENV{"DISTFILE_PATH"} . "/" . $download_urls[$count_server] . "/" . $build_script{"sourcefile"});
+			if($? eq "0") {
+				$success_dl = 1;
+			}
+		}
+		if($success_dl ne "1") {
+			$self->error("Error downloading sourcefile!... abording...\n");
+			exit 3;
+		}
+	}
 	# REQUIRED for building
 	if($build_script{"build-required"} ne "undef") {
+		unless($build_script{"build-required"} =~ m/^\(/) {
+			$self->error("Wrong build-required!\n");
+			exit 2;
+		}
 		eval("\@build_required = ".$build_script{"build-required"});
 	}
 	# abhaengikeiten ueberpruefen die fuer den 
@@ -341,6 +370,9 @@ sub lip_extract
 	my %dir_2;
 
 	$file = $self->parse_parameter($file);
+	if(-f $ENV{"DISTFILE_PATH"} . "/" . $file) {
+		$file = $ENV{"DISTFILE_PATH"} . "/" . $file;
+	}
 
 	$packmode = "/bin/bunzip2" if($file =~ m/\.bz2$/);
 	$packmode = "/bin/tar xjvf" if($file =~ m/\.tar\.bz2$/);
