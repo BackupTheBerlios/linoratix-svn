@@ -1,9 +1,8 @@
 all: binary
 
 binary:
-	g++ -o partinfo partinfo.cpp -lpartedpp -ldl
+	g++ -o partinfo partinfo.cpp -lparted -ldl
 	
 clean:
 	rm partinfo
 	rm *~
-
