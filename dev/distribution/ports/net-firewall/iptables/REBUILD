@@ -1,0 +1,26 @@
+#
+# package build script for iptables
+#
+%author: jfried
+%package-group: net-firewall -
+%sub-group: iptables -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: iptables is built on top of netfilter: the new packet alteration framework for Linux 2.4. It is an enhancement on ipchains, and is used to control packet filtering, Network Address Translation (masquerading, portforwarding, transparent proxying), and special effects.
+%name: iptables
+%version: 1.3.0
+%build: $DATA
+%sourcefile: iptables-1.3.0.tar.bz2
+%source-url: ("ftp://ftp.netfilter.org/pub/iptables/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_make PREFIX=/usr LIBDIR=/lib BINDIR=/sbin
+lip_mkdir -p %install_dir/{sbin,lib,usr}
+lip_make PREFIX=%install_dir/usr LIBDIR=%install_dir/lib BINDIR=%install_dir/sbin install
+
+# -- execution of post-install-scritps
+__DATA__
+
