@@ -36,7 +36,7 @@ lip_patch -Np1 -i %patch_dir/gcc-%version-no_fixincludes-1.patch
 lip_mkdir %compile_dir/gcc-build-l
 lip_cd %compile_dir/gcc-build-l
 -CONFIGURE_PATH=%compile_dir
-lip_configure --prefix=/usr --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-languages=c,c++,java,objc,f77 --mandir=%man_dir --infodir=%info_dir
+lip_configure --prefix=/usr --libexecdir=/usr/lib --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-languages=c,c++,java,objc,f77 --mandir=%man_dir --infodir=%info_dir
 lip_make
 lip_install DESTDIR=%install_dir
 lip_mkdir %install_dir/lib
