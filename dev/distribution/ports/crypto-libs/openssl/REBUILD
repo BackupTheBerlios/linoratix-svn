@@ -8,16 +8,16 @@
 %build-required: ()
 %description: The Open Source toolkit for Secure Sockets Layer and Transport Layer Security.
 %name: libopenssl
-%version: 0.9.7c
+%version: 0.9.7e
 %build: $DATA
-%sourcefile: openssl-0.9.7c.tar.gz
+%sourcefile: openssl-0.9.7e.tar.gz
 %source-url: ("http://download.linoratix.com/distfiles")
 
 __DATA__
 lip_extract %sourcefile
 # -- execution of pre-install-scripts
 lip_cd %compile_dir
-lip_patch -Np1 -i %patch_dir/openssl-0.9.7c-manpages.patch
+#lip_patch -Np1 -i %patch_dir/openssl-0.9.7c-manpages.patch
 lip_sed 's/^passwd/openssl-passwd/' doc/apps/passwd.pod > doc/apps/openssl-passwd.pod
 lip_rm -f doc/apps/passwd.pod 
 lip_other ./config --openssldir=/etc/ssl --prefix=/usr shared

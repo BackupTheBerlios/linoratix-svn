@@ -3,9 +3,9 @@
 #
 %author: jfried
 %package-group: sys-libs -
-%sub-group: glibc !
+%sub-group: glibc -
 %required: ("dev >=0.4")
-%build-required: ("libgettext >=0.14.1")
+%build-required: ("libgettext >=0.14.1", "headers =2.6.10")
 %description: The C library used in the GNU system.
 %name: libglibc
 %version: 2.3.4

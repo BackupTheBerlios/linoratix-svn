@@ -5,7 +5,7 @@
 %author: jfried
 %package-group: sys-flavors -
 %sub-group: dev -
-%required: ("linoratix-base =0.8", "autoconf >=2.59", "automake >=1.8.3","bison >=1.875","flex >=2.5.31","gcc3 >=3.4.3","groff >=1.19","help2man >=1.27","m4 >=1.4","make >=3.80","patch >=2.5.4", "texinfo >=4.6", "man >=1.5m2")
+%required: ("linoratix-base =0.8", "autoconf >=2.59", "automake >=1.8.3","bison >=1.875","flex >=2.5.31","gcc3 >=3.4.3","groff >=1.19","help2man >=1.27","m4 >=1.4","make >=3.80","patch >=2.5.4", "texinfo >=4.6", "man >=1.5m2","headers =2.6.10", "libpopt >=1.7")
 %build-required: ("linoratix-base =0.8")
 %description: Linoratix dev-system
 %name: linoratix-dev
