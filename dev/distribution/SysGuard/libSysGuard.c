@@ -1,7 +1,7 @@
 /**
  * SysGuard
  *
- * Copyright (C) 2003 by Dag Wieers <dag@wieers.com>
+ * Copyright (C) 2004 by Jan Gehring <jfried@linoratix.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
