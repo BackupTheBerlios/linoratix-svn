@@ -71,7 +71,7 @@ sub help
 	$self->message("linoratix-config $BASE_VERSION\n");
 	$self->message("	module: LIPdev $MOD_VERSION\n\n");
 	print "	--rebuild <package> [--spec buildfile]	rebuild a Linoratix package from source\n";
-	print "	--ports-build <package>				rebuild from ports\n";
+	print "	--ports-build <package> [--install]		rebuild from ports\n";
 	print "	--rebuild-package-cache [path]			rebuilds package cache for path\n";
 	print "	--help						display help message\n\n";
 }
@@ -315,6 +315,12 @@ use File::Find;
 	mkdir("/usr/src/LIPS") unless(-d "/usr/src/LIPS");
 	mkdir("/usr/src/LIPS/BUILDS") unless(-d "/usr/src/LIPS/BUILDS");
 	system("tar cvzf /usr/src/LIPS/BUILDS/" . $build_script{"name"} . "-" . $build_script{"version"} . ".lip * ");
+
+	if($self->option("install"))
+	{
+		$self->message("now installing package: " . $build_script{"name"} . "-" . $build_script{"version"} . "\n");
+		system("linoratix-config --plugin LIP --install /usr/src/LIPS/BUILDS/".$build_script{"version"} . "-" . $build_script{"version"} . ".lip");
+	}
 
 	$self->message("done.\n\n");
 }
