@@ -7,6 +7,11 @@ fuer 1.0
 INPUTRC
 
 linoratix-config:
+LIP-new:
+		Packet manager in c++ neu schreiben
+		austauschbare speichermodes (sqlite, etc...)
+			am besten ueber eine so realisieren die dann einfach ausgetauscht wird...
+
 	LIP:
 		updaten von packeten
 		wenn installation abbricht, weitermachen (wie: apt-get -f install)
