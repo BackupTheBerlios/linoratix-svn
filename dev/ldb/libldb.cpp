@@ -13,9 +13,7 @@ db::db(char* driver)
 	
 	this->handle = dlopen(driver, RTLD_LAZY);
 	if(!this->handle)
-	{
-		cout << "kein handle" << endl;
-	}
+      throw "kein Handle";
 	
 	this->_connect = (connect_t) dlsym(handle, "l_connect");	
 	this->_select = (select_t) dlsym(handle, "l_select");
@@ -25,10 +23,8 @@ db::db(char* driver)
 	this->_num_rows = (num_rows_t) dlsym(handle, "l_num_rows");
 	this->_next_record = (next_record_t) dlsym(handle, "l_next_record");
 	
-	if(! this->_is_driver())
-	{
-		cout << "This is a wrong driver!" << endl;
-	}
+	if(! this->_is_driver()) // Seg Fault wenn es kein Treiber ist!
+      throw "dies ist kein treiber";
 }
 
 db::~db()

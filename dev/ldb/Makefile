@@ -15,8 +15,8 @@ db:
 	g++ -shared libldb.cpp -o libldb.so
 
 binary:
-#	g++ -o main main.cpp -L. -Wl,-R. -ldl -lldb
-	g++ -o main main.cpp -L. -ldl -lldb
+	g++ -o main main.cpp -L. -Wl,-R. -ldl -lldb
+#	g++ -o main main.cpp -L. -ldl -lldb
 	
 clean:
 	rm *.so
