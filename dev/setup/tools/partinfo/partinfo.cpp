@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	string s1,s3;
 	int i;
 
-	if(argc < 3) exit(1);
+	if(argc < 3) goto print_help;
 	
 	s1 = argv[1];
 	s2 = argv[2];
@@ -61,10 +61,22 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		cout << "Wrong parameter!" << endl;
+		goto print_help;
 	}
 	
 	return EXIT_SUCCESS;
+print_help:
+	cout << "wrong parameter" << endl,
+	cout << "================" << endl;
+	cout << endl;
+	cout << "model <disk> ... get the model name" << endl;
+	cout << "size <disk> ... get the size of the disk" << endl;
+	cout << "fstype <disk> <partid> ... get the filesystem type" << endl;
+	cout << "geometry <disk> <partid> ... get the geometry (start:end)" << endl;
+	cout << "type <disk> <partid> ... get the partition type" << endl;
+	cout << "getall <disk> ... get all information from the disk" << endl;
+	cout << endl;
+	exit(1);
 }
 
 void get_model()
@@ -109,7 +121,7 @@ void get_all_partitions()
 			cout << part->num << ":" << part->geom.start << ":" << part->geom.end
 			<< ":" << ped_partition_type_get_name (part->type)
 			<< ":" << (part->fs_type ? part->fs_type->name : "")
-			<< ":" << device->length / 2 << endl;
+			<< ":" << part->geom.length / 2 << endl;
 		}
 	}
 }

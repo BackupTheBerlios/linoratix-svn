@@ -62,6 +62,13 @@ $cui->setprogress(1, _("MSG_INIT_DISKS"));
 # Wizard index
 my $current_step = 1;
 
+# partitionsinfos
+my $partinfo = {};
+my $partinfo_values = [];
+my $partinfo_labels = {};
+my @partinfo = ();
+my $selected_partition;
+	
 # Wizard  windows
 my %w = ();
 
@@ -262,6 +269,68 @@ sub really_part_callback($;)
 	{
 		goto_next_step();
 	}
+}
+
+sub partitions_callback($;)
+{
+	my $listbox = shift;
+	$w{6}->getobj("part_desc")->text(_("MSG_FILESYSTEM") . ": ".$partinfo->{$listbox->get}->{"fs"}."\n"
+				. _("MSG_SIZE") . ": ".sprintf("%.2f GiB", $partinfo->{$listbox->get}->{"size"} / 1024 / 1024)."\n"
+				. _("MSG_TYPE") . ": ".$partinfo->{$listbox->get}->{"type"}."\n"
+				. _("MSG_MOUNTPOINT") . ": ".$partinfo->{$listbox->get}->{"mountpoint"}."\n");
+	$selected_partition = $listbox->get;
+}
+
+sub part_button_box_callback($;)
+{
+	my $buttons = shift;
+	if($buttons->get eq "mount")
+	{
+		my $mp = $buttons->root->question(
+			-question => _("MSG_MOUNTPOINT") . ": ",
+			-title => _("MSG_SPECIFY_MOUNTPOINT"),
+		);
+		$partinfo->{$selected_partition}->{"mountpoint"} = $mp;
+		if($mp eq "swap")
+		{
+			$partinfo->{$selected_partition}->{"fs"} = "linux-swap";
+		}
+		elsif(! $partinfo->{$selected_partition}->{"fs"})
+		{
+			$partinfo->{$selected_partition}->{"fs"} = "ext3";
+		}
+		$w{6}->getobj("part_desc")->text(_("MSG_FILESYSTEM") . ": ".$partinfo->{$selected_partition}->{"fs"}."\n"
+					. _("MSG_SIZE") . ": ".sprintf("%.2f GiB", $partinfo->{$selected_partition}->{"size"} / 1024 / 1024)."\n"
+					. _("MSG_TYPE") . ": ".$partinfo->{$selected_partition}->{"type"}."\n"
+					. _("MSG_MOUNTPOINT") . ": ".$partinfo->{$selected_partition}->{"mountpoint"}."\n");
+	}
+	elsif($buttons->get eq "delete")
+	{
+		system("/usr/sbin/createpart remove_partition /dev/".$setup_config->{"target_disk"}." ".$selected_partition);
+		@partinfo = ();
+		$partinfo_values = [];
+		$partinfo_labels = {};
+		my $partinfo_intern = {};
+			
+		@partinfo = `/usr/sbin/partinfo getall /dev/$setup_config->{target_disk}`;
+		
+		chomp(@partinfo);
+		foreach(@partinfo)
+		{
+			my($part_id, $part_start, $part_end, $part_type, $part_fs, $part_size) = split(/:/, $_);
+			$partinfo_intern->{$part_id}->{"sector_start"} = $part_start;
+			$partinfo_intern->{$part_id}->{"sector_end"} = $part_end;
+			$partinfo_intern->{$part_id}->{"type"} = $part_type;
+			$partinfo_intern->{$part_id}->{"fs"} = $part_fs;
+			$partinfo_intern->{$part_id}->{"size"} = $part_size;
+			$partinfo_intern->{$part_id}->{"mountpoint"} = "";
+			push(@$partinfo_values, $part_id);
+			$partinfo_labels->{$part_id} = $setup_config->{"target_disk"} . $part_id . " (".sprintf("%.2f", $part_size / 1024 / 1024)." GiB) [" . substr($part_type, 0, 1)."]" ;
+		}
+		
+		$w{6}->getobj('part_list')->values = $par;
+	}
+	
 }
 
 # ----------------------------------------------------------------------
@@ -488,6 +557,8 @@ sub dialog_6
 	chomp($target_disk_size);
 	my $part_mod;
 	
+	my @partitions = ();
+	
 	if($setup_config->{"howto_partition"} eq "1")  # ganze platte verwenden
 	{
 		$part_mod = _("MSG_USE_ENTIRE_DISK");
@@ -531,7 +602,7 @@ sub dialog_6
 		$w{6}->draw;
 		$w{6}->getobj('progress_partition')->pos(1);
 		$w{6}->draw;
-		my @partitions = `/usr/sbin/createpart onedisk /dev/$setup_config->{target_disk}`;
+		@partitions = `/usr/sbin/createpart onedisk /dev/$setup_config->{target_disk}`;
 		chomp(@partitions);
 		
 		$w{6}->getobj('progress_partition')->pos(2);
@@ -567,6 +638,110 @@ sub dialog_6
 		
 		
 		goto_next_step();
+	}
+	elsif($setup_config->{"howto_partition"} eq "2") # freier speicher verwenden
+	{
+		if(-f "/tmp/.fifo_part")
+		{
+			unlink("/tmp/.fifo_part");
+		}
+		system("/usr/bin/mkfifo /tmp/.fifo_part");
+		system("sleep 1; /usr/sbin/createpart remaindisk /dev/$setup_config->{target_disk} > /tmp/.fifo_part 2> /dev/null &");
+		open(PART, "< /tmp/.fifo_part");
+		while(<PART>)
+		{
+			chomp;
+			push(@partitions, $_);
+		}
+		close(PART);
+		
+		foreach(@partitions)
+		{
+			my($key, $val) = split(/:/, $_);
+			if($key ne "/")
+			{
+				mkdir("/mnt/root$key");
+			}
+			system("/sbin/mount $val /mnt/root$key");
+		}
+	}
+	elsif($setup_config->{"howto_partition"} eq "3") # selbschd ischd de mann
+	{
+		unless($w{6}->getobj("part_desc"))
+		{
+			@partinfo = `/usr/sbin/partinfo getall /dev/$setup_config->{target_disk}`;
+			
+			chomp(@partinfo);
+			foreach(@partinfo)
+			{
+				my($part_id, $part_start, $part_end, $part_type, $part_fs, $part_size) = split(/:/, $_);
+				$partinfo->{$part_id}->{"sector_start"} = $part_start;
+				$partinfo->{$part_id}->{"sector_end"} = $part_end;
+				$partinfo->{$part_id}->{"type"} = $part_type;
+				$partinfo->{$part_id}->{"fs"} = $part_fs;
+				$partinfo->{$part_id}->{"size"} = $part_size;
+				$partinfo->{$part_id}->{"mountpoint"} = "";
+				push(@$partinfo_values, $part_id);
+				$partinfo_labels->{$part_id} = $setup_config->{"target_disk"} . $part_id . " (".sprintf("%.2f", $part_size / 1024 / 1024)." GiB) [" . substr($part_type, 0, 1)."]" ;
+			}
+			
+			$w{6}->add
+			(
+				'part_list', 'Listbox',
+				-y          => 0, #==
+				-x          => 2,
+				-values     => $partinfo_values,
+				-labels     => $partinfo_labels,
+				-width      => 25,
+				-border     => 1,
+				-title      => _("MSG_PARTITIONS"),
+				-height		=> 10,
+				-vscrollbar => 1,
+				-onchange   => \&partitions_callback,
+			);
+			
+
+			$w{6}->add
+			(
+				'part_desc', 'Label',
+				-text => _("MSG_FILESYSTEM") . ": \n"
+					. _("MSG_SIZE") . ": \n"
+					. _("MSG_TYPE") . ": \n"
+					. _("MSG_MOUNTPOINT") . " \n",
+				-y => 0, # ==
+				-x => 30,
+				-border => 1,
+				-height => 10,
+				-width => 43,
+			);
+			
+			$w{6}->add
+			(
+				undef, 'Buttonbox',
+				-y => 12, # ==
+				-x => 2,
+				-border => 1,
+				-width => 71,
+				-buttons => [
+					{
+						-label => _("BTN_PART_DELETE"),
+						-value => "delete",
+						-onpress => \&part_button_box_callback,
+					},{
+						-label => _("BTN_PART_ADD"),
+						-value => "add",
+						-onpress => \&part_button_box_callback,
+					},{
+						-label => _("BTN_PART_MOUNT"),
+						-value => "mount",
+						-onpress => \&part_button_box_callback,
+					},
+				],
+			);
+		}
+	}
+	else
+	{
 	}
 }
 

@@ -45,6 +45,13 @@ sub _()
 		"MSG_PART_FORMAT_SWAP"		=> "Formatiere swap...",
 		"MSG_PART_MOUNT"			=> "Mounte die Partitionen...",
 		"MSG_INSTALL_BASE_SYSTEM"	=> "Installiere das Basissystem.\n\nBitte haben Sie etwas Gedult.",
+		"MSG_PARTITIONS"			=> "Partitionen",
+		"MSG_MANUAL_PART_DESC"		=> "p = Primäre-, e = Erweiterte-, l = Logische-Partition",
+		"MSG_FILESYSTEM"			=> "Dateisystem",
+		"MSG_SIZE"					=> "Größe",
+		"MSG_TYPE"					=> "Typ",
+		"MSG_MOUNTPOINT"			=> "Mountpunkt",
+		"MSG_SPECIFY_MOUNTPOINT"		=> "Geben Sie hier den Mountpunkt an",
 		
 		"MNU_FILE"					=> "Datei",
 		
@@ -64,6 +71,9 @@ sub _()
 		
 		"BTN_CANCEL"			=> " < Abbrechen > ",
 		"BTN_NEXT"				=> " < Weiter > ",
+		"BTN_PART_DELETE"		=> " < Partition löschen > ",
+		"BTN_PART_ADD"			=> " < Partition hinzufügen > ",
+		"BTN_PART_MOUNT"		=> " < Mountpunkt > ",
 	);
 	return $texte{$_[0]};
 }
