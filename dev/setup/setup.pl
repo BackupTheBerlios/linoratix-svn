@@ -274,11 +274,13 @@ sub really_part_callback($;)
 sub partitions_callback($;)
 {
 	my $listbox = shift;
-	$w{6}->getobj("part_desc")->text(_("MSG_FILESYSTEM") . ": ".$partinfo->{$listbox->get}->{"fs"}."\n"
-				. _("MSG_SIZE") . ": ".sprintf("%.2f GiB", $partinfo->{$listbox->get}->{"size"} / 1024 / 1024)."\n"
-				. _("MSG_TYPE") . ": ".$partinfo->{$listbox->get}->{"type"}."\n"
-				. _("MSG_MOUNTPOINT") . ": ".$partinfo->{$listbox->get}->{"mountpoint"}."\n");
-	$selected_partition = $listbox->get;
+	$selected_partition = $listbox->get_active_value;
+	$w{6}->getobj("part_desc")->text(_("MSG_FILESYSTEM") . ": ".$partinfo->{$listbox->get_active_value}->{"fs"}."\n"
+				. _("MSG_SIZE") . ": ".sprintf("%.2f GiB", $partinfo->{$listbox->get_active_value}->{"size"} / 1024 / 1024)."\n"
+				. _("MSG_TYPE") . ": ".$partinfo->{$listbox->get_active_value}->{"type"}."\n"
+				. _("MSG_MOUNTPOINT") . ": ".$partinfo->{$listbox->get_active_value}->{"mountpoint"}."\n"
+				. _("MSG_SEKTOREN") . ": " . $partinfo->{$selected_partition}->{"sector_start"} . " - " . $partinfo->{$selected_partition}->{"sector_end"});
+	
 }
 
 sub part_button_box_callback($;)
@@ -302,7 +304,8 @@ sub part_button_box_callback($;)
 		$w{6}->getobj("part_desc")->text(_("MSG_FILESYSTEM") . ": ".$partinfo->{$selected_partition}->{"fs"}."\n"
 					. _("MSG_SIZE") . ": ".sprintf("%.2f GiB", $partinfo->{$selected_partition}->{"size"} / 1024 / 1024)."\n"
 					. _("MSG_TYPE") . ": ".$partinfo->{$selected_partition}->{"type"}."\n"
-					. _("MSG_MOUNTPOINT") . ": ".$partinfo->{$selected_partition}->{"mountpoint"}."\n");
+					. _("MSG_MOUNTPOINT") . ": ".$partinfo->{$selected_partition}->{"mountpoint"}."\n"
+					. _("MSG_SEKTOREN") . ": " . $partinfo->{$selected_partition}->{"sector_start"} . " - " . $partinfo->{$selected_partition}->{"sector_end"});
 	}
 	elsif($buttons->get eq "delete")
 	{
@@ -313,11 +316,29 @@ sub part_button_box_callback($;)
 		my $partinfo_intern = {};
 			
 		@partinfo = `/usr/sbin/partinfo getall /dev/$setup_config->{target_disk}`;
-		
+		my $size_all = `/usr/sbin/partinfo size /dev/$setup_config->{target_disk}`;
+		chomp($size_all);
+		$size_all *= 2;
+			
+		my ($sec_end1,$sec_end2,$sec_end3, $part_id1, $part_id2, $part_id3);
+			
 		chomp(@partinfo);
 		foreach(@partinfo)
 		{
 			my($part_id, $part_start, $part_end, $part_type, $part_fs, $part_size) = split(/:/, $_);
+			if($part_id ne $part_id1+1)
+			{
+				$partinfo_intern->{$part_id-1}->{"sector_start"} = $sec_end1+1;
+				$partinfo_intern->{$part_id-1}->{"sector_end"} = $part_start;
+				$partinfo_intern->{$part_id-1}->{"type"} = "free";
+				$partinfo_intern->{$part_id-1}->{"fs"} = "ext3";
+				$partinfo_intern->{$part_id-1}->{"size"} = ($part_start - $sec_end1) / 2;
+				$partinfo_intern->{$part_id-1}->{"mountpoint"} = "";
+				push(@$partinfo_values, $part_id-1);
+				$partinfo_labels->{$part_id-1} = $setup_config->{"target_disk"} . ($part_id-1) . " (".sprintf("%.2f", $partinfo_intern->{$part_id-1}->{"size"} / 1024 / 1024)." GiB) [" . substr("free", 0, 1)."]" ;
+				$partinfo->{$selected_partition} = $partinfo_intern->{$part_id-1};
+			}
+			
 			$partinfo_intern->{$part_id}->{"sector_start"} = $part_start;
 			$partinfo_intern->{$part_id}->{"sector_end"} = $part_end;
 			$partinfo_intern->{$part_id}->{"type"} = $part_type;
@@ -326,9 +347,101 @@ sub part_button_box_callback($;)
 			$partinfo_intern->{$part_id}->{"mountpoint"} = "";
 			push(@$partinfo_values, $part_id);
 			$partinfo_labels->{$part_id} = $setup_config->{"target_disk"} . $part_id . " (".sprintf("%.2f", $part_size / 1024 / 1024)." GiB) [" . substr($part_type, 0, 1)."]" ;
+			$part_id1 = $part_id;
+			$sec_end1 = $part_end;
+		}
+		if($sec_end1 < $size_all)
+		{
+			$partinfo->{$part_id1+1}->{"sector_start"} = $sec_end1+1;
+			$partinfo->{$part_id1+1}->{"sector_end"} = $size_all-1;
+			$partinfo->{$part_id1+1}->{"type"} = "free";
+			$partinfo->{$part_id1+1}->{"fs"} = "";
+			$partinfo->{$part_id1+1}->{"size"} = ($partinfo->{$part_id1+1}->{"sector_end"} - $partinfo->{$part_id1+1}->{"sector_start"}) / 2;
+			$partinfo->{$part_id1+1}->{"mountpoint"} = "";
+			push(@$partinfo_values, $part_id1+1);
+			$partinfo_labels->{$part_id1+1} = $setup_config->{"target_disk"} . ($part_id1+1) . " (".sprintf("%.2f", $partinfo->{$part_id1+1}->{"size"} / 1024 / 1024)." GiB) [" . substr($partinfo->{$part_id1+1}->{"type"}, 0, 1)."]" ;
 		}
 		
-		$w{6}->getobj('part_list')->values = $par;
+		$w{6}->getobj('part_list')->values($partinfo_values);
+		$w{6}->getobj('part_list')->labels($partinfo_labels);
+		$w{6}->getobj('part_list')->draw;
+	}
+	elsif($buttons->get eq "add")
+	{
+		my $np = $buttons->root->question(
+			-question => _("MSG_PART_SIZE") . ": ",
+			-title => _("MSG_PART_TITLE"),
+		);
+		
+		if($np eq "free")
+		{
+			system("/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $partinfo->{$selected_partition}->{"sector_end"} . " " . $partinfo->{$selected_partition}->{"fs"} . " >>error.txt 2>&1");
+		}
+		else
+		{
+			my $new_end_sector = $partinfo->{$selected_partition}->{"sector_start"};
+			$new_end_sector = $new_end_sector + ($np * 1024 * 2);
+			system("/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $new_end_sector . " " . $partinfo->{$selected_partition}->{"fs"} . " >>error.txt 2>&1");
+		}
+		
+		@partinfo = ();
+		$partinfo_values = [];
+		$partinfo_labels = {};
+		my $partinfo_intern = {};
+			
+		@partinfo = `/usr/sbin/partinfo getall /dev/$setup_config->{target_disk}`;
+		my $size_all = `/usr/sbin/partinfo size /dev/$setup_config->{target_disk}`;
+		chomp($size_all);
+		$size_all *= 2;			
+		my ($sec_end1,$sec_end2,$sec_end3, $part_id1, $part_id2, $part_id3);		
+			
+		chomp(@partinfo);
+		foreach(@partinfo)
+		{
+			my($part_id, $part_start, $part_end, $part_type, $part_fs, $part_size) = split(/:/, $_);
+			if($part_id ne $part_id1+1 && $part_end)
+			{
+				$partinfo_intern->{$part_id-1}->{"sector_start"} = $sec_end1+1;
+				$partinfo_intern->{$part_id-1}->{"sector_end"} = $part_start;
+				$partinfo_intern->{$part_id-1}->{"type"} = "free";
+				$partinfo_intern->{$part_id-1}->{"fs"} = "ext3";
+				$partinfo_intern->{$part_id-1}->{"size"} = ($part_start - $sec_end1) / 2;
+				$partinfo_intern->{$part_id-1}->{"mountpoint"} = "";
+				push(@$partinfo_values, $part_id-1);
+				$partinfo_labels->{$part_id-1} = $setup_config->{"target_disk"} . ($part_id-1) . " (".sprintf("%.2f", $partinfo_intern->{$part_id-1}->{"size"} / 1024 / 1024)." GiB) [" . substr("free", 0, 1)."]" ;
+			}
+			
+			$partinfo_intern->{$part_id}->{"sector_start"} = $part_start;
+			$partinfo_intern->{$part_id}->{"sector_end"} = $part_end;
+			$partinfo_intern->{$part_id}->{"type"} = $part_type;
+			$partinfo_intern->{$part_id}->{"fs"} = $part_fs;
+			$partinfo_intern->{$part_id}->{"size"} = $part_size;
+			$partinfo_intern->{$part_id}->{"mountpoint"} = "";
+			push(@$partinfo_values, $part_id);
+			$partinfo_labels->{$part_id} = $setup_config->{"target_disk"} . $part_id . " (".sprintf("%.2f", $part_size / 1024 / 1024)." GiB) [" . substr($part_type, 0, 1)."]" ;
+			$part_id1 = $part_id;
+			$sec_end1 = $part_end;
+			
+			if($partinfo->{$part_id}->{"mountpoint"} eq "")
+			{
+				$partinfo->{$part_id} = $partinfo_intern->{$part_id};
+			}
+		}
+		if($sec_end1 < $size_all)
+		{
+			$partinfo->{$part_id1+1}->{"sector_start"} = $sec_end1+1;
+			$partinfo->{$part_id1+1}->{"sector_end"} = $size_all-1;
+			$partinfo->{$part_id1+1}->{"type"} = "free";
+			$partinfo->{$part_id1+1}->{"fs"} = "";
+			$partinfo->{$part_id1+1}->{"size"} = ($partinfo->{$part_id1+1}->{"sector_end"} - $partinfo->{$part_id1+1}->{"sector_start"}) / 2;
+			$partinfo->{$part_id1+1}->{"mountpoint"} = "";
+			push(@$partinfo_values, $part_id1+1);
+			$partinfo_labels->{$part_id1+1} = $setup_config->{"target_disk"} . ($part_id1+1) . " (".sprintf("%.2f", $partinfo->{$part_id1+1}->{"size"} / 1024 / 1024)." GiB) [" . substr($partinfo->{$part_id1+1}->{"type"}, 0, 1)."]" ;
+		}
+			
+		$w{6}->getobj('part_list')->values($partinfo_values);
+		$w{6}->getobj('part_list')->labels($partinfo_labels);
+		$w{6}->getobj('part_list')->draw;		
 	}
 	
 }
@@ -670,11 +783,34 @@ sub dialog_6
 		unless($w{6}->getobj("part_desc"))
 		{
 			@partinfo = `/usr/sbin/partinfo getall /dev/$setup_config->{target_disk}`;
+			my $size_all = `/usr/sbin/partinfo size /dev/$setup_config->{target_disk}`;
+			chomp($size_all);
+			$size_all *= 2;
+			
+			my ($sec_end1,$sec_end2,$sec_end3, $part_id1, $part_id2, $part_id3);
 			
 			chomp(@partinfo);
 			foreach(@partinfo)
 			{
 				my($part_id, $part_start, $part_end, $part_type, $part_fs, $part_size) = split(/:/, $_);
+				#if($sec_end1 && ($part_start-1) > $sec_end1)
+				#{#
+				#	$part_id1 = $part_id;
+				#	$sec_end1 = $part_start-1;
+				#}
+			#	if($part_id >= 2 && $sec_end1+1 ne $part_start) # hier ist ein freier bereich
+				if($part_id ne $part_id1+1)
+				{
+					#next if($part_id-1 eq $part_id1);
+					$partinfo->{$part_id-1}->{"sector_start"} = $sec_end1+1;
+					$partinfo->{$part_id-1}->{"sector_end"} = $part_start;
+					$partinfo->{$part_id-1}->{"type"} = "free";
+					$partinfo->{$part_id-1}->{"fs"} = "ext3";
+					$partinfo->{$part_id-1}->{"size"} = ($partinfo->{$part_id-1}->{"sector_end"} - $sec_end1+1) / 2;
+					$partinfo->{$part_id-1}->{"mountpoint"} = "";
+					push(@$partinfo_values, $part_id-1);
+					$partinfo_labels->{$part_id-1} = $setup_config->{"target_disk"} . ($part_id-1) . " (".sprintf("%.2f", $partinfo->{$part_id-1}->{"size"} / 1024 / 1024)." GiB) [" . substr("free", 0, 1)."]" ;
+				}
 				$partinfo->{$part_id}->{"sector_start"} = $part_start;
 				$partinfo->{$part_id}->{"sector_end"} = $part_end;
 				$partinfo->{$part_id}->{"type"} = $part_type;
@@ -683,8 +819,22 @@ sub dialog_6
 				$partinfo->{$part_id}->{"mountpoint"} = "";
 				push(@$partinfo_values, $part_id);
 				$partinfo_labels->{$part_id} = $setup_config->{"target_disk"} . $part_id . " (".sprintf("%.2f", $part_size / 1024 / 1024)." GiB) [" . substr($part_type, 0, 1)."]" ;
+				$part_id1 = $part_id;
+				$sec_end1 = $part_end;
 			}
 			
+			if($sec_end1 < $size_all)
+			{
+				$partinfo->{$part_id1+1}->{"sector_start"} = $sec_end1+1;
+				$partinfo->{$part_id1+1}->{"sector_end"} = $size_all-1;
+				$partinfo->{$part_id1+1}->{"type"} = "free";
+				$partinfo->{$part_id1+1}->{"fs"} = "";
+				$partinfo->{$part_id1+1}->{"size"} = ($partinfo->{$part_id1+1}->{"sector_end"} - $partinfo->{$part_id1+1}->{"sector_start"}) / 2;
+				$partinfo->{$part_id1+1}->{"mountpoint"} = "";
+				push(@$partinfo_values, $part_id1+1);
+				$partinfo_labels->{$part_id1+1} = $setup_config->{"target_disk"} . ($part_id1+1) . " (".sprintf("%.2f", $partinfo->{$part_id1+1}->{"size"} / 1024 / 1024)." GiB) [" . substr($partinfo->{$part_id1+1}->{"type"}, 0, 1)."]" ;
+			}
+
 			$w{6}->add
 			(
 				'part_list', 'Listbox',
@@ -697,7 +847,7 @@ sub dialog_6
 				-title      => _("MSG_PARTITIONS"),
 				-height		=> 10,
 				-vscrollbar => 1,
-				-onchange   => \&partitions_callback,
+				-onselchange => \&partitions_callback,
 			);
 			
 

@@ -52,6 +52,9 @@ sub _()
 		"MSG_TYPE"					=> "Typ",
 		"MSG_MOUNTPOINT"			=> "Mountpunkt",
 		"MSG_SPECIFY_MOUNTPOINT"		=> "Geben Sie hier den Mountpunkt an",
+		"MSG_PART_SIZE"				=> "Partitionsgröße eingeben.\n\nGeben Sie 'free' ein um den kompletten freien Speicherplatz zu verwenden.\nGrößenangabe in MB.",
+		"MSG_PART_TITLE"				=> "Partitionsgröße",
+		"MSG_SEKTOREN"			=> "Sektoren",
 		
 		"MNU_FILE"					=> "Datei",
 		
