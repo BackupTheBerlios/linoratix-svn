@@ -1,0 +1,11 @@
+--- fileutils-4.0u/src/shred.c.glibc22	Sat Jun 24 14:50:39 2000
++++ fileutils-4.0u/src/shred.c	Sat Jun 24 14:51:05 2000
+@@ -853,7 +853,7 @@
+     hrtime_t t = gethrtime ();
+     ISAAC_SEED (s, t);
+ #else
+-# if HAVE_CLOCK_GETTIME		/* POSIX ns-resolution */
++# if HAVE_CLOCK_GETTIME && defined(CLOCK_REALTIME) /* POSIX ns-resolution */
+     struct timespec t;
+     clock_gettime (CLOCK_REALTIME, &t);
+ # else

@@ -1,0 +1,129 @@
+diff -ruN software-suspend-core-2.0.0.99/include/linux/suspend-debug.h software-suspend-core-2.0.0.100/include/linux/suspend-debug.h
+--- software-suspend-core-2.0.0.99/include/linux/suspend-debug.h	2004-07-15 22:01:52.945200864 +1000
++++ software-suspend-core-2.0.0.100/include/linux/suspend-debug.h	2004-07-15 22:01:58.291388120 +1000
+@@ -5,7 +5,7 @@
+ /* Solely for comparison with the version specific patch revision */
+ #define SWSUSP_CORE_REVISION 0x201
+ 
+-#define SWSUSP_CORE_VERSION "2.0.0.99"
++#define SWSUSP_CORE_VERSION "2.0.0.100"
+ #define name_suspend "Software Suspend " SWSUSP_CORE_VERSION ": "
+ 
+ /* Same length to ensure one overwrites the other */
+diff -ruN software-suspend-core-2.0.0.99/kernel/power/suspend2.c software-suspend-core-2.0.0.100/kernel/power/suspend2.c
+--- software-suspend-core-2.0.0.99/kernel/power/suspend2.c	2004-07-15 22:01:52.984194936 +1000
++++ software-suspend-core-2.0.0.100/kernel/power/suspend2.c	2004-07-15 22:01:58.414369424 +1000
+@@ -79,8 +79,16 @@
+ int suspend_lvl_used = 0;
+ int suspend_dbg_used = 0;
+ 
+-/* For resume2= kernel option */
++/* 
++ * For resume2= kernel option. It's pointless to compile
++ * suspend2 without any writers, but compilation shouldn't
++ * fail if you do.
++ */
++#ifdef CONFIG_SOFTWARE_SUSPEND_DEFAULT_RESUME2
+ char resume_file[256] = CONFIG_SOFTWARE_SUSPEND_DEFAULT_RESUME2;
++#else
++char resume_file[256];
++#endif
+ 
+ unsigned long orig_mem_free = 0;
+ 
+diff -ruN software-suspend-core-2.0.0.99/kernel/power/swapwriter.c software-suspend-core-2.0.0.100/kernel/power/swapwriter.c
+--- software-suspend-core-2.0.0.99/kernel/power/swapwriter.c	2004-07-15 22:01:52.990194024 +1000
++++ software-suspend-core-2.0.0.100/kernel/power/swapwriter.c	2004-07-15 22:01:58.423368056 +1000
+@@ -1573,7 +1573,7 @@
+ 
+ static int swapwriter_parse_image_location(char * commandline, int boot_time, int only_writer)
+ {
+-	char *thischar, *colon = NULL, *at_symbol = NULL;
++	char *thischar, *devstart = NULL, *colon = NULL, *at_symbol = NULL;
+ 	union p_diskpage diskpage;
+ 	int signature_found;
+ 
+@@ -1585,7 +1585,7 @@
+ 	} else
+ 		commandline += 5;
+ 
+-	thischar = commandline;
++	devstart = thischar = commandline;
+ 	while ((*thischar != ':') && ((thischar - commandline) < 250) && (*thischar))
+ 		thischar++;
+ 
+@@ -1617,7 +1617,7 @@
+ 		resume_firstblocksize = 4096;
+ 	//printk("Setting logical block size of resume device to %d.\n", resume_firstblocksize);
+ 	
+-	if (try_to_parse_resume_device(commandline, boot_time))
++	if (try_to_parse_resume_device(devstart, boot_time))
+ 		goto invalid;
+ 
+ 	if (colon)
+diff -ruN software-suspend-core-2.0.0.99/kernel/power/ui.c software-suspend-core-2.0.0.100/kernel/power/ui.c
+--- software-suspend-core-2.0.0.99/kernel/power/ui.c	2004-07-15 22:01:52.994193416 +1000
++++ software-suspend-core-2.0.0.100/kernel/power/ui.c	2004-07-15 22:01:58.430366992 +1000
+@@ -324,19 +324,14 @@
+ 
+ static int handle_loglevel_change(void)
+ {
++#ifdef CONFIG_VT
+ 	static int recursive = 0;
+ 	
+ 	if ((console_loglevel == lastloglevel) || recursive)
+ 		return 0;
+ 	
+-	if (lastloglevel == -1) {
+-		lastloglevel = console_loglevel;
+-		return 0;
+-	}
+-
+ 	recursive = 1;
+ 
+-#ifdef CONFIG_VT
+ 	/* Calculate progress bar width. Note that whether the
+ 	 * splash screen is on might have changed (this might be
+ 	 * the first call in a new cycle), so we can't take it
+@@ -352,6 +347,12 @@
+ 		barwidth = 
+ 			(video_num_columns - 2 * (video_num_columns / 4) - 2);
+ 
++	if (lastloglevel == -1) {
++		lastloglevel = console_loglevel;
++		recursive = 0;
++		return 0;
++	}
++
+ 	/* Only reset the display if we're switching between nice display
+ 	 * and displaying debugging output */
+ 	
+@@ -361,11 +362,11 @@
+ 			if (splash_is_on(fg_console))
+ 				splash_write_proc("verbose\n", 9);
+ 		}
+-#endif
++
+ 		printnolog(0, console_loglevel, 0,
+ 			"Switched to console loglevel %d.\n", 
+ 			console_loglevel);
+-#ifdef CONFIG_VT
++	
+ 	} else if (lastloglevel > 1) {
+ 		clear_display();
+ 		if (splash_is_on(fg_console))
+@@ -374,13 +375,13 @@
+ 	
+ 	/* Get the nice display or last action [re]drawn */
+ 	prepare_status(0, 0, NULL);
+-#endif
+ 	
+ 	lastloglevel = console_loglevel;
+ 
+ 	recursive = 0;
+ 	
+ 	return 1;
++#endif
+ }
+ 
+ #ifdef CONFIG_SOFTWARE_SUSPEND_DEBUG

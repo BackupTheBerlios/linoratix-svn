@@ -1,0 +1,39 @@
+#
+# package build script for sysvinit
+#
+%author: jfried
+%package-group: sys-base -
+%sub-group: sysvinit -
+%required: ("libglibc >=2.3.3", "libselinux >=1.14")
+%build-required: ("libglibc >=2.3.3", "libselinux >=1.14")
+%description: The Linux System V Init
+%name: sysvinit
+%version: 2.85
+%build: $DATA
+%sourcefile: sysvinit-2.85.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+%bootscripts: boot-scripts-0.5.tar.gz
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+#lip_patch -Np1 -i %patch_dir/%name-2.84-selinux1.patch
+lip_cp src/init.c{,.backup}
+lip_sed -i -e 's:log(L_VB, "Entering.*);::g' src/init.c
+lip_make -C src ROOT=%install_dir
+lip_mkdir %install_dir/sbin -p
+lip_mkdir %install_dir/usr/bin -p
+lip_mkdir %install_dir/usr/share/man/man8 -p
+lip_mkdir %install_dir/usr/share/man/man5 -p
+lip_mkdir %install_dir/usr/share/man/man1 -p
+lip_mkdir %install_dir/usr/include
+lip_install -C src ROOT=%install_dir
+lip_cd %install_dir
+#lip_get_file %bootscripts %compile_dir/%bootscripts
+#lip_other tar xvzf %compile_dir/%bootscripts
+# -- execution of post-install-scritps
+__DATA__
+
+
+

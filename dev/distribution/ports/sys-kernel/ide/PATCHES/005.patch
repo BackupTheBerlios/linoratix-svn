@@ -1,0 +1,45 @@
+diff -ruN software-suspend-linux-2.6.7-rev11/arch/i386/kernel/apm.c software-suspend-linux-2.6.7-rev12/arch/i386/kernel/apm.c
+--- software-suspend-linux-2.6.7-rev11/arch/i386/kernel/apm.c	2004-07-09 21:43:51.636727312 +1000
++++ software-suspend-linux-2.6.7-rev12/arch/i386/kernel/apm.c	2004-05-19 22:10:17.000000000 +1000
+@@ -1414,8 +1414,6 @@
+ 	set_current_state(TASK_INTERRUPTIBLE);
+ 	for (;;) {
+ 		schedule_timeout(APM_CHECK_TIMEOUT);
+-		if (current->flags & PF_FREEZE)
+-			refrigerator(PF_FREEZE);
+ 		if (exit_kapmd)
+ 			break;
+ 		/*
+diff -ruN software-suspend-linux-2.6.7-rev11/drivers/s390/cio/device.c software-suspend-linux-2.6.7-rev12/drivers/s390/cio/device.c
+--- software-suspend-linux-2.6.7-rev11/drivers/s390/cio/device.c	2004-07-09 21:43:51.816699952 +1000
++++ software-suspend-linux-2.6.7-rev12/drivers/s390/cio/device.c	2004-07-09 21:43:53.603428328 +1000
+@@ -160,7 +160,7 @@
+ 		ret = -ENOMEM; /* FIXME: better errno ? */
+ 		goto out_err;
+ 	}
+-	slow_path_wq = create_singlethread_workqueue("kslowcrw");
++	slow_path_wq = create_singlethread_workqueue("kslowcrw", 0);
+ 	if (!slow_path_wq) {
+ 		ret = -ENOMEM; /* FIXME: better errno ? */
+ 		goto out_err;
+diff -ruN software-suspend-linux-2.6.7-rev11/include/linux/suspend-version-specific.h software-suspend-linux-2.6.7-rev12/include/linux/suspend-version-specific.h
+--- software-suspend-linux-2.6.7-rev11/include/linux/suspend-version-specific.h	2004-07-09 21:43:51.912685360 +1000
++++ software-suspend-linux-2.6.7-rev12/include/linux/suspend-version-specific.h	2004-07-09 21:43:53.717411000 +1000
+@@ -42,9 +42,9 @@
+ #define UNUSED_SWAP_ENTRY(i) (!swap_info[i].swap_file)
+ #define SWAP_FILE_INODE(i) swap_info[i].swap_file->f_dentry->d_inode
+ #define SWAP_IS_PARTITION(i) (S_ISBLK(SWAP_FILE_INODE(i)->i_mode))
+-#define SWAP_DEVICE_ID(i) (SWAP_FILE_INODE(i)->i_rdev)
+ #define SWAP_DEVICE_BDEV(i) (swap_info[i].bdev)
+ #define BDEV_TO_DEVICE_ID(bdev) ((bdev)->bd_dev)
++#define SWAP_DEVICE_ID(i) (BDEV_TO_DEVICE_ID(SWAP_DEVICE_BDEV(i)))
+ #define SWAP_BLOCKSIZE(bdev) (block_size(bdev))
+ #define RESUME_BDEV(i) swap_info[i].bdev
+ extern void kblockd_flush(void);
+@@ -130,4 +130,6 @@
+ 
+ #define SWAP_FILE_STRUCT file
+ 
++extern struct pm_ops * pm_ops;
++
+ #endif

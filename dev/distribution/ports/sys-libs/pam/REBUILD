@@ -1,0 +1,46 @@
+#
+# package build script for pam
+#
+%author: jfried
+%package-group: sys-libs -
+%sub-group: pam -
+%required: ("libglibc >=2.3.3", "libselinux >=1.14")
+%build-required: ("libglibc >=2.3.3", "libselinux >=1.14")
+%description: Linux PAM authetication.
+%name: libpam
+%version: 0.77
+%build: $DATA
+%sourcefile: Linux-PAM-0.77.tar.bz2
+%source-url: ("http://download.linoratix.com/distfiles")
+
+# Different Pam-files
+%file_pam.d: $PAM
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_other for patch in %patch_dir/*.patch; do patch -Np1 -i $patch; done
+lip_cp /usr/share/automake-1.8/install-sh .
+lip_other autoconf
+lip_configure --enable-static-libpam --with-mailspool=/var/mail --enable-read-both-confs --sysconfdir=/etc 
+lip_make
+lip_install FAKEROOT=%install_dir
+lip_mkdir -p %install_dir/usr/lib
+lip_mv %install_dir/lib/libpam.a %install_dir/lib/libpam_misc.a %install_dir/lib/libpamc.a %install_dir/usr/lib
+lip_ln -sf ../../lib/libpam.so.0.77 %install_dir/usr/lib/libpam.so 
+lip_ln -sf ../../lib/libpam_misc.so.0.77 %install_dir/usr/lib/libpam_misc.so 
+lip_ln -sf ../../lib/libpamc.so.0.77 %install_dir/usr/lib/libpamc.so
+#lip_mkdir %install_dir/etc
+lip_add_file %install_dir/etc/pam.conf %file_pam.d
+# -- execution of post-install-scritps
+__DATA__
+
+# File /etc/pam.conf
+__PAM__
+other           auth            required        pam_unix.so     nullok
+other           account         required        pam_unix.so
+other           session         required        pam_unix.so
+other           password        required        pam_unix.so     nullok
+__PAM__
+

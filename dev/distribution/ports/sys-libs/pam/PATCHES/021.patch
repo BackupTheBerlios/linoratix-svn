@@ -1,0 +1,76 @@
+o For non-extensible-style hashes, strip off anything after the 13th character
+  which would not be valid as part of a hash.  On HP/UX, this clips off a comma
+  followed by encoded aging information.
+
+  The real problem is a complete lack of any standard for storing password
+  aging information (actually, for anything having to do with password aging)
+  for users across operating systems, but there's nothing we can do about that
+  here.
+
+--- Linux-PAM-0.77/modules/pam_unix/unix_chkpwd.c	2003-06-30 18:47:55.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/unix_chkpwd.c	2003-06-30 19:01:24.000000000 -0400
+@@ -87,6 +87,21 @@
+ 	(void) sigaction(SIGQUIT, &action, NULL);
+ }
+ 
++static void strip_hpux_aging(char *p)
++{
++	const char *valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
++			    "abcdefghijklmnopqrstuvwxyz"
++			    "0123456789./";
++	if ((*p != '$') && (strlen(p) > 13)) {
++		for (p += 13; *p != '\0'; p++) {
++			if (strchr(valid, *p) == NULL) {
++				*p = '\0';
++				break;
++			}
++		}
++	}
++}
++
+ static int _unix_verify_password(const char *name, const char *p, int opt)
+ {
+ 	struct passwd *pwd = NULL;
+@@ -134,6 +149,7 @@
+ 		return retval;
+ 	}
+ 
++	strip_hpux_aging(salt);
+ 	salt_len = strlen(salt);
+ 	if (salt_len == 0) {
+ 		return (opt == 0) ? UNIX_FAILED : UNIX_PASSED;
+--- Linux-PAM-0.77/modules/pam_unix/support.c.hpux-aging	2003-06-30 18:59:00.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/support.c	2003-06-30 19:00:50.000000000 -0400
+@@ -509,6 +509,21 @@
+     return retval;
+ }
+ 
++static void strip_hpux_aging(char *p)
++{
++	const char *valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
++			    "abcdefghijklmnopqrstuvwxyz"
++			    "0123456789./";
++	if ((*p != '$') && (strlen(p) > 13)) {
++		for (p += 13; *p != '\0'; p++) {
++			if (strchr(valid, *p) == NULL) {
++				*p = '\0';
++				break;
++			}
++		}
++	}
++}
++
+ int _unix_verify_password(pam_handle_t * pamh, const char *name
+ 			  ,const char *p, unsigned int ctrl)
+ {
+@@ -610,7 +625,9 @@
+ 			retval = PAM_AUTHINFO_UNAVAIL;
+ 		}
+ 	} else {
+-	    int salt_len = strlen(salt);
++	    int salt_len;
++	    strip_hpux_aging(salt);
++	    salt_len = strlen(salt);
+ 	    if (!salt_len) {
+ 		/* the stored password is NULL */
+ 		if (off(UNIX__NONULL, ctrl)) {/* this means we've succeeded */

@@ -1,0 +1,48 @@
+Submitted By: Kelledin <kelledin@users.sourceforge.net>
+Date: 2003-10-02
+Initial Package Version: 0.9.7c
+Origin: Kelledin <kelledin@users.sourceforge.net>
+Description: The OpenSSL source tree generates man pages from pod files during
+             build via a set of internal utilities, including 'pod2man' and
+             'extract-names.pl'.  The 'extract-names.pl' utility got stricter
+             about POD formatting in 0.9.7c; unfortunately, not all the
+             pod files are up to snuff with the new formatting.  This results
+             in a few misnamed man pages and broken symlinks.  This patch
+             fixes the formatting on the problematic pod files. 
+
+diff -Naur openssl-0.9.7c/doc/crypto/EVP_BytesToKey.pod openssl-0.9.7c-manpages/doc/crypto/EVP_BytesToKey.pod
+--- openssl-0.9.7c/doc/crypto/EVP_BytesToKey.pod	2001-12-02 21:07:37.000000000 -0600
++++ openssl-0.9.7c-manpages/doc/crypto/EVP_BytesToKey.pod	2003-10-02 22:38:39.000000000 -0500
+@@ -2,7 +2,7 @@
+ 
+ =head1 NAME
+ 
+- EVP_BytesToKey - password based encryption routine
++EVP_BytesToKey - password based encryption routine
+ 
+ =head1 SYNOPSIS
+ 
+diff -Naur openssl-0.9.7c/doc/crypto/EVP_DigestInit.pod openssl-0.9.7c-manpages/doc/crypto/EVP_DigestInit.pod
+--- openssl-0.9.7c/doc/crypto/EVP_DigestInit.pod	2002-07-18 13:55:04.000000000 -0500
++++ openssl-0.9.7c-manpages/doc/crypto/EVP_DigestInit.pod	2003-10-02 22:30:37.000000000 -0500
+@@ -4,7 +4,7 @@
+ 
+ EVP_MD_CTX_init, EVP_MD_CTX_create, EVP_DigestInit_ex, EVP_DigestUpdate,
+ EVP_DigestFinal_ex, EVP_MD_CTX_cleanup, EVP_MD_CTX_destroy, EVP_MAX_MD_SIZE,
+-EVP_MD_CTX_copy_ex EVP_MD_CTX_copy, EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size,
++EVP_MD_CTX_copy_ex, EVP_MD_CTX_copy, EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size,
+ EVP_MD_block_size, EVP_MD_CTX_md, EVP_MD_CTX_size, EVP_MD_CTX_block_size, EVP_MD_CTX_type,
+ EVP_md_null, EVP_md2, EVP_md5, EVP_sha, EVP_sha1, EVP_dss, EVP_dss1, EVP_mdc2,
+ EVP_ripemd160, EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj -
+diff -Naur openssl-0.9.7c/doc/crypto/ui.pod openssl-0.9.7c-manpages/doc/crypto/ui.pod
+--- openssl-0.9.7c/doc/crypto/ui.pod	2001-10-25 11:55:17.000000000 -0500
++++ openssl-0.9.7c-manpages/doc/crypto/ui.pod	2003-10-02 22:30:37.000000000 -0500
+@@ -5,7 +5,7 @@
+ UI_new, UI_new_method, UI_free, UI_add_input_string, UI_dup_input_string,
+ UI_add_verify_string, UI_dup_verify_string, UI_add_input_boolean,
+ UI_dup_input_boolean, UI_add_info_string, UI_dup_info_string,
+-UI_add_error_string, UI_dup_error_string, UI_construct_prompt
++UI_add_error_string, UI_dup_error_string, UI_construct_prompt,
+ UI_add_user_data, UI_get0_user_data, UI_get0_result, UI_process,
+ UI_ctrl, UI_set_default_method, UI_get_default_method, UI_get_method,
+ UI_set_method, UI_OpenSSL, ERR_load_UI_strings - New User Interface

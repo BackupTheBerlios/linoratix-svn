@@ -1,0 +1,295 @@
+diff -ruN software-suspend-linux-2.6.7-rev14/kernel/power/Kconfig software-suspend-linux-2.6.7-rev15/kernel/power/Kconfig
+--- software-suspend-linux-2.6.7-rev14/kernel/power/Kconfig	2004-07-15 21:52:16.691001696 +1000
++++ software-suspend-linux-2.6.7-rev15/kernel/power/Kconfig	2004-07-15 21:52:18.712694352 +1000
+@@ -50,141 +50,141 @@
+ 	bool "Software Suspend 2"
+ 	depends on EXPERIMENTAL && PM
+ 
+-	config SOFTWARE_SUSPEND2_WRITER
+-	bool
+-
+-	comment 'Image Storage (you need at least one writer)'
+-	depends on SOFTWARE_SUSPEND2
+-	
+-	config SOFTWARE_SUSPEND_SWAPWRITER
+-		bool '   Swap Writer'
+-		depends on SWAP
+-		select SOFTWARE_SUSPEND2_WRITER
+-		---help---
+-		  This option enabled support for storing an image in your
+-		  swap space. Swap partitions are supported. Swap file
+-		  support is currently broken (16 April 2004).
+-
+-	config SOFTWARE_SUSPEND_NFSWRITER
+-		bool '   NFS Writer'
+-		depends on NFSROOT && SOFTWARE_SUSPEND2
+-		select SOFTWARE_SUSPEND2_WRITER
+-		---help---
+-		  This option currently does nothing. The NFS writer is just
+-		  beginning to be written.
+-
+-	config SOFTWARE_SUSPEND_NULLWRITER
+-		bool '   Null Writer (For debugging)'
+-		depends on SOFTWARE_SUSPEND2
+-		select SOFTWARE_SUSPEND2_WRITER
+-		---help---
+-		  This is a template, which you can use to develop your
+-		  own storage backend for Software Suspend 2.
+-
+-	comment '!!! Compile will fail if no storage method is selected !!!'
+-		depends on !SOFTWARE_SUSPEND2_WRITER && SOFTWARE_SUSPEND2
+-
+ 	if SOFTWARE_SUSPEND2
+-		comment 'Page Transformers'
+-
+-		config SOFTWARE_SUSPEND_LZF_COMPRESSION
+-			bool '   LZF image compression'
+-			default Y
+-			---help---
+-			  This option enables compression of pages stored during suspending
+-			  to disk, using LZF compression. LZF compression is fast and
+-			  still achieves a good compression ratio.
+-
+-			  You want to say 'Y'.
+-
+-		config SOFTWARE_SUSPEND_GZIP_COMPRESSION
+-			bool '   GZIP image Compression'
+-			select ZLIB_DEFLATE
+-			select ZLIB_INFLATE
+-			---help---
+-			  This option enables compression of pages stored during Software Suspend
+-			  process. Pages are compressed using the zlib library, with a default
+-			  setting (in code) of fastest compression. If your swap device is
+-			  significantly slower than your CPU, you may improve the speed of a
+-			  suspend/resume cycle by enabling this option.
+-		  		
+-			  You may also benefit from it if your swap space is small. Note, however,
+-			  that since we can't know how big the image will be until we actually
+-			  compress it, the algorithm assumes no compression will be achieved and
+-			  ensures that your data will fit on disk even if that happens. This means
+-			  that more memory will be eaten than probably needs to be. The best
+-			  solution to this issue is to increase your swapspace size. We may
+-			  implement support for a swap file in future.
+-				
+-			  This option should be off for most people.
+-
+-		config SOFTWARE_SUSPEND_NULLTRANSFORMER
+-			bool '  Null Page Transformer (For debugging)'
++		config SOFTWARE_SUSPEND2_WRITER
++		bool
+ 
+-		comment 'General Options'
+-
+-		config SOFTWARE_SUSPEND_DEBUG
+-			bool '   Compile in debugging output'
++		comment 'Image Storage (you need at least one writer)'
++		depends on SOFTWARE_SUSPEND2
++	
++		config SOFTWARE_SUSPEND_SWAPWRITER
++			bool '   Swap Writer'
++			depends on SWAP
++			select SOFTWARE_SUSPEND2_WRITER
++			---help---
++			  This option enabled support for storing an image in your
++			  swap space. Swap partitions are supported. Swap file
++			  support is currently broken (16 April 2004).
++
++		config SOFTWARE_SUSPEND_NFSWRITER
++			bool '   NFS Writer'
++			depends on NFSROOT
++			select SOFTWARE_SUSPEND2_WRITER
++			---help---
++			  This option currently does nothing. The NFS writer is just
++			  beginning to be written.
++
++		config SOFTWARE_SUSPEND_NULLWRITER
++			bool '   Null Writer (For debugging)'
++			depends on SOFTWARE_SUSPEND2
++			select SOFTWARE_SUSPEND2_WRITER
+ 			---help---
+-			  This option enables the inclusion of debugging info in the software
+-			  suspend code. Turning it off will reduce the kernel size but make
+-			  debugging suspend & resume issues harder to do.
+-		
+-			  For normal usage, this option can be turned off.
++			  This is a template, which you can use to develop your
++			  own storage backend for Software Suspend 2.
+ 
+-		config SOFTWARE_SUSPEND_ACPI
+-			bool '   Use ACPI S4 support'
+-			---help---
+-			  This option enables calls to the ACPI code that handles entering
+-			  the S4 (suspend-to-disk) state. Since some BIOSes have broken S4
+-			  implementations, you might prefer to turn this off. On the other
+-			  hand, ACPI wake events may fail to turn the computer back on if
+-			  this option is disabled.
++		comment 'Page Transformers'
++			depends on SOFTWARE_SUSPEND2_WRITER
+ 
+-		config SOFTWARE_SUSPEND_VARIATION_ANALYSIS
+-			bool '   Variation Analysis'
+-			---help---
+-			  This option enables code which allows you to examine the differences
+-			  between the contents of memory at 2 points in time (usually before
+-			  and after suspending). It is mostly intended for Nigel to use, and
+-			  thus the documentation is not wonderful :>.
++		if SOFTWARE_SUSPEND2_WRITER
++			config SOFTWARE_SUSPEND_LZF_COMPRESSION
++				bool '   LZF image compression'
++				default Y
++				---help---
++				  This option enables compression of pages stored during suspending
++				  to disk, using LZF compression. LZF compression is fast and
++				  still achieves a good compression ratio.
++	
++				  You want to say 'Y'.
+ 
+-		config SOFTWARE_SUSPEND2_DUMP
+-			bool '   Metadata dump'
+-			---help---
+-			  This is a temporary option which allows you to dump metadata about
+-			  the image to dmesg, rather than resuming from it. Add suspend_dump
+-			  to the command line to do this.
++			config SOFTWARE_SUSPEND_GZIP_COMPRESSION
++				bool '   GZIP image Compression'
++				select ZLIB_DEFLATE
++				select ZLIB_INFLATE
++				---help---
++				  This option enables compression of pages stored during Software Suspend
++				  process. Pages are compressed using the zlib library, with a default
++				  setting (in code) of fastest compression. If your swap device is
++				  significantly slower than your CPU, you may improve the speed of a
++				  suspend/resume cycle by enabling this option.
++			  		
++				  You may also benefit from it if your swap space is small. Note, however,
++				  that since we can't know how big the image will be until we actually
++				  compress it, the algorithm assumes no compression will be achieved and
++				  ensures that your data will fit on disk even if that happens. This means
++				  that more memory will be eaten than probably needs to be. The best
++				  solution to this issue is to increase your swapspace size. We may
++				  implement support for a swap file in future.
++					
++				  This option should be off for most people.
++
++			config SOFTWARE_SUSPEND_NULLTRANSFORMER
++				bool '  Null Page Transformer (For debugging)'
++
++			comment 'General Options'
++
++			config SOFTWARE_SUSPEND_DEBUG
++				bool '   Compile in debugging output'
++				---help---
++				  This option enables the inclusion of debugging info in the software
++				  suspend code. Turning it off will reduce the kernel size but make
++				  debugging suspend & resume issues harder to do.
+ 			
+-		config SOFTWARE_SUSPEND_KEEP_IMAGE
+-			bool '   Allow Keep Image Mode'
+-			---help---
+-			  This option allows you to keep and image and reuse it. It is intended
+-			  __ONLY__ for use with systems where all filesystems are mounted read-
+-			  only (kiosks, for example). To use it, compile this option in and boot
+-			  normally. Set the KEEP_IMAGE flag in /proc/swsusp and suspend. When you
+-			  resume, the image will not be removed. You will be unable to turn
+-			  off swap partitions (assuming you are using the swap writer), but future
+-			  suspends simply do a power-down. The image can be updated using the
+-			  kernel command line parameter suspend_act= to turn off the keep image
+-			  bit. Keep image mode is a little less user friendly on purpose - it
+-			  should not be used without thought!
++				  For normal usage, this option can be turned off.
+ 
+-		config SOFTWARE_SUSPEND_RELAXED_PROC
+-			bool '   Relaxed /proc/swsusp permissions'
+-			---help---
+-			  This option makes /proc/swsusp entries world-accessible, rather than
+-			  root-only. It is intended for systems where security is not a concern.
++			config SOFTWARE_SUSPEND_ACPI
++				bool '   Use ACPI S4 support'
++				---help---
++				  This option enables calls to the ACPI code that handles entering
++				  the S4 (suspend-to-disk) state. Since some BIOSes have broken S4
++				  implementations, you might prefer to turn this off. On the other
++				  hand, ACPI wake events may fail to turn the computer back on if
++				  this option is disabled.
++
++			config SOFTWARE_SUSPEND_VARIATION_ANALYSIS
++				bool '   Variation Analysis'
++				---help---
++				  This option enables code which allows you to examine the differences
++				  between the contents of memory at 2 points in time (usually before
++				  and after suspending). It is mostly intended for Nigel to use, and
++				  thus the documentation is not wonderful :>.
++
++			config SOFTWARE_SUSPEND2_DUMP
++				bool '   Metadata dump'
++				---help---
++				  This is a temporary option which allows you to dump metadata about
++				  the image to dmesg, rather than resuming from it. Add suspend_dump
++				  to the command line to do this.
+ 			
+-			  Networked machines, and particularly those where users are granted
+-			  shell access, should say 'N' here!
++			config SOFTWARE_SUSPEND_KEEP_IMAGE
++				bool '   Allow Keep Image Mode'
++				---help---
++				  This option allows you to keep and image and reuse it. It is intended
++				  __ONLY__ for use with systems where all filesystems are mounted read-
++				  only (kiosks, for example). To use it, compile this option in and boot
++				  normally. Set the KEEP_IMAGE flag in /proc/swsusp and suspend. When you
++				  resume, the image will not be removed. You will be unable to turn
++				  off swap partitions (assuming you are using the swap writer), but future
++				  suspends simply do a power-down. The image can be updated using the
++				  kernel command line parameter suspend_act= to turn off the keep image
++				  bit. Keep image mode is a little less user friendly on purpose - it
++				  should not be used without thought!
++
++			config SOFTWARE_SUSPEND_RELAXED_PROC
++				bool '   Relaxed /proc/swsusp permissions'
++				---help---
++				  This option makes /proc/swsusp entries world-accessible, rather than
++				  root-only. It is intended for systems where security is not a concern.
++				
++				  Networked machines, and particularly those where users are granted
++				  shell access, should say 'N' here!
+ 
+-		config SOFTWARE_SUSPEND_DEFAULT_RESUME2
+-			string '   Default resume device name'
+-			---help---
+-			  You normally need to add a resume2= parameter to your lilo.conf or
+-			  equivalent. With this option properly set, the kernel has a value
+-			  to default. No damage will be done if the value is invalid.
++			config SOFTWARE_SUSPEND_DEFAULT_RESUME2
++				string '   Default resume device name'
++				---help---
++				  You normally need to add a resume2= parameter to your lilo.conf or
++				  equivalent. With this option properly set, the kernel has a value
++				  to default. No damage will be done if the value is invalid.
++		endif
+ 
+ 	endif
+ 	
+diff -ruN software-suspend-linux-2.6.7-rev14/kernel/power/swapwriter-version-specific.c software-suspend-linux-2.6.7-rev15/kernel/power/swapwriter-version-specific.c
+--- software-suspend-linux-2.6.7-rev14/kernel/power/swapwriter-version-specific.c	2004-07-15 21:52:16.698000632 +1000
++++ software-suspend-linux-2.6.7-rev15/kernel/power/swapwriter-version-specific.c	2004-07-15 21:52:18.728691920 +1000
+@@ -67,7 +67,7 @@
+ 			suspend_early_boot_message("Failed to translate the device name into a device id.\n");
+ 		else
+ 			printk(name_suspend "Failed to translate \"%s\" into a device id.\n", commandline);
+-		return 0;
++		return 1;
+ 	}
+ 	
+ 	resume_block_device = OPEN_BY_DEVNUM(resume_device, FMODE_READ);
+@@ -78,10 +78,10 @@
+ 			suspend_early_boot_message("Failed to get access to the device on which Software Suspend's header should be found.");
+ 		else
+ 			printk("Failed to get access to the device on which Software Suspend's header should be found.\n");
+-		return 0;
++		return 1;
+ 	}
+ 
+-	return 1;
++	return 0;
+ }
+ 
+ static int try_to_parse_header_device(void)

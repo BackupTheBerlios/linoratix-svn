@@ -1,0 +1,415 @@
+o Add and implement the use_authtok, unknown_ok, and key_only flags.
+o Remove definition of _BSD_SOURCE from conv.c, that's the build setup's job.
+o Make the flags and database name in pam_userdb non-global at parse-time.
+o Fix the help string in create.pl.
+o Add "user is valid" account management check.
+
+--- Linux-PAM-0.77/doc/modules/pam_userdb.sgml	2000-06-20 18:11:05.000000000 -0400
++++ Linux-PAM-0.77/doc/modules/pam_userdb.sgml	2003-07-07 20:05:54.000000000 -0400
+@@ -50,6 +50,8 @@
+ <tt/icase/;
+ <tt/dump/;
+ <tt/db=XXXX/;
++<tt/use_authtok/;
++<tt/unknown_ok/;
+ 
+ <tag><bf>Description:</bf></tag>
+ 
+@@ -59,7 +61,7 @@
+ so caution must be exercised over the access rights to the DB database itself..
+ 
+ The module will read the password from the user using the conversation mechanism. If
+-you are using this module on top of another authetication module (like <tt/pam_pwdb/;)
++you are using this module on top of another authentication module (like <tt/pam_pwdb/;)
+ then you should tell that module to read the entered password from the PAM_AUTHTOK field, which is set by this module.
+ 
+ <p>
+@@ -85,6 +87,18 @@
+ needed filename extension for you, so you should use something like <tt>/etc/foodata</tt>
+ instead of <tt>/etc/foodata.db</tt>.
+ 
++<item> <tt/use_authtok/ - 
++use the authentication token previously obtained by another module that did the
++conversation with the application. If this token can not be obtained then
++the module will try to converse again. This option can be used for stacking
++different modules that need to deal with the authentication tokens.
++
++<item>
++<tt/unknown_ok/ -
++do not return error when checking for a user that is not in the database.
++This can be used to stack more than one pam_userdb module that will check a
++username/password pair in more than a database.
++
+ </itemize>
+ 
+ <tag><bf>Examples/suggested usage:</bf></tag>
+--- Linux-PAM-0.77/modules/pam_userdb/pam_userdb.h	2000-06-20 18:12:09.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_userdb/pam_userdb.h	2003-07-07 20:05:54.000000000 -0400
+@@ -10,6 +10,9 @@
+ #define PAM_DEBUG_ARG		0x0001
+ #define PAM_ICASE_ARG		0x0002
+ #define PAM_DUMP_ARG		0x0004
++#define PAM_USE_AUTHTOK_ARG	0x0008
++#define PAM_UNKNOWN_OK_ARG	0x0010
++#define PAM_KEY_ONLY_ARG	0x0020
+ 
+ /* Useful macros */
+ #define  x_strdup(s)  ( (s) ? strdup(s):NULL )
+--- Linux-PAM-0.77/modules/pam_userdb/README	2000-06-20 18:12:09.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_userdb/README	2003-07-07 20:05:54.000000000 -0400
+@@ -1,6 +1,7 @@
+ pam_userdb:
+ 	Look up users in a .db database and verify their password against
+-	what is contained in that database.
++	what is contained in that database.  The database will have been
++	created using db_load.
+ 
+ RECOGNIZED ARGUMENTS:
+ 	debug		write a message to syslog indicating success or
+@@ -8,7 +9,9 @@
+ 
+ 	db=[path]	use the [path] database for performing lookup. There
+ 			is no default; the module will return PAM_IGNORE if
+-			no database is provided.
++			no database is provided.  Some versions of DB will
++			automatically append ".db" to whatever pathname you
++			supply here.
+ 			
+ 	icase		make the password verification to be case insensitive
+ 			(ie when working with registration numbers and such)
+@@ -16,8 +19,28 @@
+ 	dump		dump all the entries in the database to the log (eek,
+ 			don't do this by default!)
+ 
++	use_authtok	use the authentication token previously obtained by
++			another module that did the conversation with the
++			application.  If this token can not be obtained then
++			the module will try to converse again. This option can
++			be used for stacking different modules that need to
++			deal with the authentication tokens.
++
++	unknown_ok	do not return error when checking for a user that is
++			not in the database. This can be used to stack more
++			than one pam_userdb module that will check a
++			username/password pair in more than a database.
++
++	key_only	the username and password are concatenated together
++			in the database hash as 'username-password' with a
++			random value.  if the concatenation of the username and
++			password with a dash in the middle returns any result,
++			the user is valid.  this is useful in cases where
++			the username may not be unique but the username and
++			password pair are.
++
+ MODULE SERVICES PROVIDED:
+-	auth		_authetication and _setcred (blank)
++	auth		_authentication and _setcred (blank)
+ 
+ EXAMPLE USE:
+ 	auth  sufficient pam_userdb.so icase db=/tmp/dbtest.db
+--- Linux-PAM-0.77/modules/pam_userdb/conv.c	2000-06-20 18:12:09.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_userdb/conv.c	2003-07-07 20:05:54.000000000 -0400
+@@ -5,8 +5,6 @@
+ /* $Id */
+ /* Copyright at the end of the file */
+ 
+-#define _BSD_SOURCE
+-
+ #include <stdlib.h>
+ #include <string.h>
+ 
+--- Linux-PAM-0.77/modules/pam_userdb/pam_userdb.c	2003-07-07 20:05:54.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_userdb/pam_userdb.c	2003-07-07 22:35:28.000000000 -0400
+@@ -56,26 +56,27 @@
+     closelog();
+ }
+ 
+-char * database	 = NULL;
+-static int ctrl	 = 0;
+-
+-static int _pam_parse(int argc, const char **argv)
++static int _pam_parse(int argc, const char **argv, char **database)
+ {
++     int ctrl;
+      /* step through arguments */
+-     for (ctrl = 0; argc-- > 0; ++argv) {
+-
++     for (ctrl = 0, *database = NULL; argc-- > 0; ++argv) {
+           /* generic options */
+-
+           if (!strcmp(*argv,"debug"))
+-               ctrl |= PAM_DEBUG_ARG;
++              ctrl |= PAM_DEBUG_ARG;
+ 	  else if (!strcasecmp(*argv, "icase"))
+ 	      ctrl |= PAM_ICASE_ARG;
+ 	  else if (!strcasecmp(*argv, "dump"))
+ 	      ctrl |= PAM_DUMP_ARG;
++	  else if (!strcasecmp(*argv, "unknown_ok"))
++	      ctrl |= PAM_UNKNOWN_OK_ARG;
++	  else if (!strcasecmp(*argv, "key_only"))
++	      ctrl |= PAM_KEY_ONLY_ARG;
+           else if (!strncasecmp(*argv,"db=", 3)) {
+-	      database = strdup((*argv) + 3);
+-	      if (database == NULL)
+-		  _pam_log(LOG_ERR, "pam_parse: could not parse argument \"%s\"",
++	      *database = strdup((*argv) + 3);
++	      if ((*database == NULL) || (strlen(*database) == 0))
++		  _pam_log(LOG_ERR,
++		           "pam_parse: could not parse argument \"%s\"",
+ 			   *argv);
+ 	  } else {
+                _pam_log(LOG_ERR, "pam_parse: unknown option; %s", *argv);
+@@ -95,7 +96,8 @@
+  * 	-1  = Password incorrect
+  *	-2  = System error
+  */
+-static int user_lookup(const char *user, const char *pass)
++static int user_lookup(const char *database, int ctrl,
++		       const char *user, const char *pass)
+ {
+     DBM *dbm;
+     datum key, data;
+@@ -108,7 +110,8 @@
+ 	return -2;
+     }
+ 
+-    if (ctrl &PAM_DUMP_ARG) {
++    /* dump out the database contents for debugging */
++    if (ctrl & PAM_DUMP_ARG) {
+ 	_pam_log(LOG_INFO, "Database dump:");
+ 	for (key = dbm_firstkey(dbm);  key.dptr != NULL;
+ 	     key = dbm_nextkey(dbm)) {
+@@ -117,13 +120,18 @@
+ 		     key.dsize, key.dptr, data.dsize, data.dptr);
+ 	}
+     } 
+-    /* do some more init work */
+ 
++    /* do some more init work */
+     memset(&key, 0, sizeof(key));
+     memset(&data, 0, sizeof(data));
+-    key.dptr = x_strdup(user);
+-    key.dsize = strlen(user);
+-    user = NULL;
++    if (ctrl & PAM_KEY_ONLY_ARG) {
++        key.dptr = malloc(strlen(user) + 1 + strlen(pass) + 1);
++        sprintf(key.dptr, "%s-%s", user, pass);
++        key.dsize = strlen(key.dptr);
++    } else {
++        key.dptr = x_strdup(user);
++        key.dsize = strlen(user);
++    }
+ 
+     if (key.dptr) {
+ 	data = dbm_fetch(dbm, key);
+@@ -139,8 +147,13 @@
+     if (data.dptr != NULL) {
+ 	int compare = 0;
+ 	
++        if (ctrl & PAM_KEY_ONLY_ARG) {
++	    dbm_close(dbm);
++	    return 0; /* found it, data contents don't matter */
++	}
++
+ 	if (strlen(pass) != data.dsize) {
+-	    compare = 1;
++	    compare = 1; /* wrong password len -> wrong password */
+ 	} else if (ctrl & PAM_ICASE_ARG) {
+ 	    compare = strncasecmp(data.dptr, pass, data.dsize);
+ 	} else {
+@@ -152,13 +165,58 @@
+ 	else
+ 	    return -1; /* wrong */
+     } else {
++        int saw_user = 0;
++
+ 	if (ctrl & PAM_DEBUG_ARG) {    
+ 	    _pam_log(LOG_INFO, "error returned by dbm_fetch: %s",
+ 		     strerror(errno));
+ 	}
+-	dbm_close(dbm);
++
+ 	/* probably we should check dbm_error() here */
+-	return 1; /* not found */
++
++        if ((ctrl & PAM_KEY_ONLY_ARG) == 0) {
++	    dbm_close(dbm);
++            return 1; /* not key_only, so no entry => no entry for the user */
++        }
++
++        /* now handle the key_only case */
++        for (key = dbm_firstkey(dbm);
++             key.dptr != NULL;
++             key = dbm_nextkey(dbm)) {
++            int compare;
++            /* first compare the user portion (case sensitive) */
++            compare = strncmp(key.dptr, user, strlen(user));
++            if (compare == 0) {
++                /* assume failure */
++                compare = -1;
++                /* if we have the divider where we expect it to be... */
++                if (key.dptr[strlen(user)] == '-') {
++		    saw_user = 1;
++		    if (key.dsize == strlen(user) + 1 + strlen(pass)) {
++		        if (ctrl & PAM_ICASE_ARG) {
++			    /* compare the password portion (case insensitive)*/
++                            compare = strncasecmp(key.dptr + strlen(user) + 1,
++                                                  pass,
++                                                  strlen(pass));
++		        } else {
++                            /* compare the password portion (case sensitive) */
++                            compare = strncmp(key.dptr + strlen(user) + 1,
++                                              pass,
++                                              strlen(pass));
++		        }
++		    }
++                }
++                if (compare == 0) {
++                    dbm_close(dbm);
++                    return 0; /* match */
++                }
++            }
++        }
++        dbm_close(dbm);
++	if (saw_user)
++	    return -1; /* saw the user, but password mismatch */
++	else
++	    return 1; /* not found */
+     }
+ 
+     /* NOT REACHED */
+@@ -173,10 +231,16 @@
+ {
+      const char *username;
+      const char *password;
+-     int retval = PAM_AUTH_ERR;
++     char *database = NULL;
++     int retval = PAM_AUTH_ERR, ctrl;
+     
+      /* parse arguments */
+-     ctrl = _pam_parse(argc, argv);
++     ctrl = _pam_parse(argc, argv, &database);
++     if ((database == NULL) || (strlen(database) == 0)) {
++        if (ctrl & PAM_DEBUG_ARG)
++            _pam_log(LOG_DEBUG,"can not get the database name");
++        return PAM_SERVICE_ERR;
++     }
+ 
+      /* Get the username */
+      retval = pam_get_user(pamh, &username, NULL);
+@@ -186,18 +250,33 @@
+         return PAM_SERVICE_ERR;
+      }
+      
+-     /* Converse just to be sure we have the password */
++     /* Converse just to be sure we have a password */
+      retval = conversation(pamh);
+      if (retval != PAM_SUCCESS) {
+ 	 _pam_log(LOG_ERR, "could not obtain password for `%s'",
+ 		  username);
+-	 return -2;
++	 return PAM_CONV_ERR;
+      }
+-     
++
++     /* Check if we got a password.  The docs say that if we didn't have one,
++      * and use_authtok was specified as an argument, that we converse with the
++      * user anyway, so check for one and handle a failure for that case.  If
++      * use_authtok wasn't specified, then we've already asked once and needn't
++      * do so again. */
++     retval = pam_get_item(pamh, PAM_AUTHTOK, (const void **) &password);
++     if ((retval != PAM_SUCCESS) && ((ctrl & PAM_USE_AUTHTOK_ARG) != 0)) {
++        retval = conversation(pamh);
++        if (retval != PAM_SUCCESS) {
++           _pam_log(LOG_ERR, "could not obtain password for `%s'",
++                    username);
++           return PAM_CONV_ERR;
++        }
++     }
++
+      /* Get the password */
+      retval = pam_get_item(pamh, PAM_AUTHTOK, (const void **)&password);
+      if (retval != PAM_SUCCESS) {
+-	 _pam_log(LOG_ERR, "Could not retrive user's password");
++	 _pam_log(LOG_ERR, "Could not retrieve user's password");
+ 	 return -2;
+      }
+      
+@@ -206,7 +285,7 @@
+ 		  username, password);
+      
+      /* Now use the username to look up password in the database file */
+-     retval = user_lookup(username, password);
++     retval = user_lookup(database, ctrl, username, password);
+      switch (retval) {
+ 	 case -2:
+ 	     /* some sort of system error. The log was already printed */
+@@ -247,9 +326,46 @@
+ }
+ 
+ PAM_EXTERN
+-int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
+-		   int argc, const char **argv)
++int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
+ {
++    const char *username;
++    char *database = NULL;
++    int retval = PAM_AUTH_ERR, ctrl;
++    
++    /* parse arguments */
++    ctrl = _pam_parse(argc, argv, &database);
++
++    /* Get the username */
++    retval = pam_get_user(pamh, &username, NULL);
++    if ((retval != PAM_SUCCESS) || (!username)) {
++        if (ctrl & PAM_DEBUG_ARG)
++            _pam_log(LOG_DEBUG,"can not get the username");
++        return PAM_SERVICE_ERR;
++    }
++
++    /* Now use the username to look up password in the database file */
++    retval = user_lookup(database, ctrl, username, "");
++    switch (retval) {
++        case -2:
++	    /* some sort of system error. The log was already printed */
++	    return PAM_SERVICE_ERR;    
++	case -1:
++	    /* incorrect password, but we don't care */
++	    /* FALL THROUGH */
++	case 0:
++	    /* authentication succeeded. dumbest password ever. */
++	    return PAM_SUCCESS;
++	case 1:
++	    /* the user does not exist in the database */
++	    return PAM_USER_UNKNOWN;
++        default:
++	    /* we don't know anything about this return value */
++	    _pam_log(LOG_ERR,
++		     "internal module error (retval = %d, user = `%s'",
++		     retval, username);
++        return PAM_SERVICE_ERR;
++    }
++
+     return PAM_SUCCESS;
+ }
+ 
+@@ -262,7 +378,7 @@
+      "pam_userdb",
+      pam_sm_authenticate,
+      pam_sm_setcred,
+-     NULL,
++     pam_sm_acct_mgmt,
+      NULL,
+      NULL,
+      NULL,
+--- Linux-PAM-0.77/modules/pam_userdb/create.pl	2000-06-20 18:12:09.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_userdb/create.pl	2003-07-07 20:05:54.000000000 -0400
+@@ -7,7 +7,7 @@
+ use DB_File;
+ 
+ my $database = $ARGV[0];
+-die "Use: check,pl <database>\n" unless ($database);
++die "Use: create.pl <database>\n" unless ($database);
+ print "Using database: $database\n";
+ 
+ my %lusers = ();

@@ -1,0 +1,24 @@
+diff -ruN software-suspend-linux-2.6.7-rev10/arch/i386/power/suspend2.c software-suspend-linux-2.6.7-rev11/arch/i386/power/suspend2.c
+--- software-suspend-linux-2.6.7-rev10/arch/i386/power/suspend2.c	2004-07-08 22:31:00.000000000 +1000
++++ software-suspend-linux-2.6.7-rev11/arch/i386/power/suspend2.c	2004-07-08 22:31:05.000000000 +1000
+@@ -27,6 +27,8 @@
+ #ifdef SUSPEND_C
+ #include <asm/processor.h>
+ #endif
++#undef inline
++#define inline	__inline__ __attribute__((always_inline))
+ //#define DEBUG_LOWLEVEL_SUSPEND
+ 
+ /* image of the saved processor states */
+diff -ruN software-suspend-linux-2.6.7-rev10/kernel/power/block_io.c software-suspend-linux-2.6.7-rev11/kernel/power/block_io.c
+--- software-suspend-linux-2.6.7-rev10/kernel/power/block_io.c	2004-07-08 22:31:00.000000000 +1000
++++ software-suspend-linux-2.6.7-rev11/kernel/power/block_io.c	2004-07-08 22:31:05.000000000 +1000
+@@ -297,7 +297,7 @@
+  *
+  * Description:	Reset all our sanity-checking statistics.
+  */
+-void inline reset_io_stats(void)
++void reset_io_stats(void)
+ {
+ 	max_outstanding_io = outstanding_io = 0;
+ 	maxinfopages = infopages = 0;

@@ -1,0 +1,460 @@
+diff -ruN software-suspend-linux-2.6.7-rev13/fs/buffer.c software-suspend-linux-2.6.7-rev14/fs/buffer.c
+--- software-suspend-linux-2.6.7-rev13/fs/buffer.c	2004-07-14 14:23:17.000000000 +1000
++++ software-suspend-linux-2.6.7-rev14/fs/buffer.c	2004-07-14 14:23:22.000000000 +1000
+@@ -37,6 +37,8 @@
+ #include <linux/bio.h>
+ #include <linux/notifier.h>
+ #include <linux/cpu.h>
++#include <linux/init.h>
++#include <linux/swap.h>
+ #include <asm/bitops.h>
+ 
+ static void invalidate_bh_lrus(void);
+diff -ruN software-suspend-linux-2.6.7-rev13/include/linux/suspend-version-specific.h software-suspend-linux-2.6.7-rev14/include/linux/suspend-version-specific.h
+--- software-suspend-linux-2.6.7-rev13/include/linux/suspend-version-specific.h	2004-07-14 14:23:17.000000000 +1000
++++ software-suspend-linux-2.6.7-rev14/include/linux/suspend-version-specific.h	2004-07-14 14:23:22.000000000 +1000
+@@ -11,6 +11,18 @@
+ #define SWSUSP_VERSION_SPECIFIC_REVISION 0x201
+ #define SWSUSP_VERSION_SPECIFIC_REVISION_STRING "2.0.1"
+ 
++/* For user interface */
++#include <linux/syscalls.h>
++extern asmlinkage ssize_t sys_write(unsigned int fd, const char __user * buf, 
++	size_t count);
++#define write sys_write
++
++/* This is for decoding symbols in variation analysis, below */
++#ifdef CONFIG_KDB
++#include <linux/kdb.h>
++#include <linux/kdbprivate.h>
++#endif
++
+ #ifdef CONFIG_BOOTSPLASH
+ #include <linux/console.h>
+ #include "../../drivers/video/console/fbcon.h"
+@@ -131,5 +143,55 @@
+ #define SWAP_FILE_STRUCT file
+ 
+ extern struct pm_ops * pm_ops;
++extern dev_t name_to_dev_t(char *line) __init;
++#define FLUSH_LOCAL_TLB() local_flush_tlb()
++extern char _text[], _etext[], _edata[], __bss_start[], _end[];
++extern char __nosave_begin[], __nosave_end[];
++extern void signal_wake_up(struct task_struct *t, int resume);
++
++/* swap_entry_to_range_val & range_val_to_swap_entry: 
++ * We are putting offset in the low bits so consecutive swap entries
++ * make consecutive range values */
++#define swap_entry_to_range_val(swp_entry) (swp_entry.val)
++#define range_val_to_swap_entry(val) (swp_entry_t) { (val) }
++
++#define mark_lru_pages_pageset2(void) \
++{ \
++	struct zone * zone; \
++	for_each_zone(zone) { \
++		spin_lock(&zone->lru_lock); \
++		INACTIVE_LIST_FOR_EACH(SetPagePageset2); \
++		ACTIVE_LIST_FOR_EACH(SetPagePageset2); \
++		spin_unlock(&zone->lru_lock); \
++	} \
++}
++
++#define free_some_memory(amount, flags) shrink_all_memory(amount)
++
++extern int wakeup_bdflush(long nr_pages);
++#define do_suspend_sync() \
++	do { \
++		wakeup_bdflush(0); \
++		io_schedule(); \
++		yield(); \
++	} while(0)
+ 
++
++#ifdef CONFIG_SOFTWARE_SUSPEND_DEBUG
++#define cond_show_pcp_lists() \
++do { \
++	if (TEST_DEBUG_STATE(SUSPEND_FREEZER)) \
++		show_pcp_lists(); \
++} while(0)
++#else
++#define cond_show_pcp_lists() do { } while(0)
++#endif
++
++#define version_specific_resume(void) \
++{ \
++	enable_pcp_lists(); \
++	suspend_store_free_mem(SUSPEND_FREE_DRAIN_PCP, 1); \
++	cond_show_pcp_lists(); \
++}
++extern spinlock_t io_request_lock;
+ #endif
+diff -ruN software-suspend-linux-2.6.7-rev13/kernel/power/block_io.c software-suspend-linux-2.6.7-rev14/kernel/power/block_io.c
+--- software-suspend-linux-2.6.7-rev13/kernel/power/block_io.c	2004-07-14 14:23:17.000000000 +1000
++++ software-suspend-linux-2.6.7-rev14/kernel/power/block_io.c	2004-07-14 14:23:22.000000000 +1000
+@@ -1,7 +1,7 @@
+ /*
+  * block_io.c
+  *
+- * Copyright 2004 Nigel Cunningham <ncunningham@linuxmail.org>
++ * Copyright 2004 Nigel Cunningham <ncunningham@users.sourceforge.net>
+  *
+  * Distributed under GPLv2.
+  * 
+@@ -530,6 +530,11 @@
+ 	do_suspend_io(rw, &submit_info, 1);
+ }
+ 
++/*
++ * suspend_wait_on_readahead
++ *
++ * Wait until a particular readahead is ready.
++ */
+ void suspend_wait_on_readahead(int readahead_index)
+ {
+ 	int index = readahead_index/(8 * sizeof(unsigned long));
+diff -ruN software-suspend-linux-2.6.7-rev13/kernel/power/Kconfig software-suspend-linux-2.6.7-rev14/kernel/power/Kconfig
+--- software-suspend-linux-2.6.7-rev13/kernel/power/Kconfig	2004-07-14 14:23:17.000000000 +1000
++++ software-suspend-linux-2.6.7-rev14/kernel/power/Kconfig	2004-07-14 14:23:22.000000000 +1000
+@@ -45,17 +45,21 @@
+ 	  For more information take a look at Documentation/power/swsusp.txt.
+ 
+ menu "Software Suspend 2"
++
++config SOFTWARE_SUSPEND2
++	bool "Software Suspend 2"
+ 	depends on EXPERIMENTAL && PM
+ 
+-	config SOFTWARE_SUSPEND2
++	config SOFTWARE_SUSPEND2_WRITER
+ 	bool
+ 
+ 	comment 'Image Storage (you need at least one writer)'
++	depends on SOFTWARE_SUSPEND2
+ 	
+ 	config SOFTWARE_SUSPEND_SWAPWRITER
+ 		bool '   Swap Writer'
+ 		depends on SWAP
+-		select SOFTWARE_SUSPEND2
++		select SOFTWARE_SUSPEND2_WRITER
+ 		---help---
+ 		  This option enabled support for storing an image in your
+ 		  swap space. Swap partitions are supported. Swap file
+@@ -63,19 +67,23 @@
+ 
+ 	config SOFTWARE_SUSPEND_NFSWRITER
+ 		bool '   NFS Writer'
+-		depends on NFSROOT
+-		select SOFTWARE_SUSPEND2
++		depends on NFSROOT && SOFTWARE_SUSPEND2
++		select SOFTWARE_SUSPEND2_WRITER
+ 		---help---
+ 		  This option currently does nothing. The NFS writer is just
+ 		  beginning to be written.
+ 
+ 	config SOFTWARE_SUSPEND_NULLWRITER
+ 		bool '   Null Writer (For debugging)'
+-		select SOFTWARE_SUSPEND2
++		depends on SOFTWARE_SUSPEND2
++		select SOFTWARE_SUSPEND2_WRITER
+ 		---help---
+ 		  This is a template, which you can use to develop your
+ 		  own storage backend for Software Suspend 2.
+ 
++	comment '!!! Compile will fail if no storage method is selected !!!'
++		depends on !SOFTWARE_SUSPEND2_WRITER && SOFTWARE_SUSPEND2
++
+ 	if SOFTWARE_SUSPEND2
+ 		comment 'Page Transformers'
+ 
+@@ -180,8 +188,6 @@
+ 
+ 	endif
+ 	
+-	comment 'Suspend will not be compiled in if no storage method is selected.'
+-		depends on !SOFTWARE_SUSPEND2
+ 	
+ endmenu
+ 
+diff -ruN software-suspend-linux-2.6.7-rev13/kernel/power/suspend2-version-specific.c software-suspend-linux-2.6.7-rev14/kernel/power/suspend2-version-specific.c
+--- software-suspend-linux-2.6.7-rev13/kernel/power/suspend2-version-specific.c	1970-01-01 10:00:00.000000000 +1000
++++ software-suspend-linux-2.6.7-rev14/kernel/power/suspend2-version-specific.c	2004-07-14 14:23:22.000000000 +1000
+@@ -0,0 +1,134 @@
++/*
++ * kernel/power/suspend2-version-specific.c
++ *
++ * Version specific routines for suspend2.
++ *
++ * #included in kernel/power/suspend2.c.
++ */
++
++static unsigned long avenrun_save[3];
++
++#ifdef CONFIG_SMP
++static void ensure_on_processor_zero(void)
++{
++	set_cpus_allowed(current, CPU0_MASK);
++	BUG_ON(smp_processor_id() != 0);
++}
++#else
++#define ensure_on_processor_zero() do { } while(0)
++#endif
++
++void suspend_drivers_resume(int flags)
++{
++	if (flags & RESUME_PHASE1) {
++		device_flush_retain_state();
++		device_resume();
++	}
++}
++
++/* Called from process context */
++static int suspend_drivers_suspend(void)
++{
++	int result;
++
++	result = device_suspend(3);
++	return result;
++}
++
++#if defined(CONFIG_SOFTWARE_SUSPEND_DEBUG)
++void show_pcp_lists(void)
++{
++	int cpu, temperature;
++	struct zone *zone;
++
++	for_each_zone(zone) {
++		printk("%s per-cpu:", zone->name);
++
++		if (!zone->present_pages) {
++			printk(" empty\n");
++			continue;
++		} else
++			printk("\n");
++
++		for (cpu = 0; cpu < NR_CPUS; ++cpu) {
++			struct per_cpu_pageset *pageset;
++
++			if (!cpu_possible(cpu))
++				continue;
++
++			pageset = zone->pageset + cpu;
++
++			for (temperature = 0; temperature < 2; temperature++)
++				printk("cpu %d %s: low %d, high %d, batch %d, count %d.\n",
++					cpu,
++					temperature ? "cold" : "hot",
++					pageset->pcp[temperature].low,
++					pageset->pcp[temperature].high,
++					pageset->pcp[temperature].batch,
++					pageset->pcp[temperature].count);
++		}
++	}
++}
++#else
++#define show_pcp_lists() do { } while(0)
++#endif
++
++/* -------------------------------------------------------------------------- */
++
++static void suspend_version_specific_initialise(void)
++{
++	int i;
++
++	/*
++	 * Running suspend makes for a very high load average. I'm told that
++	 * sendmail and crond check the load average, so in order for them
++	 * not to be unnecessarily affected by the operation of suspend, we
++	 * store the avenrun values prior to suspending and restore them
++	 * at the end of the resume cycle. Thus, the operation of suspend
++	 * should be invisible to them. Thanks to Marcus Gaugusch and Bernard
++	 * Blackham for noticing the problem and suggesting the solution.
++	 */
++	
++	for (i = 0; i < 3; i++)
++		avenrun_save[i] = avenrun[i];
++
++	disable_pcp_lists();
++
++	PRINTFREEMEM("after draining local pages");
++	suspend_store_free_mem(SUSPEND_FREE_DRAIN_PCP, 0);
++
++	if (TEST_DEBUG_STATE(SUSPEND_FREEZER))
++		show_pcp_lists();
++}
++
++static void suspend_version_specific_cleanup(void)
++{
++	int i;
++
++	/* Restore stats before we restart processes */
++	for (i = 0; i < 3; i++)
++		avenrun[i] = avenrun_save[i];
++
++}
++
++static void suspend_version_specific_pre_powerdown(void)
++{
++	device_flush_retain_state();
++	suspend_drivers_suspend();
++
++#if CONFIG_SOFTWARE_SUSPEND_ACPI
++	if (pm_ops && pm_ops->prepare) {
++		if (!pm_ops->prepare(PM_SUSPEND_DISK)) {
++			if (pm_ops && pm_ops->enter)
++				pm_ops->enter(PM_SUSPEND_DISK);
++		}
++	}
++#endif
++}
++static void suspend_version_specific_post_wake(void)
++{
++#if CONFIG_SOFTWARE_SUSPEND_ACPI
++	if (pm_ops && pm_ops->finish)
++		pm_ops->finish(PM_SUSPEND_DISK);
++#endif
++}
+diff -ruN software-suspend-linux-2.6.7-rev13/kernel/power/swapwriter-version-specific.c software-suspend-linux-2.6.7-rev14/kernel/power/swapwriter-version-specific.c
+--- software-suspend-linux-2.6.7-rev13/kernel/power/swapwriter-version-specific.c	1970-01-01 10:00:00.000000000 +1000
++++ software-suspend-linux-2.6.7-rev14/kernel/power/swapwriter-version-specific.c	2004-07-14 14:23:22.000000000 +1000
+@@ -0,0 +1,141 @@
++/*
++ * kernel/power/swapwriter-version-specific.c
++ *
++ * Copyright 2004 Nigel Cunningham <ncunningham@linuxmail.org>
++ *
++ * Swapwriter routines specific to the 2.6 kernel.
++ *
++ * (This file gets #included in swapwriter.c)
++ */
++
++
++static int get_phys_params(swp_entry_t entry)
++{
++	int swapfilenum = SWP_TYPE(entry);
++	unsigned long offset = swp_offset(entry);
++	struct swap_info_struct * sis = get_swap_info_struct(swapfilenum);
++	sector_t sector = map_swap_page(sis, offset);
++
++	printnolog(SUSPEND_BMAP,
++		SUSPEND_VERBOSE,
++		1,
++		"Add swap partition entry to chain: Swap address %lx, "
++		"chain %d, bdev %x, block %d (sector %x).",
++		entry.val,
++		swapfilenum,
++		header_data.swapdevs[swapfilenum],
++		offset,
++		sector);
++	add_to_range_chain(&header_data.block_chain[swapfilenum], sector);
++	return 1;
++}
++
++static int get_header_params(struct submit_params * headerpage)
++{
++	swp_entry_t entry = headerpage->swap_address;
++	int swapfilenum = SWP_TYPE(entry);
++	unsigned long offset = SWP_OFFSET(entry);
++	struct swap_info_struct * sis = get_swap_info_struct(swapfilenum);
++	sector_t sector = map_swap_page(sis, offset);
++
++	headerpage->dev = sis->bdev,
++	headerpage->blocks[0] = sector;
++	headerpage->blocks_used = 1;
++	headerpage->readahead_index = -1;
++	printnolog(SUSPEND_BMAP, SUSPEND_VERBOSE, 1,
++		"Header entry: %lx -> %x:%x.",
++		headerpage->swap_address.val,
++		headerpage->dev->bd_dev,
++		headerpage->blocks[0]);
++	/* We are assuming this.
++	blocks_used = 1;
++	block_size = PAGE_SIZE;
++	*/
++	return 0;
++}
++
++static inline int get_blocks_per_page(int chain)
++{
++	return 1;
++}
++
++static int try_to_parse_resume_device(char * commandline, int boot_time)
++{
++	resume_device = name_to_dev_t(commandline);
++	if (!resume_device) {
++		if (boot_time)
++			suspend_early_boot_message("Failed to translate the device name into a device id.\n");
++		else
++			printk(name_suspend "Failed to translate \"%s\" into a device id.\n", commandline);
++		return 0;
++	}
++	
++	resume_block_device = OPEN_BY_DEVNUM(resume_device, FMODE_READ);
++
++	if (IS_ERR(resume_block_device)) {
++		printk("Open by devnum returned %p given %x.\n", resume_block_device, resume_device);
++		if (boot_time)
++			suspend_early_boot_message("Failed to get access to the device on which Software Suspend's header should be found.");
++		else
++			printk("Failed to get access to the device on which Software Suspend's header should be found.\n");
++		return 0;
++	}
++
++	return 1;
++}
++
++static int try_to_parse_header_device(void)
++{
++	header_block_device = OPEN_BY_DEVNUM(header_device, FMODE_READ);
++
++	if (IS_ERR(header_block_device)) {
++		if (suspend_early_boot_message(
++				"Failed to get access to the "
++				"resume header device.\nYou could be "
++				"booting with a 2.6 kernel when you "
++				"suspended a 2.4 kernel."))
++			swapwriter_invalidate_image();
++
++		return -EINVAL;
++	}
++
++	if (set_blocksize(header_block_device, PAGE_SIZE) < 0) {
++		if (suspend_early_boot_message("Failed to set the blocksize"
++			"for a swap device."))
++				do { } while(0);
++		swapwriter_invalidate_image();
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static void open_other_swap_device(DEVICE_ID_TYPE thisdevice)
++{
++	RESUME_BDEV(thisdevice) = open_by_devnum(thisdevice, FMODE_READ);
++	set_blocksize(RESUME_BDEV(thisdevice), PAGE_SIZE);
++}
++
++static inline char * get_path_for_swapfile(int which, char * path_page)
++{
++	return d_path(	swap_info[which].swap_file->f_dentry,
++			swap_info[which].swap_file->f_vfsmnt,
++			path_page,
++			PAGE_SIZE);
++}
++
++static void swapwriter_noresume_reset(void)
++{
++	int i;
++
++ 	/* 
++	 * If we have read part of the image, we might have filled header_data with
++	 * data that should be zeroed out.
++	 */
++
++	memset((char *) &header_data, 0, sizeof(header_data));
++	for (i = 0; i < MAX_SWAPFILES; i++) {
++		RESUME_BDEV(i) = DEVICE_BLOCK_NONE;
++	}
++	 
++}

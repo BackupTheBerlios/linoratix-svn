@@ -1,0 +1,289 @@
+Point the preprocessor at the copy of _pam_aconf.h for this build
+instead of the one installed on the system.
+
+--- Linux-PAM-0.77/examples/xsh.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/examples/xsh.c	2003-06-26 18:56:22.000000000 -0400
+@@ -11,7 +11,7 @@
+ #include <security/pam_appl.h>
+ #include <security/pam_misc.h>
+ 
+-#include <security/_pam_aconf.h>
++#include "../_pam_aconf.h"
+ 
+ #include <pwd.h>
+ #include <sys/types.h>
+--- Linux-PAM-0.77/libpam_misc/misc_conv.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/libpam_misc/misc_conv.c	2003-06-26 18:56:22.000000000 -0400
+@@ -6,7 +6,7 @@
+  * Written by Andrew Morgan <morgan@linux.kernel.org>
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../_pam_aconf.h"
+ 
+ #include <signal.h>
+ #include <stdio.h>
+--- Linux-PAM-0.77/modules/pam_access/pam_access.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_access/pam_access.c	2003-06-26 18:56:28.000000000 -0400
+@@ -25,7 +25,7 @@
+  *************************************************************************
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+--- Linux-PAM-0.77/modules/pam_cracklib/pam_cracklib.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_cracklib/pam_cracklib.c	2003-06-26 18:56:28.000000000 -0400
+@@ -35,7 +35,7 @@
+  * S.A.G. in the section on the cracklib module.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #ifdef HAVE_CRYPT_H
+--- Linux-PAM-0.77/modules/pam_env/pam_env.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_env/pam_env.c	2003-06-26 18:56:28.000000000 -0400
+@@ -15,7 +15,7 @@
+ #define DEFAULT_ETC_ENVFILE     "/etc/environment"
+ #define DEFAULT_READ_ENVFILE    1
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <ctype.h>
+ #include <errno.h>
+--- Linux-PAM-0.77/modules/pam_filter/pam_filter.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_filter/pam_filter.c	2003-06-26 18:56:28.000000000 -0400
+@@ -5,7 +5,7 @@
+  * Richard Stevens' UNIX Network Programming book.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdlib.h>
+ #include <syslog.h>
+--- Linux-PAM-0.77/modules/pam_ftp/pam_ftp.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_ftp/pam_ftp.c	2003-06-26 18:56:28.000000000 -0400
+@@ -14,7 +14,7 @@
+ /* the following is a password that "can't be correct" */
+ #define BLOCK_PASSWORD "\177BAD PASSWPRD\177"
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+--- Linux-PAM-0.77/modules/pam_lastlog/pam_lastlog.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_lastlog/pam_lastlog.c	2003-06-26 18:56:28.000000000 -0400
+@@ -10,7 +10,7 @@
+  * present (login) service.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <fcntl.h>
+ #include <time.h>
+--- Linux-PAM-0.77/modules/pam_limits/pam_limits.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_limits/pam_limits.c	2003-06-26 18:56:28.000000000 -0400
+@@ -17,7 +17,7 @@
+ #error THIS CODE IS KNOWN TO WORK ONLY ON LINUX !!!
+ #endif 
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #include <unistd.h>
+--- Linux-PAM-0.77/modules/pam_listfile/pam_listfile.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_listfile/pam_listfile.c	2003-06-26 18:56:28.000000000 -0400
+@@ -10,7 +10,7 @@
+  * This code began life as the pam_rootok module.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+--- Linux-PAM-0.77/modules/pam_mail/pam_mail.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_mail/pam_mail.c	2003-06-26 18:56:28.000000000 -0400
+@@ -8,7 +8,7 @@
+  * mailhash additions by Chris Adams <cadams@ro.com> 1998/7/11
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <ctype.h>
+ #include <pwd.h>
+--- Linux-PAM-0.77/modules/pam_motd/pam_motd.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_motd/pam_motd.c	2003-06-26 18:56:28.000000000 -0400
+@@ -10,7 +10,7 @@
+  *
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #include <string.h>
+--- Linux-PAM-0.77/modules/pam_pwdb/pam_pwdb.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_pwdb/pam_pwdb.c	2003-06-26 18:56:28.000000000 -0400
+@@ -20,7 +20,7 @@
+ 
+ /* #define DEBUG */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <sys/types.h>
+ #include <stdarg.h>
+--- Linux-PAM-0.77/modules/pam_pwdb/pwdb_chkpwd.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_pwdb/pwdb_chkpwd.c	2003-06-26 18:56:28.000000000 -0400
+@@ -13,7 +13,7 @@
+  *
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #ifdef MEMORY_DEBUG
+ # undef exit
+--- Linux-PAM-0.77/modules/pam_rhosts/pam_rhosts_auth.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_rhosts/pam_rhosts_auth.c	2003-06-26 18:56:28.000000000 -0400
+@@ -38,7 +38,7 @@
+  * SUCH DAMAGE.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #define USER_RHOSTS_FILE "/.rhosts"     /* prefixed by user's home dir */
+ 
+--- Linux-PAM-0.77/modules/pam_stress/pam_stress.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_stress/pam_stress.c	2003-06-26 18:56:28.000000000 -0400
+@@ -5,7 +5,7 @@
+  * created by Andrew Morgan <morgan@linux.kernel.org> 1996/3/12
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdlib.h>
+ #include <stdio.h>
+--- Linux-PAM-0.77/modules/pam_tally/pam_tally.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_tally/pam_tally.c	2003-06-26 18:56:28.000000000 -0400
+@@ -11,7 +11,7 @@
+  * Stuff stolen from pam_rootok and pam_listfile
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #if defined(MAIN) && defined(MEMORY_DEBUG)
+ # undef exit
+--- Linux-PAM-0.77/modules/pam_time/pam_time.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_time/pam_time.c	2003-06-26 18:56:28.000000000 -0400
+@@ -13,7 +13,7 @@
+ "\t\tVersion 0.22 for Linux-PAM\n"
+ "Copyright (C) Andrew G. Morgan 1996 <morgan@linux.kernel.org>\n";
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <sys/file.h>
+ #include <stdio.h>
+--- Linux-PAM-0.77/modules/pam_unix/pam_unix_acct.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/pam_unix_acct.c	2003-06-26 18:56:28.000000000 -0400
+@@ -34,7 +34,7 @@
+  * OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdlib.h>
+ #include <stdio.h>
+--- Linux-PAM-0.77/modules/pam_unix/pam_unix_auth.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/pam_unix_auth.c	2003-06-26 18:56:28.000000000 -0400
+@@ -37,7 +37,7 @@
+ 
+ /* #define DEBUG */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+--- Linux-PAM-0.77/modules/pam_unix/pam_unix_passwd.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/pam_unix_passwd.c	2003-06-26 18:56:28.000000000 -0400
+@@ -35,7 +35,7 @@
+  * OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+--- Linux-PAM-0.77/modules/pam_unix/pam_unix_sess.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/pam_unix_sess.c	2003-06-26 18:56:28.000000000 -0400
+@@ -36,7 +36,7 @@
+  * OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+--- Linux-PAM-0.77/modules/pam_unix/unix_chkpwd.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/unix_chkpwd.c	2003-06-26 18:56:28.000000000 -0400
+@@ -13,7 +13,7 @@
+  *
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #ifdef MEMORY_DEBUG
+ # undef exit
+--- Linux-PAM-0.77/modules/pam_unix/yppasswd_xdr.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/yppasswd_xdr.c	2003-06-26 18:56:28.000000000 -0400
+@@ -10,7 +10,7 @@
+  * editied manually.
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <rpc/rpc.h>
+ #include <rpcsvc/yp_prot.h>
+--- Linux-PAM-0.77/modules/pam_userdb/pam_userdb.c	2003-06-26 18:54:48.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_userdb/pam_userdb.c	2003-06-26 18:56:28.000000000 -0400
+@@ -6,7 +6,7 @@
+  * See the end of the file for Copyright Information
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ 
+ #include <stdlib.h>
+ #include <unistd.h>
+--- Linux-PAM-0.77/modules/pammodutil/pammodutil.h	2003-06-30 21:08:56.000000000 -0400
++++ Linux-PAM-0.77/modules/pammodutil/pammodutil.h	2003-06-30 21:09:14.000000000 -0400
+@@ -7,7 +7,7 @@
+  * Copyright (c) 2001 Andrew Morgan <morgan@kernel.org>
+  */
+ 
+-#include <security/_pam_aconf.h>
++#include "../../_pam_aconf.h"
+ #include <security/_pam_macros.h>
+ #include <security/pam_modules.h>
+ #include <security/_pam_modutil.h>

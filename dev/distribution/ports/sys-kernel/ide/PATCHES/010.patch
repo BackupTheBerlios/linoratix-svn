@@ -1,0 +1,60 @@
+diff -ruN software-suspend-core-2.0.0.96/include/linux/suspend-common.h software-suspend-core-2.0.0.97/include/linux/suspend-common.h
+--- software-suspend-core-2.0.0.96/include/linux/suspend-common.h	2004-07-08 22:27:57.000000000 +1000
++++ software-suspend-core-2.0.0.97/include/linux/suspend-common.h	2004-07-08 22:28:04.000000000 +1000
+@@ -157,7 +157,7 @@
+ extern char _text[], _etext[], _edata[], __bss_start[], _end[];
+ extern char __nosave_begin[], __nosave_end[];
+ 
+-extern inline void signal_wake_up(struct task_struct *t, int resume);
++extern void signal_wake_up(struct task_struct *t, int resume);
+ 
+ #else /* 2.4 version */
+ 
+diff -ruN software-suspend-core-2.0.0.96/include/linux/suspend-debug.h software-suspend-core-2.0.0.97/include/linux/suspend-debug.h
+--- software-suspend-core-2.0.0.96/include/linux/suspend-debug.h	2004-07-08 22:27:57.000000000 +1000
++++ software-suspend-core-2.0.0.97/include/linux/suspend-debug.h	2004-07-08 22:28:04.000000000 +1000
+@@ -5,7 +5,7 @@
+ /* Solely for comparison with the version specific patch revision */
+ #define SWSUSP_CORE_REVISION 0x201
+ 
+-#define SWSUSP_CORE_VERSION "2.0.0.96"
++#define SWSUSP_CORE_VERSION "2.0.0.97"
+ #define name_suspend "Software Suspend " SWSUSP_CORE_VERSION ": "
+ 
+ /* Same length to ensure one overwrites the other */
+diff -ruN software-suspend-core-2.0.0.96/include/linux/suspend.h software-suspend-core-2.0.0.97/include/linux/suspend.h
+--- software-suspend-core-2.0.0.96/include/linux/suspend.h	2004-07-08 22:27:57.000000000 +1000
++++ software-suspend-core-2.0.0.97/include/linux/suspend.h	2004-07-08 22:28:04.000000000 +1000
+@@ -50,7 +50,7 @@
+ extern int register_resume_notifier(struct notifier_block *);
+ extern int unregister_resume_notifier(struct notifier_block * nb);
+ extern struct buffer_head * suspend_swap_bh;
+-extern inline void cleanup_finished_suspend_io(void);
++extern void cleanup_finished_suspend_io(void);
+ extern void __suspend_activity_start(int, const char *, const char *);
+ extern atomic_t suspend_num_doing_io;
+ #define SWSUSP_CANHOLD 1
+diff -ruN software-suspend-core-2.0.0.96/kernel/power/block_io.h software-suspend-core-2.0.0.97/kernel/power/block_io.h
+--- software-suspend-core-2.0.0.96/kernel/power/block_io.h	2004-07-08 22:27:57.000000000 +1000
++++ software-suspend-core-2.0.0.97/kernel/power/block_io.h	2004-07-08 22:28:04.000000000 +1000
+@@ -37,7 +37,7 @@
+ int suspend_set_block_size(DEVICE_BLOCK_TYPE bdev, int size);
+ 
+ // - Manage statistics for I/O structures.
+-void __inline reset_io_stats(void);
++void reset_io_stats(void);
+ void suspend_check_io_stats(void);
+ 
+ // - Submit & cleanup I/O.
+diff -ruN software-suspend-core-2.0.0.96/kernel/power/io.c software-suspend-core-2.0.0.97/kernel/power/io.c
+--- software-suspend-core-2.0.0.96/kernel/power/io.c	2004-07-08 22:27:57.000000000 +1000
++++ software-suspend-core-2.0.0.97/kernel/power/io.c	2004-07-08 22:28:04.000000000 +1000
+@@ -38,7 +38,7 @@
+  * 		want to wait on suspend I/O in future.
+  */
+ 
+-inline void cleanup_finished_suspend_io(void)
++void cleanup_finished_suspend_io(void)
+ {
+ 	active_writer->ops.writer.wait_on_io(0);
+ }

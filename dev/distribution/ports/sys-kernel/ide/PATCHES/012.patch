@@ -1,0 +1,2226 @@
+diff -ruN software-suspend-core-2.0.0.98/include/linux/suspend-common.h software-suspend-core-2.0.0.99/include/linux/suspend-common.h
+--- software-suspend-core-2.0.0.98/include/linux/suspend-common.h	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/include/linux/suspend-common.h	2004-07-15 10:10:54.000000000 +1000
+@@ -42,13 +42,6 @@
+ #include <asm/pgtable.h>
+ #include <asm/io.h>
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-extern inline void do_flush_tlb_all_local(void);
+-#define FLUSH_LOCAL_TLB() do_flush_tlb_all_local()
+-#else
+-#define FLUSH_LOCAL_TLB() local_flush_tlb()
+-#endif
+-
+ struct rangechain {
+ 	struct range * first;
+ 	struct range * last;
+@@ -152,22 +145,6 @@
+ 
+ #define MB(x) ((x) >> (20 - PAGE_SHIFT))
+ 
+-/* References to section boundaries */
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-extern char _text[], _etext[], _edata[], __bss_start[], _end[];
+-extern char __nosave_begin[], __nosave_end[];
+-
+-extern void signal_wake_up(struct task_struct *t, int resume);
+-
+-#else /* 2.4 version */
+-
+-extern char _text, _etext, _edata, __bss_start, _end;
+-extern char __nosave_begin, __nosave_end;
+-
+-extern inline void signal_wake_up(struct task_struct *t);
+-
+-#endif /* Version specific */
+-
+ extern void ide_disk_unsuspend(int);
+ extern void ide_disk_suspend(void);
+ extern int try_to_free_pages_suspend(int amount_needed, int free_flags);
+@@ -216,7 +193,6 @@
+ extern unsigned long get_grabbed_pages(int order);
+ 
+ /* ------ io.c ------ */
+-void do_suspend_sync(void);
+ int suspend_early_boot_message(char *reason);
+ 
+ /* ------ console.c ------ */
+@@ -586,4 +562,14 @@
+ #endif
+ extern int suspend_free_mem_values[MAX_FREEMEM_SLOTS][2];
+ 
++extern int initialise_suspend_plugins(void);
++extern void cleanup_suspend_plugins(void);
++extern unsigned long header_storage_for_plugins(void);
++extern int expected_compression_ratio(void);
++extern unsigned long memory_for_plugins(void);
++extern int print_plugin_debug_info(char * buffer, int buffer_size);
++extern int suspend_register_plugin(struct suspend_plugin_ops * plugin);
++extern int initialise_suspend_plugins(void);
++extern void cleanup_suspend_plugins(void);
++
+ #endif /* #ifndef SWSUSP_COMMON_H */
+diff -ruN software-suspend-core-2.0.0.98/include/linux/suspend-debug.h software-suspend-core-2.0.0.99/include/linux/suspend-debug.h
+--- software-suspend-core-2.0.0.98/include/linux/suspend-debug.h	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/include/linux/suspend-debug.h	2004-07-15 10:10:54.000000000 +1000
+@@ -5,7 +5,7 @@
+ /* Solely for comparison with the version specific patch revision */
+ #define SWSUSP_CORE_REVISION 0x201
+ 
+-#define SWSUSP_CORE_VERSION "2.0.0.98"
++#define SWSUSP_CORE_VERSION "2.0.0.99"
+ #define name_suspend "Software Suspend " SWSUSP_CORE_VERSION ": "
+ 
+ /* Same length to ensure one overwrites the other */
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/block_io.h software-suspend-core-2.0.0.99/kernel/power/block_io.h
+--- software-suspend-core-2.0.0.98/kernel/power/block_io.h	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/block_io.h	2004-07-15 10:10:54.000000000 +1000
+@@ -1,7 +1,7 @@
+ /*
+  * block_io.h
+  *
+- * Copyright 2004 Nigel Cunningham <ncunningham@linuxmail.org>
++ * Copyright 2004 Nigel Cunningham <ncunningham@users.sourceforge.net>
+  *
+  * Distributed under GPLv2.
+  *
+@@ -18,7 +18,7 @@
+ extern void suspend_wait_on_readahead(int readahead);
+ #endif
+ 
+-// Forward Declarations
++/* Forward Declarations */
+ 
+ struct submit_params {
+ 	swp_entry_t swap_address;
+@@ -31,20 +31,19 @@
+ };
+ 
+ 
+-// Lowlevel I/O functions
+-// - Get/set block size.
++/* Lowlevel I/O functions: Get/set block size. */
+ int suspend_get_block_size(DEVICE_BLOCK_TYPE bdev);
+ int suspend_set_block_size(DEVICE_BLOCK_TYPE bdev, int size);
+ 
+-// - Manage statistics for I/O structures.
++/* - Manage statistics for I/O structures. */
+ void reset_io_stats(void);
+ void suspend_check_io_stats(void);
+ 
+-// - Submit & cleanup I/O.
++/* Submit & cleanup I/O. */
+ void cleanup_completed_io(void);
+ void finish_all_io(void);
+ 
+-// - Synchronous (async + wait on completion)
++/* Synchronous (async + wait on completion) */
+ extern void bdev_page_io(int rw, DEVICE_BLOCK_TYPE bdev, long pos,
+ 		struct page * page);
+ 
+@@ -53,18 +52,3 @@
+ 
+ extern void do_suspend_io(int rw, 
+ 		struct submit_params * submit_info, int syncio);
+-
+-/* swap_entry_to_range_val & range_val_to_swap_entry: 
+- * We are putting offset in the low bits so consecutive swap entries
+- * make consecutive range values */
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-extern dev_t name_to_dev_t(char *line) __init;
+-#define swap_entry_to_range_val(swp_entry) (swp_entry.val)
+-#define range_val_to_swap_entry(val) (swp_entry_t) { (val) }
+-#else
+-extern kdev_t name_to_kdev_t(char *line) __init;
+-#define swap_entry_to_range_val(swp_entry) ((swp_entry.val >> 8) | \
+-		((swp_entry.val & 0x3f) << 24))
+-#define range_val_to_swap_entry(val) (swp_entry_t) { ((val >> 24) | \
+-		((val & 0xffffff) << 8)) }
+-#endif
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/io.c software-suspend-core-2.0.0.99/kernel/power/io.c
+--- software-suspend-core-2.0.0.98/kernel/power/io.c	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/io.c	2004-07-15 10:10:54.000000000 +1000
+@@ -8,7 +8,7 @@
+  *
+  * This file is released under the GPLv2.
+  *
+- * This file contains data IO routines for suspend.
++ * This file contains high level IO routines for suspend.
+  *
+  */
+ 
+@@ -16,21 +16,24 @@
+ 
+ #include <linux/suspend-common.h>
+ 
++/* Variables used */
+ extern unsigned long orig_mem_free;
+ extern int suspend_act_used;
+ extern int suspend_lvl_used;
+ extern int suspend_dbg_used;
+-extern void warmup_collision_cache(void);
+-extern int get_pageset1_load_addresses(void);
+ extern struct pagedir __nosavedata pagedir_resume;
+ extern struct range * unused_ranges;
++int suspend_io_time[2][2];
++
+ extern int pm_prepare_console(void);
+ 
++/* Routines we call when reloading the original kernel */
++extern void warmup_collision_cache(void);
++extern int get_pageset1_load_addresses(void);
++
+ extern void get_next_pbe(struct pbe * pbe);
+ extern void get_first_pbe(struct pbe * pbe, struct pagedir * pagedir);
+ 
+-int suspend_io_time[2][2];
+-
+ /* cleanup_finished_suspend_io
+  *
+  * Description:	Very simple helper function to save #including all the
+@@ -80,40 +83,6 @@
+ 		       suspend_io_time[i/2][i%2];
+ }
+ 
+-/* TODO: Handle page protection when saving and loading pages. */
+-#if 0
+-static void store_page_protection(void)
+-{
+-	pte_t * pte = NULL;
+-	int pageprot = 0;
+-
+-	clear_bit(IO_RESTORE_PAGE_PROT, &io_info->flags);
+-	
+-	// Remove any page protection while we restore contents
+-	if (test_bit(IO_HANDLE_PAGE_PROT, &io_info->flags)) {
+-		pte = lookup_address((unsigned long) data_address);
+-		printlog(SUSPEND_IO, SUSPEND_VERBOSE, "pte %p", pte);
+-		if (pte) {
+-			pageprot = pte->pte_low & ~_PAGE_CHG_MASK;
+-			if (pageprot != pgprot_val(PAGE_KERNEL_NOCACHE)) {
+-				set_pte(pte, pte_modify(*pte, PAGE_KERNEL_NOCACHE));	
+-				set_bit(IO_RESTORE_PAGE_PROT, &io_info->flags);
+-			}
+-		}
+-	}
+-	io_info->pte = pte;
+-	io_info->pageprot = pageprot;
+-	
+-}
+-
+-static void restore_page_protection(void)
+-{
+-		if (test_bit(IO_RESTORE_PAGE_PROT, &io_info->flags))
+-			set_pte(io_info->pte, pte_modify(*(io_info->pte), 
+-					__pgprot(io_info->pageprot)));
+-}
+-#endif
+-
+ /* write_pageset()
+  *
+  * Description:	Write a pageset to disk.
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/memory_pool.c software-suspend-core-2.0.0.99/kernel/power/memory_pool.c
+--- software-suspend-core-2.0.0.98/kernel/power/memory_pool.c	2004-07-15 10:10:51.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/memory_pool.c	2004-07-15 10:10:54.000000000 +1000
+@@ -313,27 +313,3 @@
+ 	display_memory_pool_pages();
+ }
+ 
+-int suspend_page_in_pool(struct page * page)
+-{
+-	unsigned long flags, *next, *address;
+-	int order;
+-
+-	if (PageHighMem(page))
+-		return 0;
+-
+-	address = (unsigned long *) page_address(page);
+-
+-	spin_lock_irqsave(&suspend_memory_pool_lock, flags);
+-	for (order = 0; order <= MAX_POOL_ORDER; order++) {
+-		next = suspend_memory_pool[order];
+-		while (next) {
+-			if (next == address) {
+-				spin_unlock_irqrestore(&suspend_memory_pool_lock, flags);
+-				return 1;
+-			}
+-			next = (unsigned long *) *next;
+-		}
+-	}
+-	spin_unlock_irqrestore(&suspend_memory_pool_lock, flags);
+-	return 0;
+-}
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/pagedir.c software-suspend-core-2.0.0.99/kernel/power/pagedir.c
+--- software-suspend-core-2.0.0.98/kernel/power/pagedir.c	2004-07-15 10:10:51.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/pagedir.c	2004-07-15 10:10:54.000000000 +1000
+@@ -280,9 +280,6 @@
+ void mark_pages_for_pageset2(void)
+ {
+ 	int i, numpageset2 = 0;
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-	struct zone * zone;
+-#endif
+ 
+ 	if (max_mapnr != num_physpages) {
+ 		abort_suspend("mapnr is not expected");
+@@ -294,19 +291,7 @@
+ 		ClearPagePageset2(mem_map+i);
+ 
+ 	/* Add LRU pages */
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-	for_each_zone(zone) {
+-		spin_lock(&zone->lru_lock);
+-		INACTIVE_LIST_FOR_EACH(SetPagePageset2);
+-		ACTIVE_LIST_FOR_EACH(SetPagePageset2);
+-		spin_unlock(&zone->lru_lock);
+-	}
+-#else
+-	spin_lock(&pagemap_lru_lock);
+-	INACTIVE_LIST_FOR_EACH(SetPagePageset2);
+-	ACTIVE_LIST_FOR_EACH(SetPagePageset2);
+-	spin_unlock(&pagemap_lru_lock);
+-#endif
++	mark_lru_pages_pageset2();
+ 
+ 	/* Ensure range pages are not Pageset2 */
+ 	if (num_range_pages) {
+@@ -338,11 +323,6 @@
+ 				numpageset2--;
+ 			}
+ 		}
+-#if 0
+-		if (PageHighMem(mem_map+i))
+-			if (!TestAndSetPagePageset2(mem_map+i))
+-				numpageset2++;
+-#endif
+ 	}
+ }
+ 
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/plugins.c software-suspend-core-2.0.0.99/kernel/power/plugins.c
+--- software-suspend-core-2.0.0.98/kernel/power/plugins.c	1970-01-01 10:00:00.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/plugins.c	2004-07-15 10:10:54.000000000 +1000
+@@ -0,0 +1,205 @@
++/*
++ * kernel/power/plugin.c
++ *
++ * Copyright (C) 2004 Nigel Cunningham <ncunningham@users.sourceforge.net>
++ *
++ */
++
++#include <linux/suspend-common.h>
++
++struct list_head suspend_filters, suspend_writers, suspend_plugins;
++int num_filters = 0, num_writers = 0;
++struct suspend_plugin_ops * active_writer = NULL;
++
++
++/*
++ * header_storage_for_plugins
++ *
++ * Returns the amount of space needed to store configuration
++ * data needed by the plugins prior to copying back the original
++ * kernel. We can exclude data for pageset2 because it will be
++ * available anyway once the kernel is copied back.
++ */
++unsigned long header_storage_for_plugins(void)
++{
++	struct list_head *plugin;
++	struct suspend_plugin_ops * this_plugin;
++	unsigned long bytes = 0;
++	
++	list_for_each(plugin, &suspend_plugins) {
++		this_plugin = list_entry(plugin, struct suspend_plugin_ops, plugin_list);
++		if (this_plugin->disabled)
++			continue;
++		if (this_plugin->storage_needed)
++			bytes += this_plugin->storage_needed();
++	}
++
++	return ((bytes + PAGE_SIZE - 1) >> PAGE_SHIFT);
++}
++
++/*
++ * expected_compression_ratio
++ *
++ * Returns the expected ratio between the amount of memory
++ * to be saved and the amount of space required on the
++ * storage device.
++ */
++int expected_compression_ratio(void)
++{
++	struct list_head *filter;
++	struct suspend_plugin_ops * this_filter;
++	unsigned long ratio = 100;
++	
++	list_for_each(filter, &suspend_filters) {
++		this_filter = list_entry(filter, struct suspend_plugin_ops, ops.filter.filter_list);
++		if (this_filter->disabled)
++			continue;
++		if (this_filter->ops.filter.expected_compression)
++			ratio = ratio * this_filter->ops.filter.expected_compression() / 100;
++	}
++
++	return (int) ratio;
++}
++
++/*
++ * memory_for_plugins
++ *
++ * Returns the amount of memory requested by plugins for
++ * doing their work during the cycle.
++ */
++
++unsigned long memory_for_plugins(void)
++{
++	unsigned long bytes = 0;
++	struct list_head *plugin;
++	struct suspend_plugin_ops * this_plugin;
++
++	list_for_each(plugin, &suspend_plugins) {
++		this_plugin = list_entry(plugin, struct suspend_plugin_ops, plugin_list);
++		if (this_plugin->disabled)
++			continue;
++		if (this_plugin->memory_needed)
++			bytes += this_plugin->memory_needed();
++	}
++
++	return ((bytes + PAGE_SIZE - 1) >> PAGE_SHIFT);
++}
++
++/*
++ * print_plugin_debug_info
++ * Functionality   : Get debugging info from plugins into a buffer.
++ */
++int print_plugin_debug_info(char * buffer, int buffer_size)
++{
++	struct list_head *plugin;
++	struct suspend_plugin_ops *this_plugin = NULL;
++	int len = 0;
++
++	list_for_each(plugin, &suspend_plugins) {
++		this_plugin = list_entry(plugin, struct suspend_plugin_ops,
++				plugin_list);
++		if (this_plugin->disabled)
++			continue;
++		if (this_plugin->print_debug_info) {
++			int result;
++			result = this_plugin->print_debug_info(buffer + len, 
++					buffer_size - len);
++			len += result;
++		}
++	}
++
++	return len;
++}
++
++int suspend_register_plugin(struct suspend_plugin_ops * plugin)
++{
++	if (!(num_filters + num_writers)) {
++		INIT_LIST_HEAD(&suspend_filters);
++		INIT_LIST_HEAD(&suspend_writers);
++		INIT_LIST_HEAD(&suspend_plugins);
++	}
++
++	switch (plugin->type) {
++		case FILTER_PLUGIN:
++			list_add_tail(&plugin->ops.filter.filter_list,
++					&suspend_filters);
++			num_filters++;
++			break;
++
++		case WRITER_PLUGIN:
++			list_add_tail(&plugin->ops.writer.writer_list,
++					&suspend_writers);
++			num_writers++;
++			break;
++
++		default:
++			printk("Hmmm. Plugin '%s' has an invalid type."
++				" It has been ignored.\n", plugin->name);
++			return -EINVAL;
++	}
++	list_add(&plugin->plugin_list, &suspend_plugins);
++
++	return 0;	
++}
++
++int initialise_suspend_plugins(void)
++{
++	struct list_head *plugin;
++	struct suspend_plugin_ops * this_plugin;
++	int result;
++	
++	list_for_each(plugin, &suspend_plugins) {
++		this_plugin = list_entry(plugin, struct suspend_plugin_ops,
++				plugin_list);
++		if (this_plugin->disabled)
++			continue;
++		printlog(SUSPEND_MEMORY, SUSPEND_MEDIUM,
++			"Initialising plugin %s.\n",
++			this_plugin->name);
++		if (this_plugin->initialise)
++			if ((result = this_plugin->initialise()))
++				return result;
++		PRINTFREEMEM("after initialising plugin");
++	}
++
++	return 0;
++}
++
++void cleanup_suspend_plugins(void)
++{
++	struct list_head *plugin;
++	struct suspend_plugin_ops * this_plugin;
++	
++	list_for_each(plugin, &suspend_plugins) {
++		this_plugin = list_entry(plugin, struct suspend_plugin_ops, 
++				plugin_list);
++		if (this_plugin->disabled)
++			continue;
++		printlog(SUSPEND_MEMORY, SUSPEND_MEDIUM,
++			"Cleaning up plugin %s.\n",
++			this_plugin->name);
++		if (this_plugin->cleanup)
++			this_plugin->cleanup();
++		PRINTFREEMEM("after cleaning up plugin");
++	}
++}
++
++struct suspend_plugin_ops * 
++get_next_filter(struct suspend_plugin_ops * filter_sought)
++{
++	struct list_head *filter;
++	struct suspend_plugin_ops * last_filter = NULL, *this_filter = NULL;
++
++	list_for_each(filter, &suspend_filters) {
++		this_filter = list_entry(filter, struct suspend_plugin_ops,
++				ops.filter.filter_list);
++		if (this_filter->disabled)
++			continue;
++		if ((last_filter == filter_sought) || (!filter_sought))
++			return this_filter;
++		last_filter = this_filter;
++	}
++
++	return active_writer;
++}
++
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/prepare_image.c software-suspend-core-2.0.0.99/kernel/power/prepare_image.c
+--- software-suspend-core-2.0.0.98/kernel/power/prepare_image.c	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/prepare_image.c	2004-07-15 10:10:54.000000000 +1000
+@@ -1,5 +1,9 @@
+ /*
+- * Prepare_image.c
++ * kernel/power/prepare_image.c
++ *
++ * Copyright (C) 2003-2004 Nigel Cunningham <ncunningham@users.sourceforge.net>
++ *
++ * This file is released under the GPLv2.
+  *
+  * We need to eat memory until we can:
+  * 1. Perform the save without changing anything (RAM_NEEDED < max_mapnr)
+@@ -28,6 +32,14 @@
+ int suspend_amount_grabbed = 0;
+ static int arefrozen = 0, numnosave = 0;
+ 
++/*
++ * generate_free_page_map
++ *
++ * Description:	This routine generates a bitmap of free pages from the
++ * 		lists used by the memory manager. We then use the bitmap
++ * 		to quickly calculate which pages to save and in which
++ * 		pagesets.
++ */
+ static void generate_free_page_map(void) 
+ {
+ 	int i, loop;
+@@ -75,6 +87,11 @@
+ 	}
+ }
+ 
++/* size_of_free_region
++ * 
++ * Description:	Return the number of pages that are free, beginning with and 
++ * 		including this one.
++ */
+ static int size_of_free_region(struct page * page)
+ {
+ 	struct page * posn = page;
+@@ -84,79 +101,6 @@
+ 	return (posn - page);
+ }
+ 
+-/*
+- * header_storage_for_plugins
+- *
+- * Returns the amount of space needed to store configuration
+- * data needed by the plugins prior to copying back the original
+- * kernel. We can exclude data for pageset2 because it will be
+- * available anyway once the kernel is copied back.
+- */
+-unsigned long header_storage_for_plugins(void)
+-{
+-	struct list_head *plugin;
+-	struct suspend_plugin_ops * this_plugin;
+-	unsigned long bytes = 0;
+-	
+-	list_for_each(plugin, &suspend_plugins) {
+-		this_plugin = list_entry(plugin, struct suspend_plugin_ops, plugin_list);
+-		if (this_plugin->disabled)
+-			continue;
+-		if (this_plugin->storage_needed)
+-			bytes += this_plugin->storage_needed();
+-	}
+-
+-	return ((bytes + PAGE_SIZE - 1) >> PAGE_SHIFT);
+-}
+-
+-/*
+- * expected_compression_ratio
+- *
+- * Returns the expected ratio between the amount of memory
+- * to be saved and the amount of space required on the
+- * storage device.
+- */
+-int expected_compression_ratio(void)
+-{
+-	struct list_head *filter;
+-	struct suspend_plugin_ops * this_filter;
+-	unsigned long ratio = 100;
+-	
+-	list_for_each(filter, &suspend_filters) {
+-		this_filter = list_entry(filter, struct suspend_plugin_ops, ops.filter.filter_list);
+-		if (this_filter->disabled)
+-			continue;
+-		if (this_filter->ops.filter.expected_compression)
+-			ratio = ratio * this_filter->ops.filter.expected_compression() / 100;
+-	}
+-
+-	return (int) ratio;
+-}
+-
+-/*
+- * memory_for_plugins
+- *
+- * Returns the amount of memory requested by plugins for
+- * doing their work during the cycle.
+- */
+-
+-unsigned long memory_for_plugins(void)
+-{
+-	unsigned long bytes = 0;
+-	struct list_head *plugin;
+-	struct suspend_plugin_ops * this_plugin;
+-
+-	list_for_each(plugin, &suspend_plugins) {
+-		this_plugin = list_entry(plugin, struct suspend_plugin_ops, plugin_list);
+-		if (this_plugin->disabled)
+-			continue;
+-		if (this_plugin->memory_needed)
+-			bytes += this_plugin->memory_needed();
+-	}
+-
+-	return ((bytes + PAGE_SIZE - 1) >> PAGE_SHIFT);
+-}
+-
+ static void display_reserved_pages(void)
+ {
+ 	int loop;
+@@ -182,6 +126,9 @@
+ 			((char *) page_address(mem_map + max_mapnr)) - 1);
+ }
+ 
++/* 
++ * Description:	Display which pages are marked Nosave.
++ */
+ void display_nosave_pages(void)
+ {
+ 	int loop;
+@@ -212,6 +159,14 @@
+ 			((char *) page_address(mem_map + max_mapnr)) - 1);
+ }
+ 
++/*
++ * count_data_pages
++ *
++ * This routine generates our lists of pages to be stored in each
++ * pageset. Since we store the data using ranges, and adding new
++ * ranges might allocate a new range page, this routine may well
++ * be called more than once.
++ */
+ static struct pageset_sizes_result count_data_pages(void)
+ {
+ 	int chunk_size, loop, numfree = 0;
+@@ -338,6 +293,11 @@
+ 	return result;
+ }
+ 
++/* amount_needed
++ *
++ * Calculates the amount by which the image size needs to be reduced to meet
++ * our constraints.
++ */
+ static int amount_needed(int use_image_size_limit)
+ {
+ 
+@@ -355,6 +315,10 @@
+ #define EATEN_ENOUGH_MEMORY() (amount_needed(1) < 1)
+ unsigned long storage_available = 0;
+ 
++/* display_stats
++ *
++ * Display the vital statistics.
++ */
+ void display_stats(void)
+ { 
+ #ifdef CONFIG_SOFTWARE_SUSPEND_DEBUG
+@@ -418,6 +382,11 @@
+ extern void suspend_calculate_checksums(void);
+ #endif
+ 
++/* update_image
++ *
++ * Allocate [more] memory and storage for the image.
++ * Remember, this is iterative!
++ */
+ static int update_image(void) 
+ { 
+ 	struct pageset_sizes_result result;
+@@ -492,6 +461,18 @@
+ 	return (amount_needed(0) > 0);
+ }
+ 
++/* ----------------------- Memory grabbing --------------------------
++ *
++ * All of the memory that is available, we grab.
++ * This enables us to get the image size down, even when other
++ * processes might be trying to increase their memory usage. (We
++ * have a hook to disable the OOM killer).
++ *
++ * At the same time, suspend's own routines get memory from this
++ * pool, and so does slab growth. Only get_zeroed_page and siblings
++ * see no memory available.
++ */
++
+ static spinlock_t suspend_grabbed_memory_lock = SPIN_LOCK_UNLOCKED;
+ 
+ struct eaten_memory_t
+@@ -624,6 +605,8 @@
+ 	return this;
+ }
+ 
++/* --------------------------------------------------------------------------- */
++
+ extern int freeze_processes(int no_progress);
+ 
+ static int attempt_to_freeze(void)
+@@ -698,11 +681,7 @@
+ 		else
+ 			times_criteria_met = 0;
+ 		last_amount_needed = amount_needed(1);
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-		try_to_free_pages_suspend(amount_needed(1), free_flags);
+-#else
+-		shrink_all_memory(amount_needed(1));
+-#endif
++		free_some_memory(amount_needed(1), free_flags);
+ 		grab_free_memory();
+ 		recalculate_stats();
+ 		display_stats();
+@@ -741,7 +720,21 @@
+ 	return 0;
+ }
+ 
+-
++/* prepare_image
++ *
++ * Entry point to the whole image preparation section.
++ *
++ * We do four things:
++ * - Freeze processes;
++ * - Ensure image size constraints are met;
++ * - Complete all the preparation for saving the image,
++ *   including allocation of storage. The only memory
++ *   that should be needed when we're finished is that
++ *   for actually storing the image (and we know how
++ *   much is needed for that because the plugins tell
++ *   us).
++ * - Make sure that all dirty buffers are written out.
++ */
+ int prepare_image(void)
+ {
+ 	int result = 1, sizesought;
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/proc.c software-suspend-core-2.0.0.99/kernel/power/proc.c
+--- software-suspend-core-2.0.0.98/kernel/power/proc.c	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/proc.c	2004-07-15 10:10:54.000000000 +1000
+@@ -5,7 +5,10 @@
+  *
+  * This file is released under the GPLv2.
+  *
+- * This file is to realize proc entries for tuning Software Suspend.
++ * This file contains support for proc entries for tuning Software Suspend.
++ *
++ * We have a generic handler that deals with the most common cases, and
++ * hooks for special handlers to use.
+  *
+  * Versions:
+  * 1: /proc/sys/kernel/suspend the only tuning interface
+@@ -167,8 +170,6 @@
+ }
+ 
+ extern int attempt_to_parse_resume_device(int boot_time);
+-
+-extern void start_ksuspendd(void * data);
+ extern int initialise_suspend_plugins(void);
+ extern void cleanup_suspend_plugins(void);
+ 
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/process.c software-suspend-core-2.0.0.99/kernel/power/process.c
+--- software-suspend-core-2.0.0.98/kernel/power/process.c	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/process.c	2004-07-15 10:10:54.000000000 +1000
+@@ -4,7 +4,7 @@
+  * Copyright (C) 1998-2001 Gabor Kuti <seasons@fornax.hu>
+  * Copyright (C) 1998,2001,2002 Pavel Machek <pavel@suse.cz>
+  * Copyright (C) 2002-2003 Florent Chabaud <fchabaud@free.fr>
+- * Copyright (C) 2002-2003 Nigel Cunningham <ncunningham@users.sourceforge.net>
++ * Copyright (C) 2002-2004 Nigel Cunningham <ncunningham@users.sourceforge.net>
+  *
+  * This file is released under the GPLv2.
+  *
+@@ -67,51 +67,6 @@
+ /* ------------------------------------------------------------------------ */
+ 
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-extern int wakeup_bdflush(long nr_pages);
+-void do_suspend_sync(void)
+-{
+-	wakeup_bdflush(0);
+-	io_schedule();
+-	yield();
+-}
+-
+-#else
+-extern int nr_buffers_type[NR_LIST];
+-void do_suspend_sync(void)
+-{
+-	int i;
+-	int orig[NR_LIST];
+-
+-	for (i = 0; i < NR_LIST; i++)
+-		orig[i] = nr_buffers_type[i];
+-	
+-	while (sync_buffers(NODEV, 1));
+-	while (fsync_dev(NODEV));
+-
+-	while (1) {
+-		run_task_queue(&tq_disk);
+-		if (!TQ_ACTIVE(tq_disk))
+-			break;
+-		printk(KERN_ERR
+-			"Hm, tq_disk is not empty after run_task_queue\n");
+-	}
+-	
+-	if (nr_buffers_type[1] || nr_buffers_type[2]) {
+-		printk("Entry to do_suspend_sync:\n");
+-		for (i = 0; i < NR_LIST; i++)
+-			printk(" nr_buffers_type[i] = %d.\n", orig[i]);
+-
+-		printk("Exit from do_suspend_sync:\n");
+-		for (i = 0; i < NR_LIST; i++)
+-			printk(" nr_buffers_type[i] = %d.\n",
+-					nr_buffers_type[i]);
+-		check_shift_keys(1,
+-			"Not all buffers clean when exiting do_suspend_sync.");
+-	}
+-}
+-#endif
+-
+ #ifdef CONFIG_SMP
+ static void smp_pause(void * data)
+ {
+@@ -161,30 +116,27 @@
+ static int num_to_be_frozen(int type_being_frozen, int no_progress) {
+ 	
+ 	struct task_struct FOR_EACH_THREAD_TASK_STRUCTS;
+-	int todo_this_type = 0, todo_all_types = 0, total_todo = 0;
++	int todo_this_type = 0, total_todo = 0;
+ 	int total_threads = 0;
+ 
+ 	read_lock(&tasklist_lock);
+ 	FOR_EACH_THREAD_START {
+ 		if (to_be_frozen(p, type_being_frozen)) {
+ 			todo_this_type++;
+-			todo_all_types++;
+-			total_todo++;
+-		} else if (to_be_frozen(p, 3)) {
+-			todo_all_types++;
+ 			total_todo++;
+-		} else if (p->flags & PF_FROZEN)
++		} else if (to_be_frozen(p, 3))
+ 			total_todo++;
+ 		total_threads++;
+ 	} FOR_EACH_THREAD_END
+ 	read_unlock(&tasklist_lock);
+ 
+-	if (!no_progress)
+-		update_status(  total_todo - todo_all_types,
+-				total_todo,
++	if (!no_progress) {
++		update_status(	total_threads - total_todo,
++				total_threads,
+ 				"%d/%d", 
+-				total_todo - todo_all_types,
+-				total_todo);
++				total_threads - total_todo,
++				total_threads);
++	}
+ 	return todo_this_type;
+ }
+ 
+@@ -380,9 +332,6 @@
+  * Return value: 0 = success, else # of processes that we failed to stop.
+  */
+ extern int sync_old_buffers(void);
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-extern spinlock_t io_request_lock;
+-#endif
+ 
+ /* Freeze_processes.
+  * If the flag no_progress is non-zero, progress bars not be updated.
+@@ -533,62 +482,6 @@
+ 	}
+ }
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-#include <linux/notifier.h>
+-/*
+- * The following code is based on the reboot notifier code in kernel/sys.c.
+- * It is used to notify drivers when a suspend cycle finishes, so that
+- * timers which have been stopped can be restarted.
+- */
+-
+-
+-/*
+- *	Notifier list for kernel code which wants to be called
+- *	at resume. This is used to restart timers which were
+- *	stopped during suspend.
+- */
+-
+-static struct notifier_block *resume_notifier_list;
+-rwlock_t suspend_notifier_lock = RW_LOCK_UNLOCKED;
+-
+-/**
+- *	register_resume_notifier - Register function to be called at resume time
+- *	@nb: Info about notifier function to be called
+- *
+- *	Registers a function with the list of functions
+- *	to be called at resume time.
+- *
+- *	Currently always returns zero, as notifier_chain_register
+- *	always returns zero.
+- */
+- 
+-int register_resume_notifier(struct notifier_block * nb)
+-{
+-	return notifier_chain_register(&resume_notifier_list, nb);
+-}
+-
+-/**
+- *	unregister_resume_notifier - Unregister previously registered resume 
+- *					notifier
+- *	@nb: Hook to be unregistered
+- *
+- *	Unregisters a previously registered resume
+- *	notifier function.
+- *
+- *	Returns zero on success, or %-ENOENT on failure.
+- */
+- 
+-int unregister_resume_notifier(struct notifier_block * nb)
+-{
+-	return notifier_chain_unregister(&resume_notifier_list, nb);
+-}
+-
+-int notify_resume(void)
+-{
+-	return notifier_call_chain(&resume_notifier_list, 0, NULL);
+-}
+-#endif
+-
+ EXPORT_SYMBOL(suspend_num_active);
+ EXPORT_SYMBOL(idletimeout);
+ EXPORT_SYMBOL(refrigerator);
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/range.c software-suspend-core-2.0.0.99/kernel/power/range.c
+--- software-suspend-core-2.0.0.98/kernel/power/range.c	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/range.c	2004-07-15 10:10:54.000000000 +1000
+@@ -1,13 +1,13 @@
+ /* Suspend2 routines for manipulating ranges.
+  *
+- * (C) 2003-2004 Nigel Cunningham.
++ * (C) 2003-2004 Nigel Cunningham <ncunningham@users.sourceforge.net>
+  *
+  * Distributed under GPLv2.
+  * 
+  * These encapsulate the manipulation of ranges. I learnt after writing this
+  * code that ranges are more commonly called extents. They work like this:
+  *
+- * A lot of the data that pm_disk saves involves continguous ranges of memory
++ * A lot of the data that suspend saves involves continguous ranges of memory
+  * or storage. Let's say that we're storing data on disk in blocks 1-32768 and
+  * 49152-49848 of a swap partition. Rather than recording 1, 2, 3... in arrays
+  * pointing to the locations, we simply use:
+@@ -33,9 +33,6 @@
+  * together. The RangePageLink is a pointer to the next page, or'd with the index
+  * number of the page.
+  *
+- * (The following will apply once the range page code is merged and the data is
+- * switched over to being stored in ranges)...
+- * 
+  * RangePages are stored in the header of the suspend image. For portability
+  * between suspend time and resume time, we 'relativise' the contents of each page
+  * before writing them to disk. That is, each .next and each RangePageLink is
+@@ -54,14 +51,13 @@
+ static unsigned long ranges_allocated = 0;
+ struct range * first_range_page = NULL, * last_range_page = NULL;
+ 
+-/* Add_range_page
++/* Add_range_pages
++ *
+  * Allocates and initialises new pages for storing ranges.
+  * Returns 1 on failure to get a page.
+- * Otherwise adds the new pages to the unused_ranges pool
+- * and returns 0.
+- * During resuming, it ensures the page added doesn't
+- * collide with memory that will be overwritten when
+- * copying the original kernel back.
++ * Otherwise adds the new pages to the unused_ranges pool and returns 0.
++ * During resuming, it ensures the page added doesn't collide with memory that
++ * will be overwritten when copying the original kernel back.
+  */
+ 
+ static int add_range_pages(int number_requested)
+@@ -118,15 +114,8 @@
+  *
+  * Frees pages allocated by add_range_pages()
+  *
+- * Checks that all ranges allocated have been freed and aborts
+- * if this is not true.
+- *
+- * Ranges may not be in memory order but we don't
+- * mind. We just look for a range that is on a
+- * page boundary. That gives us the pages to be
+- * freed. As we find them, we link them together
+- * into a new chain (we're not going to use the
+- * other ranges anyway) and then free the chain.
++ * Checks that all ranges allocated have been freed and emits a warning if this
++ * is not true.
+  */
+ 
+ int free_ranges(void)
+@@ -155,13 +144,12 @@
+ 
+ /* get_range
+  *
+- * Returns a free range, having removed it from the
+- * unused list and having incremented the usage counter.
+- * May imply allocating a new page and may therefore 
+- * fail, returning NULL instead.
+- *
+- * No locking. This is because we are only called 
+- * from suspend, which is single threaded
++ * Returns a free range, having removed it from the unused list and having
++ * incremented the usage count. May imply allocating a new page and may
++ * therefore fail, returning NULL instead.
++ * 
++ * No locking. This is because we are only called from suspend, which is single
++ * threaded.
+  */
+ 
+ static struct range * get_range(void)
+@@ -185,8 +173,7 @@
+ /*
+  * put_range.
+  *
+- * Returns a range to the pool of unused pages and
+- * decrements the usage counter.
++ * Returns a range to the pool of unused pages and decrements the usage count.
+  *
+  * Assumes unlinking is done by the caller.
+  */
+@@ -206,8 +193,7 @@
+ /*
+  * put_range_chain.
+  *
+- * Returns a whole chain of ranges to the
+- * unused pool.
++ * Returns a whole chain of ranges to the unused pool.
+  */
+ void put_range_chain(struct rangechain * chain)
+ {
+@@ -236,7 +222,11 @@
+ 	}
+ }
+ 
+-/* printmethod:
++/* print_chain.
++ *
++ * Displays the contents of a chain.
++ *
++ * printmethod:
+  * 0: integer
+  * 1: hex
+  * 2: page number
+@@ -309,24 +299,18 @@
+ /*
+  * add_to_range_chain.
+  *
+- * Takes a value to be stored and a pointer
+- * to a chain and adds the value to the range
+- * chain, merging with an existing range or 
+- * adding a new entry as necessary. Ranges 
+- * are stored in increasing order.
+- *
+- * Values should be consecutive, and so may
+- * need to be transformed first. (eg for
+- * pages, would want to call with page-mem_map).
++ * Takes a value to be stored and a pointer to a chain and adds the value to 
++ * the range chain, merging with an existing range or  adding a new entry as
++ * necessary. Ranges  are stored in increasing order.
++ *
++ * Values should be consecutive, and so may need to be transformed first. (eg
++ * for pages, would want to call with page-mem_map).
+  *
+  * Important optimisation:
+- * We store in the chain info the location of
+- * the last range accessed or added (and its
+- * previous). If the next value is outside this
+- * range by one, we start from the previous
+- * entry instead of the start of the chain.
+- * In cases of heavy fragmentation, this saves
+- * a lot of time searching.
++ * We store in the chain info the location of the last range accessed or added
++ * (and its previous). If the next value is outside this range by one, we start
++ * from the previous entry instead of the start of the chain. In cases of heavy
++ * fragmentation, this saves a lot of time searching.
+  * 
+  * Returns:
+  * 0 if successful
+@@ -532,7 +516,8 @@
+ 	return result;
+ }
+ 
+-/* 
++/* -------------- Routines for relativising and absoluting ranges -------------
++ *
+  * Prepare rangesets for save by translating addresses to relative indices.
+  */
+ void relativise_ranges(void)
+@@ -626,9 +611,8 @@
+ }
+ 
+ /*
+- * Each page in the rangepages lists starts with a pointer to
+- * the next page containing the list. This lets us only use
+- * order zero allocations
++ * Each page in the rangepages lists starts with a pointer to the next page
++ * containing the list. This lets us only use order zero allocations.
+  */
+ #define POINTERS_PER_PAGE ((PAGE_SIZE / sizeof(void *)) - 1)
+ static unsigned long * range_pagelist = NULL;
+@@ -716,6 +700,11 @@
+ }
+ #endif
+ 
++/* relocate_rangepages
++ * 
++ * Called at the start of resuming. As well as absolutising pages, we need
++ * to ensure they won't be overwritten by the kernel we're restoring. 
++ */
+ int relocate_rangepages()
+ {
+ 	void **eaten_memory = NULL;
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/suspend2.c software-suspend-core-2.0.0.99/kernel/power/suspend2.c
+--- software-suspend-core-2.0.0.98/kernel/power/suspend2.c	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/suspend2.c	2004-07-15 10:10:54.000000000 +1000
+@@ -14,7 +14,7 @@
+  * We'd like to thank the following people for their work:
+  * 
+  * Pavel Machek <pavel@ucw.cz>:
+- * Modifications, defectiveness pointing, being with me at the very beginning,
++ * Modifications, defectiveness pointing, being with Gabor at the very beginning,
+  * suspend to swap space, stop all tasks. Port to 2.4.18-ac and 2.5.17.
+  *
+  * Steve Doddi <dirk@loth.demon.co.uk>: 
+@@ -42,10 +42,6 @@
+  * Michael Frank <mhf@linuxmail.org>
+  * Extensive testing and help with improving stability.
+  *
+- * More state savers are welcome. Especially for the scsi layer...
+- *
+- * For TODOs,FIXMEs also look in Documentation/suspend.txt.
+- * 
+  * Variable definitions which are needed if PM is enabled but 
+  * SOFTWARE_SUSPEND is disabled are found near the top of process.c.
+  */
+@@ -57,10 +53,6 @@
+ #ifdef  CONFIG_X86
+ #include <asm/i387.h> /* for kernel_fpu_end */
+ #endif
+-#ifdef CONFIG_KDB
+-#include <linux/kdb.h>
+-#include <linux/kallsyms.h>
+-#endif
+ 
+ #if (SWSUSP_VERSION_SPECIFIC_REVISION != SWSUSP_CORE_REVISION)
+ #error The core and version specific patch revisions of Software Suspend are
+@@ -71,20 +63,18 @@
+ 
+ #include <linux/console.h>
+ 
++#define RESUME_PHASE1 1 /* Called from interrupts disabled */
++#define RESUME_PHASE2 2 /* Called with interrupts enabled */
++#define RESUME_ALL_PHASES (RESUME_PHASE1 | RESUME_PHASE2)
++
++#include "suspend2-version-specific.c"
++
+ unsigned int nr_suspends = 0;
+ 
+ /* Variables to be preserved over suspend */
+ int pageset1_sizelow = 0, pageset2_sizelow = 0;
+ struct pagedir __nosavedata pagedir_resume;
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-static int pm_suspend_state = 0;
+-#endif
+-
+-struct list_head suspend_filters, suspend_writers, suspend_plugins;
+-int num_filters = 0, num_writers = 0;
+-struct suspend_plugin_ops * active_writer = NULL;
+-
+ int suspend_act_used = 0;
+ int suspend_lvl_used = 0;
+ int suspend_dbg_used = 0;
+@@ -94,7 +84,6 @@
+ 
+ unsigned long orig_mem_free = 0;
+ 
+-static void drivers_resume(int);
+ extern void do_suspend2_lowlevel(int resume);
+ extern unsigned long header_storage_for_plugins(void);
+ extern int pm_prepare_console(void);
+@@ -104,9 +93,8 @@
+ void empty_suspend_memory_pool(void);
+ int read_primary_suspend_image(void);
+ extern void display_nosave_pages(void);
+-int initialise_suspend_plugins(void);
+-void cleanup_suspend_plugins(void);
+ int attempt_to_parse_resume_device(int boot_time);
++extern int num_writers;
+ 
+ unsigned long * in_use_map = NULL;
+ unsigned long * pageset2_map = NULL;
+@@ -165,96 +153,6 @@
+ /* include/asm-i386/suspend.h */
+ extern void smp_suspend2_lowlevel(void * info);
+ 
+-static void ensure_on_processor_zero(void)
+-{
+-#ifdef CONFIG_SMP
+-	set_cpus_allowed(current, CPU0_MASK);
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-	if (unlikely(cpu_number_map(smp_processor_id()) != 0))
+-		BUG();
+-#else
+-	BUG_ON(smp_processor_id() != 0);
+-#endif
+-#endif
+-}
+-
+-#define RESUME_PHASE1 1 /* Called from interrupts disabled */
+-#define RESUME_PHASE2 2 /* Called with interrupts enabled */
+-#define RESUME_ALL_PHASES (RESUME_PHASE1 | RESUME_PHASE2)
+-
+-void drivers_resume(int flags)
+-{
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-
+-#ifdef CONFIG_BLK_DEV_HD
+-  	if(flags & RESUME_PHASE2)
+-		do_reset_hd();	/* Kill all controller state */
+-#endif
+-
+-  	if (flags & RESUME_PHASE1) {
+-#ifdef CONFIG_BLK_DEV_IDE
+-		ide_disk_unsuspend(1);		
+-#endif
+-#ifdef CONFIG_SCSI
+-		{
+-		struct pm_dev *dev = NULL;
+-
+-		while ((dev = pm_find(PM_SCSI_DEV, dev)))
+-			pm_send(dev, PM_RESUME, (void *) 0);
+-		}
+-#endif
+-#ifdef CONFIG_BLK_DEV_MD
+-		md_autostart_arrays();
+-#endif
+-	}
+-
+-  	if (flags & RESUME_PHASE2) {
+-		if (pm_suspend_state) {
+-			if (pm_send_all(PM_RESUME,(void *)0))
+-				printk(name_suspend
+-				  "Problem while sending resume event\n");
+-			pm_suspend_state=0;
+-		} else
+-			printk(name_suspend "PM suspend state wasn't raised\n");
+-
+-#ifdef DEFAULT_SUSPEND_CONSOLE
+-		update_screen(fg_console);
+-#endif
+-	}
+-
+-#else /* Kernel version >= 2.5.0 */
+-	if (flags & RESUME_PHASE1) {
+-		device_flush_retain_state();
+-		device_resume();
+-	}
+-#endif
+-}
+-
+-/* Called from process context */
+-static int drivers_suspend(void)
+-{
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-#ifdef CONFIG_BLK_DEV_MD
+-	md_notify_reboot(NULL, SYS_HALT, NULL);
+-#endif
+-	if (!pm_suspend_state) {
+-		if (pm_send_all(PM_SUSPEND,(void *)3)) {
+-			printk(name_suspend
+-				"Problem while sending suspend event\n");
+-			drivers_resume(RESUME_ALL_PHASES);
+-			return(1);
+-		}
+-		pm_suspend_state=1;
+-	}
+-	return(0);
+-#else
+-	int result;
+-
+-	result = device_suspend(3);
+-	return result;
+-#endif
+-}
+-
+ #ifdef CONFIG_SOFTWARE_SUSPEND_DEBUG
+ 
+ int suspend_free_mem_values[MAX_FREEMEM_SLOTS][2];
+@@ -384,7 +282,7 @@
+ 	/* Suspend devices we're not going to use in writing the image */
+ 	if (active_writer && active_writer->dpm_set_devices)
+ 		active_writer->dpm_set_devices();
+-	drivers_suspend();
++	suspend_drivers_suspend();
+ 
+ 	check_shift_keys(1, "About to write pagedir2.");
+ 
+@@ -519,17 +417,7 @@
+ 		sys_reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
+ 				LINUX_REBOOT_CMD_RESTART, NULL);
+ #endif
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,5,0)
+-	device_flush_retain_state();
+-	drivers_suspend();
+-
+-	if (pm_ops && pm_ops->prepare) {
+-		if (!pm_ops->prepare(PM_SUSPEND_DISK)) {
+-			if (pm_ops && pm_ops->enter)
+-				pm_ops->enter(PM_SUSPEND_DISK);
+-		}
+-	}
+-#endif
++	suspend_version_specific_pre_powerdown();
+ 
+ 	sys_reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
+ 			LINUX_REBOOT_CMD_POWER_OFF, NULL);
+@@ -552,7 +440,7 @@
+ {
+ 	if (active_writer && active_writer->dpm_set_devices)
+ 		active_writer->dpm_set_devices();
+-	drivers_suspend();
++	suspend_drivers_suspend();
+ 
+ 	/* Get other cpus ready to restore their original contexts */
+ 
+@@ -602,10 +490,7 @@
+ 
+ 	spin_unlock_irqrestore(&suspend_irq_lock, suspendirqflags);
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,5,0)
+-	if (pm_ops && pm_ops->finish)
+-		pm_ops->finish(PM_SUSPEND_DISK);
+-#endif
++	suspend_version_specific_post_wake();
+ 
+ #ifdef DEFAULT_SUSPEND_CONSOLE
+ 	post_resume_console_redraw();
+@@ -690,32 +575,6 @@
+ 			page, page_address(page));
+ }
+ 
+-/*
+- * print_plugin_debug_info
+- * Functionality   : Get debugging info from plugins into a buffer.
+- */
+-static int print_plugin_debug_info(char * buffer, int buffer_size)
+-{
+-	struct list_head *plugin;
+-	struct suspend_plugin_ops *this_plugin = NULL;
+-	int len = 0;
+-
+-	list_for_each(plugin, &suspend_plugins) {
+-		this_plugin = list_entry(plugin, struct suspend_plugin_ops,
+-				plugin_list);
+-		if (this_plugin->disabled)
+-			continue;
+-		if (this_plugin->print_debug_info) {
+-			int result;
+-			result = this_plugin->print_debug_info(buffer + len, 
+-					buffer_size - len);
+-			len += result;
+-		}
+-	}
+-
+-	return len;
+-}
+-
+ /* get_debug_info
+  * Functionality:	Store debug info in a buffer.
+  * Called from:		Worker thread or via software_suspend_pending.
+@@ -849,82 +708,6 @@
+ 	return result;
+ }
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-static unsigned long kstat_store = 0;
+-/* kstat_save
+- * Save the contents of the kstat array so that
+- * our labours are hidden from vmstat.
+- */
+-static int kstat_save(void)
+-{
+-	const int bytes_per_page = PAGE_SIZE - sizeof(unsigned long);
+-	int kstat_pages = (sizeof(kstat) + bytes_per_page - 1) / bytes_per_page;
+-	int i, source_offset = 0, bytes;
+-	unsigned long this_page, last_page = 0;
+-
+-	kstat_store = this_page = get_zeroed_page(GFP_ATOMIC);
+-	for (i = 1; i <= kstat_pages; i++) {
+-		if (!this_page) {
+-			int k;
+-			this_page = kstat_store;
+-			for (k = 1; k < i; k++) {
+-				unsigned long next_page =
+-					*((unsigned long *) this_page +
+-					  ((PAGE_SIZE/sizeof(unsigned long)) -1)
+-					 );
+-				free_pages(this_page, 0);
+-				this_page = next_page;
+-			}
+-			kstat_store = 0;
+-			return -ENOMEM;
+-		}
+-		bytes = ((sizeof(kstat) - source_offset) >= bytes_per_page) ?
+-			bytes_per_page : (sizeof(kstat) - source_offset);
+-		memcpy((char *) this_page, ((char *) &kstat) + source_offset,
+-				bytes);
+-		if (i < kstat_pages) {
+-			last_page = this_page;
+-			this_page = get_zeroed_page(GFP_ATOMIC);
+-			*((unsigned long *) last_page +
+-			  ((PAGE_SIZE / sizeof(unsigned long)) -1)) =
+-				this_page;
+-			source_offset += bytes_per_page;
+-		}
+-	}
+-	return 0;
+-}
+-
+-/* kstat_restore
+- * Restore a previously saved kstat array
+- */
+-static void kstat_restore(void)
+-{
+-	const int bytes_per_page = PAGE_SIZE - sizeof(unsigned long);
+-	int kstat_pages = (sizeof(kstat) + bytes_per_page - 1) / bytes_per_page;
+-	int i, source_offset = 0, bytes;
+-	unsigned long this_page = kstat_store, next_page;
+-
+-	if (!kstat_store)
+-		return;
+-
+-	for (i = 1; i <= kstat_pages; i++) {
+-		bytes =	((sizeof(kstat) - source_offset) >= bytes_per_page) ?
+-			bytes_per_page : (sizeof(kstat) - source_offset);
+-		memcpy(((char *) &kstat) + source_offset,
+-				(char *) this_page, bytes);
+-		next_page = *((unsigned long *) this_page + 
+-				((PAGE_SIZE / sizeof(unsigned long)) - 1));
+-		source_offset += bytes_per_page;
+-		free_pages(this_page, 0);
+-		this_page = next_page;
+-	}
+-	kstat_store = 0;
+-}
+-#else
+-#define kstat_save()
+-#define kstat_restore()
+-#endif
+-
+ #ifdef CONFIG_SOFTWARE_SUSPEND_VARIATION_ANALYSIS
+ /*
+  * Checksumming
+@@ -991,8 +774,6 @@
+ 	prepare_status(1, 0, "Checksums done.");
+ }
+ 
+-int suspend_page_in_pool(struct page * page);
+-
+ void suspend_check_checksums(void)
+ {
+ 	struct pbe pbe;
+@@ -1146,9 +927,6 @@
+ 		printlog(SUSPEND_INTEGRITY, SUSPEND_HIGH,
+ 			"%c", PRINTABLE(*(resumetime + i)));
+ 	printlog(SUSPEND_INTEGRITY, SUSPEND_HIGH, "\n");
+-	if (suspend_page_in_pool(virt_to_page(real)))
+-		printlog(SUSPEND_INTEGRITY, SUSPEND_HIGH,
+-			"[In memory pool]");
+ 	if (PageNosave(virt_to_page(real)))
+ 		printlog(SUSPEND_INTEGRITY, SUSPEND_HIGH,
+ 			"[NoSave]");
+@@ -1311,13 +1089,6 @@
+ 
+ static int get_suspend_debug_info(void);
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-extern int notify_resume(void);
+-#if defined(CONFIG_MAGIC_SYSRQ) && defined(CONFIG_VT)
+-extern int sysrq_pressed;
+-#endif
+-#endif
+-
+ static int can_suspend(void)
+ {
+ 	if (software_suspend_state & 2) {
+@@ -1366,42 +1137,6 @@
+ 	return 0;
+ }
+ 
+-#if defined(CONFIG_SOFTWARE_SUSPEND_DEBUG) && LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0)
+-void show_pcp_lists(void)
+-{
+-	int cpu, temperature;
+-	struct zone *zone;
+-
+-	for_each_zone(zone) {
+-		printk("%s per-cpu:", zone->name);
+-
+-		if (!zone->present_pages) {
+-			printk(" empty\n");
+-			continue;
+-		} else
+-			printk("\n");
+-
+-		for (cpu = 0; cpu < NR_CPUS; ++cpu) {
+-			struct per_cpu_pageset *pageset;
+-
+-			if (!cpu_possible(cpu))
+-				continue;
+-
+-			pageset = zone->pageset + cpu;
+-
+-			for (temperature = 0; temperature < 2; temperature++)
+-				printk("cpu %d %s: low %d, high %d, batch %d, count %d.\n",
+-					cpu,
+-					temperature ? "cold" : "hot",
+-					pageset->pcp[temperature].low,
+-					pageset->pcp[temperature].high,
+-					pageset->pcp[temperature].batch,
+-					pageset->pcp[temperature].count);
+-		}
+-	}
+-}
+-#endif
+-
+ /*
+  * software_suspend_pending
+  * Functionality   : First level of code for software suspend invocations.
+@@ -1418,7 +1153,6 @@
+ 
+ void software_suspend_pending(void)
+ {
+-	unsigned long avenrun_save[3];
+ 	int i;
+ 	mm_segment_t	oldfs;
+ 
+@@ -1459,19 +1193,6 @@
+ 	PRINTFREEMEM("at start of software_suspend_pending");
+ 	suspend_store_free_mem(SUSPEND_FREE_BASE, 0);
+ 
+-	/*
+-	 * Running suspend makes for a very high load average. I'm told that
+-	 * sendmail and crond check the load average, so in order for them
+-	 * not to be unnecessarily affected by the operation of suspend, we
+-	 * store the avenrun values prior to suspending and restore them
+-	 * at the end of the resume cycle. Thus, the operation of suspend
+-	 * should be invisible to them. Thanks to Marcus Gaugusch and Bernard
+-	 * Blackham for noticing the problem and suggesting the solution.
+-	 */
+-	
+-	for (i = 0; i < 3; i++)
+-		avenrun_save[i] = avenrun[i];
+-
+ 	/* Suspend console switch (if necessary) */
+ 	if (pm_prepare_console())
+ 		printk(name_suspend "Can't allocate a console... proceeding\n");
+@@ -1479,17 +1200,7 @@
+ 	PRINTFREEMEM("after preparing suspend_console");
+ 	suspend_store_free_mem(SUSPEND_FREE_CONSOLE_ALLOC, 0);
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,5,0)
+-	disable_pcp_lists();
+-
+-	PRINTFREEMEM("after draining local pages");
+-	suspend_store_free_mem(SUSPEND_FREE_DRAIN_PCP, 0);
+-
+-#ifdef CONFIG_SOFTWARE_SUSPEND_DEBUG
+-	if (TEST_DEBUG_STATE(SUSPEND_FREEZER))
+-		show_pcp_lists();
+-#endif
+-#endif
++	suspend_version_specific_initialise();
+ 
+ 	if (allocate_bitmaps())
+ 		goto out;
+@@ -1527,13 +1238,6 @@
+ 	if (TEST_ACTION_STATE(SUSPEND_FREEZER_TEST))
+ 		goto out;
+ 
+-	/* We don't want suspend to show in the kernel statistics -
+-	 * it should be transparent to userspace */
+-	kstat_save();
+-
+-	PRINTFREEMEM("after saving kernel stats");
+-	suspend_store_free_mem(SUSPEND_FREE_KSTAT, 0);
+-
+ 	display_nosave_pages();
+ 
+ 	if (!TEST_RESULT_STATE(SUSPEND_ABORTED)) {
+@@ -1580,7 +1284,7 @@
+ #endif
+ 		active_writer->ops.writer.invalidate_image();
+ 
+-	drivers_resume(RESUME_ALL_PHASES);
++	suspend_drivers_resume(RESUME_ALL_PHASES);
+ 
+ 	empty_suspend_memory_pool();
+ 	PRINTFREEMEM("after freeing memory pool");
+@@ -1602,15 +1306,6 @@
+ 	PRINTFREEMEM("after freeing inuse map");
+ 	suspend_store_free_mem(SUSPEND_FREE_IN_USE_MAP, 1);
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-#if defined(CONFIG_MAGIC_SYSRQ) && defined(CONFIG_VT)
+-	sysrq_pressed = 0;
+-#endif
+-#endif
+-	/* Restore stats before we restart processes */
+-	for (i = 0; i < 3; i++)
+-		avenrun[i] = avenrun_save[i];
+-	
+ 	if (debug_info_buffer) {
+ 		/* Printk can only handle 1023 bytes, including
+ 		 * its level mangling. */
+@@ -1627,11 +1322,8 @@
+ 	PRINTFREEMEM("after cleaning up suspend plugins");
+ 	suspend_store_free_mem(SUSPEND_FREE_INIT_PLUGINS, 1);
+ 	
+-	kstat_restore();
++	suspend_version_specific_cleanup();
+ 
+-	PRINTFREEMEM("after restoring kstats");
+-	suspend_store_free_mem(SUSPEND_FREE_KSTAT, 1);
+-	
+ 	display_nosave_pages();
+ 
+ 	thaw_processes();
+@@ -1639,21 +1331,6 @@
+ 	PRINTFREEMEM("after thawing processes");
+ 	suspend_store_free_mem(SUSPEND_FREE_FREEZER, 1);
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,5,0)
+-	enable_pcp_lists();
+-	suspend_store_free_mem(SUSPEND_FREE_DRAIN_PCP, 1);
+-
+-#ifdef CONFIG_SOFTWARE_SUSPEND_DEBUG
+-	if (TEST_DEBUG_STATE(SUSPEND_FREEZER))
+-		show_pcp_lists();
+-#endif
+-#endif
+-
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-	if (notify_resume())
+-		printk(KERN_EMERG "Failed to notify resume chain.\n");
+-#endif
+-
+ 	MDELAY(1000);
+ 	
+ 	check_shift_keys(1, "About to restore original console.");
+@@ -1675,98 +1352,6 @@
+ 	set_fs(oldfs);
+ }
+ 
+-int suspend_register_plugin(struct suspend_plugin_ops * plugin)
+-{
+-	if (!(num_filters + num_writers)) {
+-		INIT_LIST_HEAD(&suspend_filters);
+-		INIT_LIST_HEAD(&suspend_writers);
+-		INIT_LIST_HEAD(&suspend_plugins);
+-	}
+-
+-	switch (plugin->type) {
+-		case FILTER_PLUGIN:
+-			list_add_tail(&plugin->ops.filter.filter_list,
+-					&suspend_filters);
+-			num_filters++;
+-			break;
+-
+-		case WRITER_PLUGIN:
+-			list_add_tail(&plugin->ops.writer.writer_list,
+-					&suspend_writers);
+-			num_writers++;
+-			break;
+-
+-		default:
+-			printk("Hmmm. Plugin '%s' has an invalid type."
+-				" It has been ignored.\n", plugin->name);
+-			return -EINVAL;
+-	}
+-	list_add(&plugin->plugin_list, &suspend_plugins);
+-
+-	return 0;	
+-}
+-
+-int initialise_suspend_plugins(void)
+-{
+-	struct list_head *plugin;
+-	struct suspend_plugin_ops * this_plugin;
+-	int result;
+-	
+-	list_for_each(plugin, &suspend_plugins) {
+-		this_plugin = list_entry(plugin, struct suspend_plugin_ops,
+-				plugin_list);
+-		if (this_plugin->disabled)
+-			continue;
+-		printlog(SUSPEND_MEMORY, SUSPEND_MEDIUM,
+-			"Initialising plugin %s.\n",
+-			this_plugin->name);
+-		if (this_plugin->initialise)
+-			if ((result = this_plugin->initialise()))
+-				return result;
+-		PRINTFREEMEM("after initialising plugin");
+-	}
+-
+-	return 0;
+-}
+-
+-void cleanup_suspend_plugins(void)
+-{
+-	struct list_head *plugin;
+-	struct suspend_plugin_ops * this_plugin;
+-	
+-	list_for_each(plugin, &suspend_plugins) {
+-		this_plugin = list_entry(plugin, struct suspend_plugin_ops, 
+-				plugin_list);
+-		if (this_plugin->disabled)
+-			continue;
+-		printlog(SUSPEND_MEMORY, SUSPEND_MEDIUM,
+-			"Cleaning up plugin %s.\n",
+-			this_plugin->name);
+-		if (this_plugin->cleanup)
+-			this_plugin->cleanup();
+-		PRINTFREEMEM("after cleaning up plugin");
+-	}
+-}
+-
+-struct suspend_plugin_ops * 
+-get_next_filter(struct suspend_plugin_ops * filter_sought)
+-{
+-	struct list_head *filter;
+-	struct suspend_plugin_ops * last_filter = NULL, *this_filter = NULL;
+-
+-	list_for_each(filter, &suspend_filters) {
+-		this_filter = list_entry(filter, struct suspend_plugin_ops,
+-				ops.filter.filter_list);
+-		if (this_filter->disabled)
+-			continue;
+-		if ((last_filter == filter_sought) || (!filter_sought))
+-			return this_filter;
+-		last_filter = this_filter;
+-	}
+-
+-	return active_writer;
+-}
+-
+ int attempt_to_parse_resume_device(int boot_time)
+ {
+ 	struct list_head *writer;
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/swapwriter.c software-suspend-core-2.0.0.99/kernel/power/swapwriter.c
+--- software-suspend-core-2.0.0.98/kernel/power/swapwriter.c	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/swapwriter.c	2004-07-15 10:10:54.000000000 +1000
+@@ -11,7 +11,6 @@
+ 
+ #include <linux/suspend-common.h>
+ #include "block_io.h"
+-#include <linux/kdb.h>
+ 
+ #define SIGNATURE_VER 6
+ 
+@@ -223,161 +222,9 @@
+ #define MARK_SWAP_SUSPEND 0
+ #define MARK_SWAP_RESUME 1
+ 
+-static int get_phys_params(swp_entry_t entry)
+-{
+-	int swapfilenum = SWP_TYPE(entry);
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-	unsigned long offset = swp_offset(entry);
+-	struct swap_info_struct * sis = get_swap_info_struct(swapfilenum);
+-	sector_t sector = map_swap_page(sis, offset);
+-
+-	printnolog(SUSPEND_BMAP,
+-		SUSPEND_VERBOSE,
+-		1,
+-		"Add swap partition entry to chain: Swap address %lx, "
+-		"chain %d, bdev %x, block %d (sector %x).",
+-		entry.val,
+-		swapfilenum,
+-		header_data.swapdevs[swapfilenum],
+-		offset,
+-		sector);
+-	add_to_range_chain(&header_data.block_chain[swapfilenum], sector);
+-#else
+-	unsigned long offset;
+-	int blocks[PAGE_SIZE/512];
+-	DEVICE_BLOCK_TYPE dev = 0;
+-	int block_size;
+-	struct inode *swapf = 0;
+-	get_swaphandle_info(entry, &offset, &dev, &swapf);
+-	if (dev) {
+-		/* We are assuming this.
+-		blocks_used = 1;
+-		block_size = PAGE_SIZE;
+-		*/
+-		printnolog(SUSPEND_BMAP,
+-			SUSPEND_VERBOSE,
+-			0,
+-			"Add swap partition entry to chain: Swap address %lx,"
+-			" chain %d, swapfile %x, block %d.\n",
+-			entry.val,
+-			swapfilenum,
+-			header_data.swapdevs[swapfilenum],
+-			offset);
+-		add_to_range_chain(&header_data.block_chain[swapfilenum],
+-				offset);
+-	} else if (swapf) {
+-		int i, j;
+-		unsigned int block_num = offset
+-			<< (PAGE_SHIFT - swapf->i_sb->s_blocksize_bits);
+-		block_size = swapf->i_sb->s_blocksize;
+-		for (i=0, j=0; j< PAGE_SIZE ; i++, j += block_size)
+-			if (!(blocks[i] = bmap(swapf,block_num++))) {
+-				printk("Invalid block for swap file. "
+-					"Trying to map block %x on device %x.\n",
+-					SWAP_DEVICE_ID(swapfilenum),
+-					block_num);
+-				abort_suspend("get_phys_params: bad swap file");
+-				return 0;
+-			} else {
+-				printnolog(SUSPEND_BMAP,
+-					SUSPEND_VERBOSE,
+-					0,
+-					"Add swapfile to chain: Swap address "
+-					"%lx, chain %d, bdev %x, block "
+-					"%d/%ld-> block %d.\n",
+-					entry.val,
+-					swapfilenum,
+-					header_data.swapdevs[swapfilenum],
+-					i+1,
+-					PAGE_SIZE / block_size,
+-					blocks[i]);
+-				add_to_range_chain(
+-					&header_data.block_chain[swapfilenum],
+-					blocks[i]);
+-			}
+-	} else {
+-		printk("Warning! Trying to get invalid physical parameters!"
+-				" (Entry %lx).\n", entry.val);
+-		return 0;
+-	}
+-#endif
+-	return 1;
+-}
++static int swapwriter_invalidate_image(void);
+ 
+-static int get_header_params(struct submit_params * headerpage)
+-{
+-	swp_entry_t entry = headerpage->swap_address;
+-	int swapfilenum = SWP_TYPE(entry);
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-	unsigned long offset = SWP_OFFSET(entry);
+-	struct swap_info_struct * sis = get_swap_info_struct(swapfilenum);
+-	sector_t sector = map_swap_page(sis, offset);
+-
+-	headerpage->dev = sis->bdev,
+-	headerpage->blocks[0] = sector;
+-	headerpage->blocks_used = 1;
+-	headerpage->readahead_index = -1;
+-	printnolog(SUSPEND_BMAP, SUSPEND_VERBOSE, 1,
+-		"Header entry: %lx -> %x:%x.",
+-		headerpage->swap_address.val,
+-		headerpage->dev->bd_dev,
+-		headerpage->blocks[0]);
+-	/* We are assuming this.
+-	blocks_used = 1;
+-	block_size = PAGE_SIZE;
+-	*/
+-#else
+-	unsigned long offset;
+-	int blocks[PAGE_SIZE/512];
+-	DEVICE_BLOCK_TYPE dev = 0;
+-	int block_size;
+-	struct inode *swapf = 0;
+-	int i, j;
+-	get_swaphandle_info(headerpage->swap_address, &offset, &dev, &swapf);
+-	if (dev) {
+-		headerpage->dev = dev;
+-		headerpage->blocks[0] = offset;
+-		headerpage->blocks_used = 1;
+-		printnolog(SUSPEND_BMAP, SUSPEND_VERBOSE, 1,
+-			"Header entry: %lx -> %x:%x.",
+-			headerpage->swap_address.val,
+-			headerpage->dev,
+-			headerpage->blocks[0]);
+-		/* We are assuming this.
+-		blocks_used = 1;
+-		block_size = PAGE_SIZE;
+-		*/
+-	} else if (swapf) {
+-		unsigned int block_num = offset
+-			<< (PAGE_SHIFT - swapf->i_sb->s_blocksize_bits);
+-		block_size = swapf->i_sb->s_blocksize;
+-		headerpage->dev = SWAP_DEVICE_BDEV(swapfilenum);
+-		//printk("Swapfilenum is %d -> %d.\n", swapfilenum,
+-		//	headerpage->dev);
+-		headerpage->blocks_used = PAGE_SIZE / block_size;
+-		for (i=0, j=0; j< PAGE_SIZE ; i++, j += block_size)
+-			if (!(blocks[i] = bmap(swapf,block_num++))) {
+-				abort_suspend("get_header_params: "
+-						"bad swap file");
+-				return -EFAULT;
+-			} else {
+-				headerpage->blocks[i] = blocks[i];
+-				printnolog(SUSPEND_BMAP, SUSPEND_VERBOSE, 1,
+-					"Header entry: %lx -> %x:%x (%d/%d).",
+-					headerpage->swap_address.val,
+-					headerpage->dev,
+-					blocks[i],
+-					i+1,
+-					headerpage->blocks_used);
+-			}
+-	} else {
+-		printk("Warning! Trying to get invalid header params! "
+-				"(Entry %lx).\n", headerpage->swap_address.val);
+-		return -EFAULT;
+-	}
+-#endif
+-	return 0;
+-}
++#include "swapwriter-version-specific.c"
+ 
+ /*
+  *
+@@ -581,26 +428,9 @@
+ 		struct range * rangepointer;
+ 		unsigned long rangevalue;
+ 		swp_entry_t entry;
+-		//printk("Freeing swap ranges chain.\n");
+ 		range_for_each(&header_data.swapranges, rangepointer, 
+ 				rangevalue) {
+-#if 0
+-			int swapfilenum;
+-			unsigned long offset;
+-#endif
+ 			entry = range_val_to_swap_entry(rangevalue);
+-#if 0
+-			/* Remove - just for debugging swap freeing */
+-			swapfilenum = SWP_TYPE(entry);
+-			offset = SWP_OFFSET(entry);
+-			if (!swap_info[swapfilenum].swap_map[offset])
+-				printk("Entry: %lx. Swapfilenum:%d. Offset:%lx. Map entry: %p.\n",
+-					rangevalue, swapfilenum, offset,
+-					&(swap_info[swapfilenum].swap_map[offset]));
+-			printnolog(SUSPEND_SWAP, SUSPEND_VERBOSE, 1,
+-				"(Free %d %lx)", i,
+-				entry.val);
+-#endif
+ 			swap_free(entry);
+ 
+ 			swapcount++;
+@@ -958,7 +788,6 @@
+  * -EINVAL if cannot resume at this time. Booting should continue
+  * normally.
+  */
+-static int swapwriter_invalidate_image(void);
+ 
+ static int swapwriter_read_header_init(void)
+ {
+@@ -978,53 +807,10 @@
+ 	 * If the header is not on the resume_device, get the resume device first.
+ 	 */
+ 	if (header_device != resume_device) {
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-		header_block_device = OPEN_BY_DEVNUM(header_device, FMODE_READ);
+-	
+-		if (IS_ERR(header_block_device)) {
+-			if (suspend_early_boot_message(
+-					"Failed to get access to the "
+-					"resume header device.\nYou could be "
+-					"booting with a 2.6 kernel when you "
+-					"suspended a 2.4 kernel."))
+-				swapwriter_invalidate_image();
+-
+-			return -EINVAL;
+-		}
+-
+-		if (set_blocksize(header_block_device, PAGE_SIZE) < 0) {
+-			if (suspend_early_boot_message("Failed to set the blocksize"
+-				"for a swap device."))
+-					do { } while(0);
+-			swapwriter_invalidate_image();
+-			return -EINVAL;
+-		}
+-#else
+-		int blksize = 0;
+-		header_block_device = header_device;
+-
+-		if (!blksize_size[MAJOR(header_block_device)]) {
+-			printk(name_suspend "%x: Blocksize not known?\n",
+-					header_block_device);
+-		} else blksize = blksize_size[MAJOR(header_block_device)]
+-			[MINOR(header_block_device)];
+-		if (!blksize) {
+-			printk(name_suspend "%x: Blocksize not set?\n",
+-					header_block_device);
+-			blksize = PAGE_SIZE;
+-		}
+-		printnolog(SUSPEND_IO, SUSPEND_HIGH, 0,
+-			"Header blocksize was %d.\n", blksize);
+-		if (set_blocksize(header_block_device, headerblocksize)) {
+-			if (suspend_early_boot_message("Failed to get access to the "
+-				"resume header device.\nYou could be booting "
+-				"with a 2.6 kernel when you suspended a 2.4 "
+-				"kernel."))
+-				swapwriter_invalidate_image();
++		int result = try_to_parse_header_device();
+ 
+-			return -EINVAL;
+-		}
+-#endif
++		if (result)
++			return result;
+ 	} else
+ 		header_block_device = resume_block_device;
+ 
+@@ -1069,21 +855,7 @@
+ 			continue;
+ 		}
+ 
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-		RESUME_BDEV(i) = open_by_devnum(thisdevice, FMODE_READ);
+-		set_blocksize(RESUME_BDEV(i), PAGE_SIZE);
+-#else
+-		{
+-			int blksize = 512 * (int) header_data.blocksizes[i];
+-			swap_info[i].swap_device = thisdevice;
+-		
+-			printnolog(SUSPEND_IO, SUSPEND_VERBOSE, 0,
+-					"Resume secondary device %x", thisdevice);
+-			printnolog(SUSPEND_IO, SUSPEND_HIGH, 0,
+-					"Blocksize was %d.\n", blksize);
+-			set_blocksize(thisdevice, blksize);
+-		}
+-#endif
++		open_other_swap_device(i);
+ 		swap_info[i].swap_file = (struct SWAP_FILE_STRUCT *) 0xffffff;
+ 	}
+ 
+@@ -1383,12 +1155,7 @@
+ 		stream_number,
+ 		currentblockchain, currentblockrange, currentblockoffset);
+ 	
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-	currentblocksperpage = PAGE_SIZE /
+-	    suspend_get_block_size(SWAP_DEVICE_BDEV(currentblockchain));
+-#else
+-	currentblocksperpage = 1;
+-#endif
++	currentblocksperpage = get_blocks_per_page(currentblockchain);
+ 
+ 	swapwriter_page_index = 1;
+ 
+@@ -1440,10 +1207,7 @@
+ 		currentblockrange =
+ 		  header_data.block_chain[currentblockchain].first;
+ 		currentblockoffset = currentblockrange->minimum;
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-		currentblocksperpage = PAGE_SIZE /
+-		    suspend_get_block_size(SWAP_DEVICE_BDEV(currentblockchain));
+-#endif
++		currentblocksperpage = get_blocks_per_page(currentblockchain);
+ 	}
+ 	
+ 	submit_params.readahead_index = readahead_index;
+@@ -1738,13 +1502,9 @@
+ 		printk(KERN_ERR name_suspend "Unable to find a signature. Could you have moved a swap file?\n");
+ 		return 0;
+ 	} else if (signature_found < 6) {
+-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0))
+ 		if ((!(software_suspend_state & SOFTWARE_SUSPEND_NORESUME_SPECIFIED))
+ 				&& suspend_early_boot_message("Detected the signature of an alternate implementation.\n"))
+ 			software_suspend_state |= SOFTWARE_SUSPEND_NORESUME_SPECIFIED;
+-#else
+-		printk(KERN_ERR name_suspend "Detected the signature of an alternate implementation.\n");
+-#endif
+ 		return 0;
+ 	} else if ((signature_found >> 1) != SIGNATURE_VER) {
+ 		if ((!(software_suspend_state & SOFTWARE_SUSPEND_NORESUME_SPECIFIED)) &&
+@@ -1857,38 +1617,8 @@
+ 		resume_firstblocksize = 4096;
+ 	//printk("Setting logical block size of resume device to %d.\n", resume_firstblocksize);
+ 	
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-	resume_device = name_to_dev_t(commandline);
+-	if (!resume_device) {
+-		if (boot_time)
+-			suspend_early_boot_message("Failed to translate the device name into a device id.\n");
+-		else
+-			printk(name_suspend "Failed to translate \"%s\" into a device id.\n", commandline);
+-		goto invalid;
+-	}
+-	
+-	resume_block_device = OPEN_BY_DEVNUM(resume_device, FMODE_READ);
+-
+-	if (IS_ERR(resume_block_device)) {
+-		printk("Open by devnum returned %p given %x.\n", resume_block_device, resume_device);
+-		if (boot_time)
+-			suspend_early_boot_message("Failed to get access to the device on which Software Suspend's header should be found.");
+-		else
+-			printk("Failed to get access to the device on which Software Suspend's header should be found.\n");
++	if (try_to_parse_resume_device(commandline, boot_time))
+ 		goto invalid;
+-	}
+-#else
+-	resume_block_device = resume_device = name_to_kdev_t(commandline);
+-
+-	if (!resume_block_device) {
+-		if (boot_time)
+-			suspend_early_boot_message("Failed to get the location of the device on which Software Suspend's header should be found.");
+-		else
+-			printk("Failed to get the location of the device on which Software Suspend's header should be found.\n");
+-		goto invalid;
+-	}
+-
+-#endif
+ 
+ 	if (colon)
+ 		*colon = ':';
+@@ -1950,17 +1680,7 @@
+ 		} else {
+ 			path_len = 0;
+ 			
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-			path = d_path(	swap_info[i].swap_file->f_dentry,
+-					swap_info[i].swap_file->f_vfsmnt,
+-					path_page,
+-					PAGE_SIZE);
+-#else
+-			path = d_path(	swap_info[i].swap_file,
+-					swap_info[i].swap_vfsmnt,
+-					path_page,
+-					PAGE_SIZE);
+-#endif
++			path = get_path_for_swapfile(i, path_page);
+ 			path_len = sprintf(path_page, "%-31s ", path);
+ 			
+ 			haveswap = 1;
+@@ -1986,25 +1706,6 @@
+ 	return len;
+ }
+ 
+-static void swapwriter_noresume_reset(void)
+-{
+-	int i;
+-
+- 	/* 
+-	 * If we have read part of the image, we might have filled header_data with
+-	 * data that should be zeroed out.
+-	 */
+-
+-	memset((char *) &header_data, 0, sizeof(header_data));
+-	for (i = 0; i < MAX_SWAPFILES; i++) {
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+-		swap_info[i].swap_device = 0;
+-#endif
+-		RESUME_BDEV(i) = DEVICE_BLOCK_NONE;
+-	}
+-	 
+-}
+-
+ struct suspend_proc_data swapfilename_proc_data = {
+ 	.filename			= "swapfilename",
+ 	.permissions			= PROC_RW,
+diff -ruN software-suspend-core-2.0.0.98/kernel/power/ui.c software-suspend-core-2.0.0.99/kernel/power/ui.c
+--- software-suspend-core-2.0.0.98/kernel/power/ui.c	2004-07-15 10:10:52.000000000 +1000
++++ software-suspend-core-2.0.0.99/kernel/power/ui.c	2004-07-15 10:10:54.000000000 +1000
+@@ -82,15 +82,6 @@
+ #include <linux/suspend-common.h>
+ #include <linux/console.h>
+  
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,5,0)
+-#include <linux/syscalls.h>
+-#else
+-extern asmlinkage long sys_mount(char * dev_name, char * dir_name, char * type,
+-	unsigned long flags, void * data);
+-extern asmlinkage long sys_umount(char * name, int flags);
+-extern asmlinkage long sys_mkdir(const char *name, int mode);
+-#endif
+-
+ static DECLARE_WAIT_QUEUE_HEAD(suspend_wait_for_key);
+ 
+ #ifdef DEFAULT_SUSPEND_CONSOLE
+@@ -126,11 +117,6 @@
+ 
+ int suspend_console_fd = -1;
+ struct termios termios;
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,5,0)
+-extern asmlinkage ssize_t sys_write(unsigned int fd, const char __user * buf, 
+-	size_t count);
+-#define write sys_write
+-#endif
+ 
+ #ifdef CONFIG_DEVFS_FS
+ static int mounted_devfs = 0;

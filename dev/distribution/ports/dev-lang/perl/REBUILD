@@ -1,0 +1,24 @@
+#
+# package build script for perl
+#
+%author: jfried
+%package-group: dev-lang -
+%sub-group: perl -
+%required: ("libglibc >=2.3.3")
+%build-required: ("libglibc >=2.3.3", "bash >=3.0", "coreutils >=5.2.1")
+%description: The Perl scripting language.
+%name: perl
+%version: 5.8.3
+%build: $DATA
+%sourcefile: perl-5.8.3-stable.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_other ./configure.gnu --prefix=/usr -Dpager="/bin/less -isR"
+lip_make
+lip_install DESTDIR=%install_dir INSTALLMAN1DIR=%install_dir/usr/share/man/man1 INSTALLMAN3DIR=%man_dir/man3
+# -- execution of post-install-scritps
+__DATA__
+

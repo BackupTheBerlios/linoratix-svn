@@ -1,0 +1,25 @@
+Link libpam_misc with libpam, and link pam_lastlog with libutil, which defines
+logwtmp() and related functions.
+
+diff -uNr Linux-PAM-0.75/libpam_misc/Makefile Linux-PAM-0.75/libpam_misc/Makefile
+--- Linux-PAM-0.75/libpam_misc/Makefile	Sat Feb 10 02:17:53 2001
++++ Linux-PAM-0.75/libpam_misc/Makefile	Tue Jul 10 00:14:23 2001
+@@ -37,6 +42,8 @@
+ SLIBOBJECTS = $(addprefix static/,$(LIBOBJECTS))
+ endif
+ 
++LINKLIBS += -L../libpam -lpam
++
+ # ---------------------------------------------
+ ## rules
+ 
+diff -uNr Linux-PAM-0.75/modules/pam_lastlog/Makefile Linux-PAM-0.75/modules/pam_lastlog/Makefile
+--- Linux-PAM-0.75/modules/pam_lastlog/Makefile	Sat Feb 10 17:33:10 2001
++++ Linux-PAM-0.75/modules/pam_lastlog/Makefile	Tue Jul 10 00:14:23 2001
+@@ -15,5 +15,6 @@
+ endif
+ 
+ TITLE=pam_lastlog
++MODULE_SIMPLE_EXTRALIBS=-lutil
+ 
+ include ../Simple.Rules

@@ -1,0 +1,406 @@
+o Use CFLAGS whenever we run $(CC).
+o Don't try to run $(LDCONFIG) when we are installing into a FAKEROOT.
+o Only run RANLIB when it's defined.
+o Use $(CC) instead of ld to build modules, with other changes to soname-related
+  build flags.
+o Add CFLAGS and CPPFLAGS known at configure-time to $(CFLAGS).
+o Add targets for installing man pages for simple modules.
+o Build libpam first in case helpers need to use functions from libpam.
+
+--- Linux-PAM-0.77/conf/pam_conv1/Makefile	2003-06-25 16:21:06.000000000 -0400
++++ Linux-PAM-0.77/conf/pam_conv1/Makefile	2003-06-25 16:21:24.000000000 -0400
+@@ -21,7 +21,7 @@
+ all: pam_conv1
+ 
+ pam_conv1: pam_conv.tab.c lex.yy.c
+-	$(CC) -o pam_conv1 pam_conv.tab.c $(LINK_LIBLEX)
++	$(CC) -o pam_conv1 $(CFLAGS) pam_conv.tab.c $(LINK_LIBLEX)
+ 
+ pam_conv.tab.c: pam_conv.y lex.yy.c
+ 	bison pam_conv.y
+--- Linux-PAM-0.77/libpam/Makefile	2001-12-09 16:44:58.000000000 -0500
++++ Linux-PAM-0.77/libpam/Makefile	2003-06-25 15:47:05.000000000 -0400
+@@ -92,7 +92,7 @@
+ $(LIBPAM): $(DLIBOBJECTS)
+ ifeq ($(DYNAMIC_LIBPAM),yes)
+     ifeq ($(USESONAME),yes)
+-	$(LD_L) $(SOSWITCH) $(LIBPAMNAME) -o $@ $(DLIBOBJECTS) \
++	$(LD_L) $(SOSWITCH)$(LIBPAMNAME) -o $@ $(DLIBOBJECTS) \
+ 		$(MODULES) $(LINKLIBS)
+     else
+ 	$(LD_L) -o $@ $(DLIBOBJECTS) $(MODULES) $(LINKLIBS)
+@@ -107,9 +107,11 @@
+ 
+ $(LIBPAMSTATIC): $(SLIBOBJECTS)
+ ifeq ($(STATIC_LIBPAM),yes)
+-	ar cr $@ $(SLIBOBJECTS) $(MODULES)
++	$(AR) cru $@ $(SLIBOBJECTS) $(MODULES)
++ifdef RANLIB
+ 	$(RANLIB) $@
++endif
+ endif
+ 
+ install: all
+ 	$(MKDIR) $(FAKEROOT)$(INCLUDED) $(FAKEROOT)$(libdir)
+@@ -141,7 +143,9 @@
+ 	rm -f $(FAKEROOT)$(INCLUDED)/pam_malloc.h
+ 	rm -f $(FAKEROOT)$(libdir)/$(LIBPAM).*
+ 	rm -f $(FAKEROOT)$(libdir)/$(LIBPAM)
++ifndef FAKEROOT
+ 	$(LDCONFIG)
++endif
+ 	rm -f $(FAKEROOT)$(libdir)/$(LIBPAMSTATIC)
+ 
+ clean:
+--- Linux-PAM-0.77/libpamc/test/regress/Makefile	2003-06-25 16:21:47.000000000 -0400
++++ Linux-PAM-0.77/libpamc/test/regress/Makefile	2003-06-25 16:21:57.000000000 -0400
+@@ -1,7 +1,7 @@
+ CFLAGS = -g -I ../../include
+ 
+ test.libpamc: test.libpamc.o
+-	$(CC) -o $@ $< -L ../.. -lpamc
++	$(CC) -o $@ $(CFLAGS) $< -L ../.. -lpamc
+ 
+ clean:
+ 	rm -f test.libpamc test.libpamc.o
+--- Linux-PAM-0.77/libpamc/Makefile	2001-02-10 02:17:53.000000000 -0500
++++ Linux-PAM-0.77/libpamc/Makefile	2003-06-25 15:47:05.000000000 -0400
+@@ -59,7 +59,7 @@
+ $(LIBNAMED): $(DLIBOBJECTS)
+ ifeq ($(DYNAMIC_LIBPAM),yes)
+     ifeq ($(USESONAME),yes)
+-	$(LD_L) $(SOSWITCH) $(LIBNAMEDNAME) -o $@ $(DLIBOBJECTS) $(MODULES) $(LINKLIBS)
++	$(LD_L) $(SOSWITCH)$(LIBNAMEDNAME) -o $@ $(DLIBOBJECTS) $(MODULES) $(LINKLIBS)
+     else
+ 	$(LD_L) -o $@ $(DLIBOBJECTS) $(MODULES)
+     endif
+@@ -73,9 +73,11 @@
+ 
+ $(LIBNAMEDSTATIC): $(SLIBOBJECTS)
+ ifeq ($(STATIC_LIBPAM),yes)
+-	$(AR) rc $@ $(SLIBOBJECTS) $(MODULES)
++	$(AR) rcu $@ $(SLIBOBJECTS) $(MODULES)
++ifdef RANLIB
+ 	$(RANLIB) $@
++endif
+ endif
+ 
+ install: all
+ 	$(MKDIR) $(FAKEROOT)$(INCLUDED)
+--- Linux-PAM-0.77/libpam_misc/Makefile	2002-06-27 00:04:54.000000000 -0400
++++ Linux-PAM-0.77/libpam_misc/Makefile	2003-06-25 15:47:05.000000000 -0400
+@@ -15,6 +15,7 @@
+ VERSION=.$(MAJOR_REL)
+ MODIFICATION=.$(MINOR_REL)
+ 
++FILES=misc_conv help_env
+ CFLAGS += $(MOREFLAGS) $(DYNAMIC) $(STATIC)
+ LINKLIBS += -L$(absolute_objdir)/libpam -lpam
+ 
+@@ -24,6 +25,10 @@
+ LIBNAMEDNAME = $(LIBNAMED)$(VERSION)
+ LIBNAMEDFULL = $(LIBNAMEDNAME)$(MODIFICATION)
+ 
++LIBDYNAMIC=lib$(LIBNAME).$(DYNTYPE)
++LIBDYNMAJ=$(LIBDYNAMIC).$(LIBMAJOR)
++LIBDYNMIN=$(LIBDYNMAJ).$(LIBMINOR)
++
+ # static library name
+ 
+ LIBNAMEDSTATIC = $(LIBNAME).a
+@@ -60,9 +65,9 @@
+ $(LIBNAMED): $(DLIBOBJECTS)
+ ifeq ($(DYNAMIC_LIBPAM),yes)
+     ifeq ($(USESONAME),yes)
+-	$(LD_L) $(SOSWITCH) $(LIBNAMEDNAME) -o $@ $(DLIBOBJECTS) $(MODULES) $(LINKLIBS)
++	$(LD_L) $(SOSWITCH)$(LIBNAMEDNAME) -o $@ $(DLIBOBJECTS) $(MODULES) $(LINKLIBS)
+     else
+-	$(LD_L) -o $@ $(DLIBOBJECTS) $(MODULES)
++	$(LD_L) -o $@ $(DLIBOBJECTS) $(MODULES) $(LINKLIBS)
+     endif
+     ifeq ($(NEEDSONAME),yes)
+ 	rm -f $(LIBNAMEDFULL)
+@@ -74,9 +79,12 @@
+ 
+ $(LIBNAMEDSTATIC): $(SLIBOBJECTS)
+ ifeq ($(STATIC_LIBPAM),yes)
++	$(AR) rcu $@ $(SLIBOBJECTS) $(MODULES)
++ifdef RANLIB
+ 	$(AR) rc $@ $(SLIBOBJECTS) $(MODULES)
+ 	$(RANLIB) $@
++endif
+ endif
+ 
+ install: all
+ 	$(MKDIR) $(FAKEROOT)$(INCLUDED)
+--- Linux-PAM-0.77/modules/pam_access/Makefile	2000-11-19 18:54:03.000000000 -0500
++++ Linux-PAM-0.77/modules/pam_access/Makefile	2003-06-25 15:47:05.000000000 -0400
+@@ -12,10 +12,11 @@
+ INSTALLED_CONFILE=$(SCONFIGD)/access.conf
+ 
+ DEFS=-DDEFAULT_CONF_FILE=\"$(INSTALLED_CONFILE)\"
+-CFLAGS += $(DEFS)
++CFLAGS += $(DEFS) -DNIS
+ 
+ MODULE_SIMPLE_INSTALL=bash -f ../install_conf "$(FAKEROOT)" "$(SCONFIGD)" "$(INSTALLED_CONFILE)" "$(TITLE)" "$(LOCAL_CONFILE)"
+ MODULE_SIMPLE_REMOVE=rm -f $(FAKEROOT)$(INSTALLED_CONFILE)
+ MODULE_SIMPLE_CLEAN=rm -f ./.ignore_age
++MODULE_SIMPLE_EXTRALIBS=-lnsl
+ 
+ include ../Simple.Rules
+--- Linux-PAM-0.77/modules/pam_limits/Makefile	2000-11-19 18:54:04.000000000 -0500
++++ Linux-PAM-0.77/modules/pam_limits/Makefile	2003-06-25 15:47:05.000000000 -0400
+@@ -24,6 +24,9 @@
+ 
+ include ../Simple.Rules
+ 
++#else
++#include ../dont_makefile
++#endif
+ else
+ 
+ include ../dont_makefile
+--- Linux-PAM-0.77/modules/pam_unix/Makefile	2001-02-11 01:33:53.000000000 -0500
++++ Linux-PAM-0.77/modules/pam_unix/Makefile	2003-06-25 16:22:28.000000000 -0400
+@@ -18,6 +18,19 @@
+ #USE_CRACKLIB=-D"USE_CRACKLIB"
+ #endif
+ 
++ifeq ($(shell if [ -f /usr/lib/cracklib_dict.hwm ]; then echo yes ; fi),yes)
++ CRACKLIB_DICTPATH=/usr/lib/cracklib_dict
++else
++ CRACKLIB_DICTPATH=/usr/share/dict/cracklib_dict
++endif
++EXTRAS += -DCRACKLIB_DICTS=\"$(CRACKLIB_DICTPATH)\"
++
++ifeq ($(HAVE_LIBCRYPT),yes)
++  EXTRALS += -lcrypt
++endif
++ifeq ($(HAVE_LIBNSL),yes)
++  EXTRALS += -lnsl
++endif
+ # do you want to use lckpwdf?
+ ifeq ($(WITH_LCKPWDF),yes)
+ USE_LCKPWDF=-D"USE_LCKPWDF"
+@@ -69,7 +82,7 @@
+ 
+ ########################### don't edit below #######################
+ 
+-all: dirs info $(PLUS) $(LIBSHARED) $(LIBSTATIC) $(CHKPWD) register
++all: dirs $(PLUS) $(LIBSHARED) $(LIBSTATIC) $(CHKPWD) register
+ 
+ dynamic/%.o : %.c
+ 	$(CC) $(CFLAGS) $(DYNAMIC) $(CPPFLAGS) $(TARGET_ARCH) -c $< -o $@
+@@ -81,11 +94,6 @@
+ 	@echo "**** This is not a top-level Makefile "
+ 	exit
+ 
+-info:
+-	@echo
+-	@echo "*** Building pam-unix module of the framework..."
+-	@echo
+-
+ dirs:
+ ifdef DYNAMIC
+ 	mkdir -p ./dynamic
+@@ -120,7 +128,7 @@
+ $(CHKPWD): unix_chkpwd.o md5_good.o md5_broken.o \
+ 		md5_crypt_good.o md5_crypt_broken.o \
+ 		bigcrypt.o
+-	$(CC) -o $(CHKPWD) $^ $(LDLIBS) $(LIBCRYPT)
++	$(CC) $(CFLAGS) -o $(CHKPWD) $^ $(LDLIBS) $(LIBCRYPT)
+ 
+ unix_chkpwd.o: unix_chkpwd.c
+ 	$(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c $< -o $@
+--- Linux-PAM-0.77/modules/Makefile	2001-12-09 17:15:11.000000000 -0500
++++ Linux-PAM-0.77/modules/Makefile	2003-06-25 15:47:06.000000000 -0400
+@@ -8,7 +8,7 @@
+ 
+ include ../Make.Rules
+ 
+-MODDIRS=$(shell /bin/ls -d pam_*)
++MODDIRS=$(shell /bin/ls -d pam_*/Makefile | cut -f1 -d/)
+ 
+ all:	
+ 	@echo building the static modutil library
+--- Linux-PAM-0.77/Make.Rules.in	2002-06-27 00:04:54.000000000 -0400
++++ Linux-PAM-0.77/Make.Rules.in	2003-06-25 16:27:14.000000000 -0400
+@@ -40,6 +40,10 @@
+ 
+ # Mode to install shared libraries with
+ SHLIBMODE=@SHLIBMODE@
++# Mode to install man pages with
++MANMODE=@MANMODE@
++# Mode to install configuration files with
++CONFMODE=@CONFMODE@
+ 
+ NEED_LINK_LIB_C=@PAM_NEEDS_LIBC@
+ HAVE_LCKPWDF=@HAVE_LCKPWDF@
+@@ -91,10 +95,12 @@
+ # generic build setup
+ OS=@OS@
+ CC=@CC@
+-CFLAGS=$(WARNINGS) -D$(OS) $(OS_CFLAGS) $(HEADER_DIRS) @CONF_CFLAGS@
++CFLAGS=$(WARNINGS) -D$(OS) @CFLAGS@ @CPPFLAGS@ $(OS_CFLAGS) $(HEADER_DIRS) @CONF_CFLAGS@
++LDFLAGS=@LDFLAGS@
+ LD=@LD@
+ LD_D=@LD_D@
+ LD_L=@LD_L@
++MV=@MV@
+ LDCONFIG=@LDCONFIG@
+ DYNTYPE=@DYNTYPE@
+ USESONAME=@USESONAME@
+@@ -108,3 +114,6 @@
+ CC_STATIC=@CC_STATIC@
+ 
+ LINKLIBS = $(NEED_LINK_LIB_C) $(LIBDL)
++
++USESONAME=@USESONAME@
++SOSWITCH=@SOSWITCH@
+--- Linux-PAM-0.77/Makefile	2001-05-08 00:14:20.000000000 -0400
++++ Linux-PAM-0.77/Makefile	2003-06-25 15:47:05.000000000 -0400
+@@ -11,9 +11,7 @@
+ 
+ DISTNAME=Linux-PAM
+ 
+-ifeq ($(shell test \! -f Make.Rules || echo yes),yes)
+-    include Make.Rules
+-endif
++-include Make.Rules
+ 
+-THINGSTOMAKE = modules libpam libpamc libpam_misc doc examples
++THINGSTOMAKE = libpam libpamc libpam_misc modules doc examples
+ 
+@@ -26,7 +24,7 @@
+ clean:
+ 	if [ ! -f Make.Rules ]; then touch Make.Rules ; fi
+ 	for i in $(THINGSTOMAKE) ; do $(MAKE) -C $$i clean ; done
+-	rm -f security *~ *.orig *.rej Make.Rules #*#
++	rm -f security *~ *.orig *.rej #*#
+ 
+ distclean: clean
+ 	rm -f Make.Rules _pam_aconf.h
+--- Linux-PAM-0.77/configure.in	2002-07-09 02:17:13.000000000 -0400
++++ Linux-PAM-0.77/configure.in	2003-06-25 16:33:45.000000000 -0400
+@@ -39,22 +39,25 @@
+ MKDIR="mkdir -p"		; AC_SUBST(MKDIR)
+ 
+ SHLIBMODE=755			; AC_SUBST(SHLIBMODE)
++MANMODE=644			; AC_SUBST(MANMODE)
++CONFMODE=644			; AC_SUBST(CONFMODE)
+ 
+ dnl These are most likely platform specific - I think HPUX differs
+ USESONAME=yes			; AC_SUBST(USESONAME)
+-SOSWITCH=-soname		; AC_SUBST(SOSWITCH)
+-NEEDSONAME=no			; AC_SUBST(NEEDSONAME)
++SOSWITCH="-Wl,-soname -Wl,"	; AC_SUBST(SOSWITCH)
++NEEDSONAME=yes			; AC_SUBST(NEEDSONAME)
+ LDCONFIG=/sbin/ldconfig		; AC_SUBST(LDCONFIG)
+ 
+ dnl ### Should enable this INSTALL detection.
+ dnl ### Would need to distribute GNU's config.guess and config.sub
+ dnl AC_PROG_INSTALL
+-if test "$OS" = "aix"; then
+-  INSTALL=/usr/ucb/install -c
+-else
+-  INSTALL=/usr/bin/install
+-fi
+-AC_SUBST(INSTALL)
++dnl if test "$OS" = "aix"; then
++dnl   INSTALL=/usr/ucb/install -c
++dnl else
++dnl   INSTALL=/usr/bin/install
++dnl fi
++dnl AC_SUBST(INSTALL)
++AC_PROG_INSTALL
+ 
+ dnl Checks for programs.
+ AC_PROG_CC
+@@ -199,7 +202,7 @@
+ 	HAVE_LIBCRACK=no)
+ AC_SUBST(HAVE_LIBCRACK)
+ 
+-AC_CHECK_LIB(crypt, fcrypt, HAVE_LIBCRYPT=yes ; AC_DEFINE(HAVE_LIBCRYPT),
++AC_CHECK_LIB(crypt, crypt, HAVE_LIBCRYPT=yes ; AC_DEFINE(HAVE_LIBCRYPT),
+ 	HAVE_LIBCRYPT=no)
+ AC_SUBST(HAVE_LIBCRYPT)
+ AC_CHECK_LIB(util, logwtmp, HAVE_LIBUTIL=yes ; AC_DEFINE(HAVE_LIBUTIL),
+@@ -208,7 +211,7 @@
+ AC_CHECK_LIB(ndbm, dbm_store, HAVE_LIBNDBM=yes ; AC_DEFINE(HAVE_LIBNDBM),
+ 	HAVE_LIBNDBM=no)
+ AC_SUBST(HAVE_LIBNDBM)
+-AC_CHECK_LIB(db, dbm_store, HAVE_LIBDB=yes ; AC_DEFINE(HAVE_LIBDB),
++AC_CHECK_LIB(db, __db_ndbm_fetch, HAVE_LIBDB=yes ; AC_DEFINE(HAVE_LIBDB),
+ 	HAVE_LIBDB=no)
+ if test x$HAVE_LIBDB != xyes ; then
+ 	AC_CHECK_LIB(db, db_create, HAVE_LIBDB=yes ; AC_DEFINE(HAVE_LIBDB),
+@@ -304,14 +307,14 @@
+ ### Example: -D_POSIX_SOURCE: needed on Linux but harms Solaris.
+ 	case $OS in
+ 	linux)
+-		OS_CFLAGS="-ansi -D_POSIX_SOURCE -pedantic"
+-		LD_D="gcc -shared -Xlinker -x"
++		OS_CFLAGS=
++		LD_D="$CC -shared $LDFLAGS"
+ 		WARNINGS="$GCC_WARNINGS"
+ 		PIC="-fPIC"
+ 		DYNTYPE=so
+ 		LD=ld				
+-		LD_L="$LD -x -shared"
+-		RANLIB=ranlib
++		LD_L="$CC -shared $LDFLAGS"
++		RANLIB=:
+ 		STRIP=strip
+ 		CC_STATIC="-Xlinker -export-dynamic"
+ 		;;
+--- Linux-PAM-0.77/modules/Simple.Rules	2001-12-09 17:15:11.000000000 -0500
++++ Linux-PAM-0.77/modules/Simple.Rules	2003-06-25 15:47:05.000000000 -0400
+@@ -13,6 +13,8 @@
+ #   $(MODULE_SIMPLE_EXTRAFILES) - other files to build (no .c suffix)
+ #
+ 
++-include ../Make.Rules
++
+ LIBFILES = $(TITLE) $(MODULE_SIMPLE_EXTRAFILES)
+ LIBSRC = $(addsuffix .c,$(LIBFILES))
+ LIBOBJ = $(addsuffix .o,$(LIBFILES))
+@@ -77,6 +79,18 @@
+ ifdef DYNAMIC
+ 	$(INSTALL) -m $(SHLIBMODE) $(LIBSHARED) $(FAKEROOT)$(SECUREDIR)
+ endif
++ifdef MAN3
++	test -d $(FAKEROOT)$(MANDIR)/man3 || $(MKDIR) $(FAKEROOT)$(MANDIR)/man3
++	$(INSTALL) -m $(MANMODE) $(MAN3) $(FAKEROOT)$(MANDIR)/man3/
++endif
++ifdef MAN5
++	test -d $(FAKEROOT)$(MANDIR)/man5 || $(MKDIR) $(FAKEROOT)$(MANDIR)/man5
++	$(INSTALL) -m $(MANMODE) $(MAN5) $(FAKEROOT)$(MANDIR)/man5/
++endif
++ifdef MAN8
++	test -d $(FAKEROOT)$(MANDIR)/man8 || $(MKDIR) $(FAKEROOT)$(MANDIR)/man8
++	$(INSTALL) -m $(MANMODE) $(MAN8) $(FAKEROOT)$(MANDIR)/man8/
++endif
+ 	$(MODULE_SIMPLE_INSTALL)
+ 
+ remove:
+--- Linux-PAM-0.77/modules/pam_pwdb/Makefile	2000-11-19 18:54:04.000000000 -0500
++++ Linux-PAM-0.77/modules/pam_pwdb/Makefile	2003-10-22 12:43:05.000000000 -0400
+@@ -17,6 +17,9 @@
+ ifeq ($(HAVE_LIBCRYPT),yes)
+   EXTRALS += -lcrypt
+ endif
++ifeq ($(HAVE_LIBNSL),yes)
++  EXTRALS += -lnsl
++endif
+ 
+ TITLE=pam_pwdb
+ CHKPWD=pwdb_chkpwd
+@@ -53,7 +56,7 @@
+ 
+ $(CHKPWD): pwdb_chkpwd.o md5_good.o md5_broken.o \
+            md5_crypt_good.o md5_crypt_broken.o
+-	$(CC) -o $(CHKPWD) $^ -lpwdb
++	$(CC) $(CFLAGS) -o $(CHKPWD) $^ $(LDFLAGS) -lpwdb $(EXTRALS)
+ 
+ pwdb_chkpwd.o: pwdb_chkpwd.c pam_unix_md.-c bigcrypt.-c
+ 
