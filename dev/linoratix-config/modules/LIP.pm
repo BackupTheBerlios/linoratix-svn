@@ -528,7 +528,7 @@ sub _prepend_install
 		$package_to_install = $base->get_package_by_path($package);
 	}
 
-	foreach($self->get_all_deps($version, $check_version, $package_to_install))
+	foreach($base->get_all_deps($version, $check_version, $package_to_install))
 	{
 		print "\t$_\n";
 	}
@@ -536,34 +536,6 @@ sub _prepend_install
 
 }
 
-sub get_all_deps
-{
-	my $self = shift;
-	my $version = shift;
-	my $check_version = shift;
-	my $package_to_install = shift;
-	my @ret_p = ();
-
-	if($version && $check_version)
-	{
-		$version = $base->_check_version($version, $package_to_install);
-	}
-
-
-	my $deps = $package_to_install->{$version}->{"required"};
-	push(@ret_p, $package_to_install->{$version}->{"name"} . "-" . $version);
-	foreach my $d (@{$deps}) 
-	{
-		chomp($d);
-		my($n,$v) = split(/ /, $d);
-		#push(@ret_p, "$n-$v");
-		push(@ret_p, $self->get_all_deps($v, 1, $base->get_package_by_path($base->find_package_by_name($n))));
-	}
-
-	my %uniq = ();
-	@ret_p = grep { ! $uniq{$_} ++ } @ret_p;
-	return @ret_p;
-}
 
 sub prepend_remove
 {

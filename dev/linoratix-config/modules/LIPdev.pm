@@ -422,6 +422,7 @@ sub mkcd
 	close(FH);
 
 	my @this_name = grep { /^\%name:(.*)$/ } @content;
+	my @this_description = grep { /^\%description:(.*)$/ } @content;
 	my @this_version = grep { /^\%version:(.*)$/ } @content;
 	$this_name[0] =~ m/^\%name:(.*)$/;
 	my $this_name = $1;
@@ -429,6 +430,8 @@ sub mkcd
 	$this_version[0] =~ m/^\%version:(.*)$/;
 	my $this_version = $1;
 	$this_version =~ s/^\s+|\s+$//g;
+	$this_description[0] =~ m/^\%description:(.*)$/;
+	my $this_description = $1;
 
 	@required = grep { /^\%required:/ } @content;
 	$required[0] =~ m/^\%required:(.*)$/;
@@ -465,8 +468,163 @@ sub mkcd
 		}
 	}
 
+	$self->message("Copying cd tools...\n");
+	copy("/usr/src/LIPS/BUILDS/libpopt-1.7.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/libnewt-0.51.6.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/mingetty-1.06.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/python-2.4.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/libgdbm-1.8.3.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/libslang-1.4.9.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/hwdata-0.148.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/kudzu-1.1.67.lip", "$cd_path/Linoratix");
+
 	$self->message("Rebuilding package-cache...\n");
 	system("cd $cd_path/Linoratix; linoratix-config --plugin LIPdev --rebuild-package-cache . > /dev/null 2>&1");
+	
+	$self->message("Virtually tweaking the install-tree.\n");
+	
+	$base->load_caches($cd_path . "/Linoratix/packages.cache");
+
+	my $package = $base->find_package_by_name($this_name);
+	my $package_to_install = $base->get_package_by_path($package);
+
+	my $check_version = 0;
+
+	mkdir("$cd_path/install");
+	mkdir("$cd_path/install/groups");
+	open(PKGS, ">$cd_path/install/$this_name.pkgs");
+	foreach($base->get_all_deps($this_version, $check_version, $package_to_install))
+	{
+		my($n,$v) = split(/\|/, $_);
+		unless(-f "$cd_path/Linoratix/$n-$v.lip")
+		{
+			$self->error("No such file $n-$v.lip");
+			die;
+		}
+		my ($group, $subgroup, $pkg) = split(/\//, $base->find_package_by_name($n));
+		my $p = $base->get_package_by_path($group . "/" . $subgroup . "/" . $pkg);
+		mkdir("$cd_path/install/groups/$group") unless(-d "$cd_path/install/groups/$group");
+		print PKGS "$group/$subgroup.install\n";
+		open(FH, ">$cd_path/install/groups/$group/$subgroup.install") or die($!);
+			print FH Dumper($p);
+		close(FH);
+		copy($ENV{"PORTS_PATH"} . "/$group/DESC", "$cd_path/install/groups/$group");
+	}
+	close(PKGS);
+
+	open(FH, ">$cd_path/linoratix_cd_1");
+		print FH time();
+	close(FH);
+
+	mkdir("$cd_path/boot");
+	mkdir("$cd_path/boot/grub");
+	copy("/usr/share/linoratix/bootcd/miniroot.gz", "$cd_path/boot");
+	copy("/usr/share/linoratix/bootcd/menu.lst", "$cd_path/boot/grub");
+	system("/bin/cp -a /usr/share/grub/i386-pc/* $cd_path/boot/grub");
+
+	system("mkdir -p $cd_path/etc/conf.d");
+	system("mkdir -p $cd_path/var/cache/lip/ldb");
+	system("mkdir -p $cd_path/sys");
+	system("mkdir -p $cd_path/proc");
+	system("mkdir -p $cd_path/tmp");
+
+	system("linoratix-config --plugin LIPbase --add-server file:///$cd_path/Linoratix --prefix $cd_path");
+	die if($? ne "0");
+
+	system("linoratix-config --plugin LIP --install linoratix-base --prefix $cd_path");
+	die if($? ne "0");
+
+	print "\n\n";
+	$self->message("Installing bootcd specific software...\n\n");
+	system("linoratix-config --plugin LIP --install kudzu --prefix $cd_path");
+	die if($? ne "0");
+	
+	print "\n\n";
+	$self->message("Installing mingetty for autologin...\n\n");
+	system("linoratix-config --plugin LIP --install mingetty --prefix $cd_path");
+	die if($? ne "0");
+
+	open(FH, ">$cd_path/etc/fstab");
+		print FH "/proc	/proc	proc	defaults	0 0\n";
+		print FH "/sys	/sys	sysfs	defaults	0 0\n";
+		print FH "/dev/pts	/dev/pts	devpts	mode=0622	0 0\n";
+		print FH "/dev/cdrom	/mnt/cdrom	auto	user,noauto,exec,ro	0 0\n\n";
+	close(FH);
+
+	open(FH, ">$cd_path/etc/HOSTNAME");
+		print FH "ananas\n";
+	close(FH);
+
+	open(FH, ">$cd_path/etc/hosts");
+		print FH "127.0.0.1	localhost.localdomain	localhost\n";
+	close(FH);
+
+	copy("$cd_path/sbin/init", "$cd_path/etc");
+
+	open(FH, ">$cd_path/etc/conf.d/rc.conf");
+		print FH "UTC=0\n";
+		print FH "KEYMAP=de-latin1\n";
+		print FH "EDITOR=vim\n";
+		print FH "INPUTRC=/etc/inputrc";
+	close(FH);
+
+	unlink("$cd_path/etc/runlevels/boot/11mountother");
+	unlink("$cd_path/etc/runlevels/shutdown/70mountroot");
+	unlink("$cd_path/etc/runlevels/boot/50updatemodules");
+	unlink("$cd_path/etc/runlevels/boot/65modules");
+
+	open(FH, ">$cd_path/etc/issue");
+		print FH "="x80;
+		print FH "\n\n\n";
+		print FH "Welcome to the Installation of Linoratix 0.8\n\n";
+		print FH "Please login as root with no password.\n";
+		print FH "After that you can run 'setup' to start the installation.\n\n";
+		print FH "\n";
+		print FH "="x80;
+		print FH "\n\n";
+	close(FH);
+
+	open(FH, ">$cd_path/etc/rc.d/rc.network");
+		print FH "#!/bin/sh\n\n";
+		print FH "source /etc/rc.d/functions\n";
+		print FH "write_message \"Setting up loopback networking...\"\n";
+		print FH "/sbin/ifconfig lo 127.0.0.1 > /dev/tty9 2> /dev/tty9\n";
+		print FH "/sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo > /dev/tty9 2> /dev/tty9\n";
+		print FH "check_success \$?\n";
+	close(FH);
+
+
+	mkdir("$cd_path/root");
+
+	system("chroot $cd_path /sbin/ldconfig");
+	system("rm -rf $cd_path/usr/src/*");
+	system("ln -s /usr/bin/whoami $cd_path/bin/whoami");
+
+	open(FH, ">$cd_path/etc/passwd");
+		print FH "root:x:0:0:root:/root:/bin/bash\n";
+	close(FH);
+
+	open(FH, ">$cd_path/etc/shadow");
+		print FH "root:ZUpDME1T0vuUk:12789:0:99999:7:::\n";
+	close(FH);
+	
+	#open(FH, ">$cd_path/setrootpw");
+	#	print FH "#!/bin/bash\n\n";
+	#	print FH "echo root: |/usr/sbin/chpasswd\n";
+	#close(FH);
+	#system("chmod 755 $cd_path/setrootpw");
+	#system("chroot $cd_path /setrootpw");
+	#unlink("$cd_path/setrootpw");
+
+	#### autologin
+	# unlink("$cd_path/etc/inittab");
+	# copy("/usr/share/linoratix/bootcd/inittab", "$cd_path/etc");
+
+	# die verschiedenen flavors
+	open(FH, ">$cd_path/install/flavors");
+		print FH "$this_name|$this_description\n";
+	close(FH);
+	
 }
 
 sub create_bin_lip

@@ -202,7 +202,16 @@ sub save_installed_packages
 sub load_caches
 {
 	my $self = shift;
-	$pkgdb = $self->_load_caches();
+	
+	my $virtual = shift;
+	if($virtual)
+	{
+		$pkgdb = retrieve($virtual);
+	}
+	else
+	{
+		$pkgdb = $self->_load_caches();
+	}
 	return $pkgdb;
 }
 
@@ -330,6 +339,9 @@ sub _find_package_by_name
 	
 	foreach my $group (keys %{$pkgdb}) {
 		foreach my $subgroup (keys %{$pkgdb->{$group}}) {
+			next
+				if($subgroup eq "cache-version"
+					|| $subgroup eq "cache-compatible");
 			foreach my $pkg ( keys %{$pkgdb->{$group}->{$subgroup}}) {
 				foreach my $ver (keys %{$pkgdb->{$group}->{$subgroup}->{$pkg}}) {
 					$provide = $pkgdb->{"$group"}->{"$subgroup"}->{"$pkg"}->{"$ver"}->{"provides"};
@@ -343,7 +355,7 @@ sub _find_package_by_name
 				{
 					$do_provide = $pkg;
 				}
-				if($do_provide eq $name) {
+				if($do_provide eq $name || $pkg eq $name) {
 					return "$group/$subgroup/$pkg";
 				}
 			}
@@ -400,7 +412,7 @@ sub _find_package_dep_by_name
 					{
 						$do_provide = $pkg;
 					}
-					if( $do_provide eq $package && $self->_check_version($version,
+					if( ($do_provide eq $package || $pkg eq $package)  && $self->_check_version($version,
 							$pkgdb->{$group}->{$subgroup}->{$pkg}
 						)
 					) {
@@ -478,7 +490,7 @@ sub check_if_package_is_required_by_installed_package
 						foreach my $d(@{$deps}) {
 							my($p,$v) = split(/ /, $d);
 							# kucken ob provides da ist
-							if($p eq $do_provide) {
+							if($p eq $do_provide || $p eq $package) {
 								if($self->_check_version($v, $ip->{$group}->{$subgroup}->{$pkg})) {
 									push(@needed, $pkg);
 								}
@@ -518,7 +530,7 @@ sub _find_in_i_package_dep_by_name
 						$do_provide = $package;
 					}
 					
-					if($package eq $do_provide && $self->_check_version($version,
+					if(($package eq $do_provide || $package eq $pkg) && $self->_check_version($version,
 							$ip->{$group}->{$subgroup}->{$pkg}
 						)
 					) {
@@ -957,6 +969,36 @@ sub get_name_from_rebuild
 			}
 		}
 	}
+}
+
+sub get_all_deps
+{
+	my $self = shift;
+	my $version = shift;
+	my $check_version = shift;
+	my $package_to_install = shift;
+	my @ret_p = ();
+
+	if($version && $check_version)
+	{
+		$version = $self->_check_version($version, $package_to_install);
+	}
+
+
+	my $deps = $package_to_install->{$version}->{"required"};
+	foreach my $d (@{$deps}) 
+	{
+		chomp($d);
+		my($n,$v) = split(/ /, $d);
+		#push(@ret_p, "$n-$v");
+		push(@ret_p, $self->get_all_deps($v, 1, $self->get_package_by_path($self->find_package_by_name($n))));
+	}
+
+	push(@ret_p, $package_to_install->{$version}->{"name"} . "|" . $version);
+
+	my %uniq = ();
+	@ret_p = grep { ! $uniq{$_} ++ } @ret_p;
+	return @ret_p;
 }
 
 1;
