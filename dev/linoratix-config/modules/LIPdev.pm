@@ -108,24 +108,6 @@ sub read_spec_file
 	
 	$self->warning("see tty8 for output and tty9 for errors\n\n");
 
-	# clean up build dir
-	$self->message("Cleaning up build directory\n");
-	system("rm -rfv /var/cache/lip/mklip ");
-	system("rm -rfv /var/cache/lip/build/* ");
-
-	# make temp dir for lip creation
-	mkdir("/var/cache/lip/mklip", 700);
-	mkdir("/var/cache/lip/mklip/FILES", 700);
-	mkdir("/var/cache/lip/mklip/PATCHES", 700);
-	mkdir("/var/cache/lip/mklip/SCRIPTS", 700);
-
-	# soapbox aktivieren, das nurnoch dahin geschrieben werden kann wo ich will :)=
-	my $oldpreload = $ENV{"LD_PRELOAD"};
-	$ENV{"LD_PRELOAD"} = "/lib/libsoapbox.so:".$ENV{"LD_PRELOAD"};
-	$ENV{"SOAPBOXPATH"} = ":/var/cache/lip/mklip/FILES:/var/cache/lip/build:/dev:/tmp:/usr/src/LIPS/BUILDS";
-	$ENV{"SOAPBOXACTION"} = "err";
-
-
 
 	if($rebuild_file) {
 		$self->message("Building ports: $rebuild_file\n");
@@ -222,13 +204,34 @@ sub read_spec_file
 		my $p = $base->_find_in_i_package_dep_by_name($n, $v);
 		unless($p) {	# packet nicht installiert oder ein
 				# falsche version
-			my $package_path = $base->find_package_by_name($n);
+			#my $package_path = $base->find_package_by_name($n);
+			my $package_path = $base->find_package_path_in_ports($n);
 			$self->warning("$n, $v not installed. going to do this now!\n");
-			$self->read_spec_file($ENV{"PORTS_PATH"}."/$package_path/$n-$v.src.lip");
+			#$self->read_spec_file($ENV{"PORTS_PATH"}."/$package_path/REBUILD");
+			system("linoratix-config --plugin LIPdev --ports-build $package_path");
 		} else {
 			$self->message("$n, $v already installed. skipping...\n");
 		}
 	}
+
+
+	system("rm -rfv /var/cache/lip/mklip ");
+	system("rm -rfv /var/cache/lip/build/* ");
+
+	# make temp dir for lip creation
+	mkdir("/var/cache/lip/mklip", 700);
+	mkdir("/var/cache/lip/mklip/FILES", 700);
+	mkdir("/var/cache/lip/mklip/PATCHES", 700);
+	mkdir("/var/cache/lip/mklip/SCRIPTS", 700);
+
+	# soapbox aktivieren, das nurnoch dahin geschrieben werden kann wo ich will :)=
+	my $oldpreload = $ENV{"LD_PRELOAD"};
+	$ENV{"LD_PRELOAD"} = "/lib/libsoapbox.so:".$ENV{"LD_PRELOAD"};
+	$ENV{"SOAPBOXPATH"} = ":/var/cache/lip/mklip/FILES:/var/cache/lip/build:/dev:/tmp:/usr/src/LIPS/BUILDS";
+	$ENV{"SOAPBOXACTION"} = "err";
+
+
+
 
 	# GROUP
 	open(FH, ">/var/cache/lip/mklip/GROUP") or exit 302;

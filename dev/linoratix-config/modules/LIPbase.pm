@@ -12,6 +12,7 @@ use Data::Dumper;
 use Cwd;
 use File::Basename;
 use File::Copy;
+use File::Find;
 use Storable;
 use LWP::Simple;
 
@@ -26,6 +27,9 @@ our $linoratix = Linoratix->new();
 our $config;
 our $pkgdb = {};
 our $installed_packages = {};
+
+our $WANTED_PACKAGE;
+our $WANTED_PACKAGE_PATH;
 
 # namespace 1000 - 1100
 
@@ -834,6 +838,35 @@ sub _check_server
 	}
 
 	return 0;
+}
+
+sub find_package_path_in_ports
+{
+	my $self = shift;
+	$WANTED_PACKAGE = shift;
+	find(\&get_name_from_rebuild, $ENV{"PORTS_PATH"});
+	return $WANTED_PACKAGE_PATH;
+}
+
+sub get_name_from_rebuild
+{
+	my @inhalt;
+	if(/^REBUILD$/)
+	{
+		open(FH, "<REBUILD");
+		chomp(@inhalt = <FH>);
+		close(FH);
+		foreach my $zeile (@inhalt)
+		{
+			$zeile =~ m/^\%name: (.*?)$/;
+			if($1 eq $WANTED_PACKAGE)
+			{
+				chomp($WANTED_PACKAGE_PATH = `pwd`);
+				$WANTED_PACKAGE_PATH=~s/$ENV{"PORTS_PATH"}//;
+				last;
+			}
+		}
+	}
 }
 
 1;
