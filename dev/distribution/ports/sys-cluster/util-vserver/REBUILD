@@ -1,0 +1,31 @@
+#
+# build script for util-vserver
+#
+%author: jfried
+%package-group: sys-cluster -
+%sub-group: util-vserver -
+%required: ("libglibc >=2.3.4", "mktemp >=1.5", "iptables >=1.3.0", "iproute2 >=2.6.9", "vlan >=1.8")
+%build-required: ()
+%description: The Linux VServer utils
+%name: util-vserver
+%version: 0.30.203
+%build: $DATA
+%sourcefile: util-vserver-0.30.203.tar.gz
+%source-url: ("http://www.13thfloor.at/vserver/d_rel26/v1.9.4/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+lip_configure --prefix=/usr --datadir=/usr/share --sysconfdir=/etc --localstatedir=/var --libexecdir=/usr/sbin --infodir=/usr/share/info --mandir=/usr/share/man
+
+lip_make
+lip_install DESTDIR=%install_dir
+
+lip_rm -rf %install_dir/etc/init.d
+
+
+# -- execution of post-install-scritps
+__DATA__
+
