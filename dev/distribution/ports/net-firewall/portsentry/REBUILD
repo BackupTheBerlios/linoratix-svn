@@ -1,0 +1,43 @@
+#
+# package build script for portsentry
+#
+%author: jfried
+%package-group: net-firewall -
+%sub-group: portsentry -
+%required: ("tcsh >=6.13.00")
+%build-required: ()
+%description: Automated port scan detector and response tool
+%name: portsentry
+%version: 1.2
+%build: $DATA
+%sourcefile: portsentry-1.2.tar.gz
+%source-url: ("http://sf.gds.tuwien.ac.at/s/se/sentrytools/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+lip_sed -i -e 's:/usr/local/psionic/portsentry/portsentry.conf:/etc/portsentry/portsentry.conf:' portsentry_config.h
+lip_sed -i -e 's:\(^IGNORE_FILE\).*:\1="/etc/portsentry/portsentry.ignore":g' -e 's:^\(HISTORY_FILE\).*:\1="/etc/portsentry/portsentry.history":g' -e 's:^\(BLOCKED_FILE\).*:\1="/etc/portsentry/portsentry.blocked":g' portsentry.conf
+lip_sed -i -e "s:^set SENTRYDIR.*:set SENTRYDIR=/etc/portsentry:g" ignore.csh
+
+lip_patch -Np1 -i %patch_dir/gcc.patch
+
+lip_make linux
+
+lip_mkdir -p %install_dir/usr/{bin,share,man,info}
+lip_mkdir %install_dir/usr/man/{man8,man5}
+lip_mkdir %install_dir/usr/share/portsentry
+lip_mkdir -p %install_dir/etc/portsentry
+
+#lip_cp *.8 %install_dir/usr/share/man/man8
+#lip_cp *.5 %install_dir/usr/share/man/man5
+lip_cp portsentry ignore.csh %install_dir/usr/bin
+lip_cp portsentry.ignore %install_dir/usr/share/portsentry/portsentry.ignore.sample
+lip_cp portsentry.conf %install_dir/usr/share/portsentry/portsentry.conf.sample
+lip_cp portsentry.ignore %install_dir/etc/portsentry/portsentry.ignore.sample
+lip_cp portsentry.conf %install_dir/etc/portsentry/portsentry.conf.sample
+
+__DATA__
+

@@ -1,0 +1,29 @@
+#
+# package build script for tcsh
+#
+%author: jfried
+%package-group: sys-shell -
+%sub-group: tcsh -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description:  The Tcsh package contains \"an enhanced but completely compatible version of the Berkeley Unix C shell (csh)\". This is useful as an alternative shell for those who prefer C syntax to that of the bash shell, and also because some programs require the C shell in order to install.
+%name: tcsh
+%version: 6.13.00
+%build: $DATA
+%sourcefile: tcsh-6.13.00.tar.gz
+%source-url: ("http://gd.tuwien.ac.at/utils/shells/tcsh/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+lip_configure --prefix=/usr 
+lip_make
+lip_install DESTDIR=%install_dir
+
+lip_ln -s tcsh %install_dir/usr/bin/csh
+
+# -- execution of post-install-scritps
+__DATA__
+
