@@ -1,0 +1,35 @@
+#
+# kernel build script
+#
+%author: jfried
+%package-group: sys-kernel -
+%sub-group: vserver-ide -
+%required: ("module-init-tools >=3.0")
+%build-required: ("module-init-tools >=3.0")
+%description: The vanilla Linux Kernel with VSERVER Patch
+%name: kernel-vanilla-vserver
+%version: 2.6.10
+%build: $DATA
+%sourcefile: linux-2.6.10.tar.bz2
+%source-url: ("http://download.linoratix.com/distfiles")
+%provides: kernel
+
+__DATA__
+lip_extract %sourcefile
+lip_cd %compile_dir
+
+lip_patch -Np1 -i %patch_dir/patch-2.6.10-vs1.9.4.diff
+
+lip_make clean
+lip_get_file config %compile_dir/.config
+lip_make oldconfig
+lip_make
+lip_make modules
+lip_make modules_install INSTALL_MOD_PATH=%install_dir
+lip_mkdir -p %install_dir/boot
+lip_copy %compile_dir/arch/i386/boot/bzImage %install_dir/boot/bzImage-%version-%name
+lip_copy %compile_dir/System.map %install_dir/boot
+#lip_rm /lib/modules/2.6.10-linoratix-ide/build
+# -- execution of post-install-scritps
+__DATA__
+
