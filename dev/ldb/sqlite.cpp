@@ -15,7 +15,7 @@
 
 // DEBUG macro
 #ifdef _DO_DEBUG_
-#  define DEBUG(text) cout << "DEBUG: " << text << endl;
+#  define DEBUG(text) cerr << "DEBUG: " << text << endl;
 #else
 #  define DEBUG(text)
 #endif
@@ -220,11 +220,40 @@ extern "C" int l_query(string database, string sql_query) { // database var is n
 
 extern "C" int l_num_rows() {
    if(stmt != NULL) {
-      return 0; // TODO !!!!
+      DEBUG("sqlite cant get the numbers of rows :-(")
+      return 0;
    } else {
       DEBUG("no statement precompiled");
       return -1;
    }
+}
+
+
+int strlen(const unsigned char* srcstr) {
+   int length = 0;
+   
+   while(srcstr[length] != '\0')
+      length++;
+   
+   return length;
+}
+
+
+string toString(const unsigned char* srcstr) {
+   int length = strlen(srcstr);
+   string deststr;
+   
+   for(int x = 0; x <= length; x++) {
+      deststr += srcstr[x];
+   }
+   return deststr;
+}
+
+
+string toString(int& srcint) {
+   string deststr;
+   deststr += srcint;
+   return deststr;
 }
 
 
@@ -233,14 +262,37 @@ extern "C" int l_next_record(map<string, string>& record) {
       DEBUG("no statement precompiled")
       return -1;
    }
-      int rc = l_execute();
-      if(rc <= 0) return rc;
+   
+   int rc = l_execute();
+   if(rc <= 0) return rc;
 
-      int spaltenanz = sqlite3_column_count(stmt);
+   int spaltenanz = sqlite3_column_count(stmt);
       
-      for(int x = 0; x < spaltenanz; x++) {
-         record[sqlite3_column_name(stmt, x)] = "test"; //TODO value
-         DEBUG(string(sqlite3_column_name(stmt, x)) + " => " + "test")
+   for(int x = 0; x < spaltenanz; x++) {
+      record[sqlite3_column_name(stmt, x)] = toString(sqlite3_column_text(stmt, x));
+      DEBUG(string("OUT: ") + sqlite3_column_name(stmt, x) + " => " + toString(sqlite3_column_text(stmt, x)))
+   }
+   return true;
+}
+
+
+extern "C" int l_column_names(map<string, string>& out) {
+   if(stmt == NULL) {
+      DEBUG("no statement precompiled")
+      return -1;
+   }
+   
+  int count = sqlite3_column_count(stmt);
+   
+   for(int x = 0; x < count; x++) {
+      out[toString(x)] = sqlite3_column_name(stmt, x);
+   }
+
+   #ifdef _DO_DEBUG
+      for(int x = 0; x < count; x++) {
+         cerr << "Spalte: " << x << " Wert: " << out[toString(x)] << endl;
       }
-      return true;
+   #endif
+
+   return count;
 }

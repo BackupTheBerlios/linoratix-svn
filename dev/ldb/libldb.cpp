@@ -27,6 +27,7 @@ db::db(char* driver)
 	this->_query = (query_t) dlsym(handle, "l_query");
 	this->_num_rows = (num_rows_t) dlsym(handle, "l_num_rows");
 	this->_next_record = (next_record_t) dlsym(handle, "l_next_record");
+   this->_column_names = (column_names_t) dlsym(handle, "l_column_names");
 	
 	if(! this->_is_driver()) // Seg Fault wenn es kein Treiber ist!
       throw "this is not a driver";
@@ -43,6 +44,13 @@ bool db::Connect(map<string,string> con_data)
 	this->_database = con_data["database"];
 	this->_connect(con_data);
 }
+
+
+int db::ColumnNames(map<string, string>& out)
+{
+   return this->_column_names(out);
+}
+
 
 int db::Select(map<string, string>& query)
 {

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <stdlib.h>
 #include <map>
 //#include <exception>
@@ -40,15 +41,33 @@ int main(int argc, char **argv)
 //	   my_query["table"] = "blocks";
 	   my_query["table"] = "test";
 	   my_query["fields"]= "*";
+      my_query["order"]= "zahl";
 
 	   if(datenbank->Select(my_query))
 	   {
-	   	cout << "Anzahl: " << datenbank->NumRows() << endl;
-	   	while(datenbank->NextRecord())
-	   	{
-	   		cout << datenbank->Record["direction"] << endl;
-	   	}
-	   }
+	   	cout << "Reihenanzahl: " << datenbank->NumRows() << endl;
+         
+         map<string, string> titles;
+         int columns = datenbank->ColumnNames(titles);
+         cout << "Spaltenanzahl: " << columns << endl;
+         string tmp;
+         
+         if(columns > 0) {
+            // Feldnamen
+            for(int x = 0; x < columns; x++) {
+               tmp = x;
+               cout << "| " << setw(11) << titles[tmp] << " | ";
+            } cout << endl;
+            // Feldinhalte
+            while(datenbank->NextRecord()) {
+               for(int x = 0; x < columns; x++) {
+                  tmp = x;
+                  cout << "| " << setw(12) << datenbank->Record[titles[tmp]] << " | ";
+               } cout << endl;
+      	   }
+         }
+      } // ich bin König der Treppen :P
+
 
 /*
    	my_insert["table"] = "blocks";
@@ -57,6 +76,7 @@ int main(int argc, char **argv)
 	
    	datenbank->Insert(my_insert, my_set);
 */
+
       
    } catch (std::exception& e) {
       cout << "Exception: " << e.what() << endl;

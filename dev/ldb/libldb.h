@@ -19,8 +19,9 @@ class db
       int Create(map<string, string>&);
 		int Insert(map<string,string>&, map<string,string>&);
       int Execute();
-
+      
 		bool NextRecord();
+      int ColumnNames(map<string, string>& out);
 		int NumRows();
 	
 		map<string,string> Record;
@@ -39,6 +40,9 @@ class db
 
 		typedef int (*next_record_t)(map<string,string>&);
 		next_record_t _next_record;
+
+      typedef int (*column_names_t)(map<string, string>&);
+      column_names_t _column_names;
 
 		typedef bool (*select_t)(map<string,string>, string&);
 		select_t _select;
