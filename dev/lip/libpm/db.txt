@@ -1,0 +1,17 @@
+
+table programms:
+   id    name     version
+   1     bash     2.95
+
+table files:
+   programmid     file
+   1              /bin/bash
+   1              ...
+   1              ...
+   1              ...
+
+table depends:
+   programmid     dependName     dependType     dependVersion
+   1              curses         >=              1.3.2a
+   1              ...            =               1.10.2-rc1
+
