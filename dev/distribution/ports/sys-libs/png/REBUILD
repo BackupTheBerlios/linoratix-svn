@@ -1,0 +1,33 @@
+#
+#rebuild file for libpng-1.2.8
+#
+%author: ogu	
+%package-group: sys-libs -
+%sub-group: png -
+%required: ("libglibc >=2.3.3", "zlib >=1.2.1")
+%build-required: ()
+%description: A collection of routines used to create PNG format graphics files
+%name: libpng
+%version: 1.2.8
+%build: $DATA
+%sourcefile: libpng-1.2.8.tar.gz
+%source-url: ("http://heanet.dl.sourceforge.net/sourceforge/libpng")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+
+
+# makefile ist in scripts
+lip_make -f scripts/makefile.linux prefix=/usr ZLIBINC=/usr/include ZLIBLIB=/usr/lib
+
+# verzeichnis erstellen
+lip_mkdir -p %install_dir/usr/include/libpng12
+
+lip_install -f scripts/makefile.linux DESTDIR=%install_dir prefix=/usr ZLIBINC=/usr/include ZLIBLIB=/usr/lib
+
+# -- execution of post-install-scripts
+__DATA__
