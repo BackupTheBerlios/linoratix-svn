@@ -1,10 +1,10 @@
 #
 #rebuild file for libpng-1.2.8
 #
-%author: ogu	
+%author: ogu
 %package-group: sys-libs -
 %sub-group: png -
-%required: ("libglibc >=2.3.3", "zlib >=1.2.1")
+%required: ("libglibc >=2.3.3", "libzlib >=1.2.1")
 %build-required: ()
 %description: A collection of routines used to create PNG format graphics files
 %name: libpng
