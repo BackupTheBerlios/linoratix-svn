@@ -1,0 +1,40 @@
+subversion:
+	neon lib fuer subversion
+	./configure --prefix=/usr ... --with-apr=/usr --with-apr-util=/usr
+
+bash:
+	rebuild
+
+mc:
+	rebuild
+
+vim: 
+	update
+
+gpm:
+	neu
+
+linoratix-config:
+	LIP:
+		suchen von dateien in welchem packet
+		updaten von packeten
+		wenn installation abbricht, weitermachen (wie: apt-get -f install)
+	base:
+		runlevel einstellungen, was wird gestartet und so
+		motd
+		issue
+
+hotplug:
+	wenn neue hardware eingesteckt wird, diese automatisch einrichten -> wenn usb stick fstab bearbeiten
+
+CQL:
+	linoratix-config auf CQL portieren
+
+acpid:
+	neu
+	reaktion auf events wie powerbutton
+
+installation:
+	richtigen kernel installieren, -> fuer ide, ide-kernel, scsi-kernel, usb-kernel fuer usb stick installationen
+	framebuffer mit bootsplash
+
