@@ -5,7 +5,7 @@
 %package-group: sys-base -
 %sub-group: coreutils -
 %required: ("libglibc >=2.3.3", "libselinux >=1.14")
-%build-required: ("libglibc >=2.3.3", "libselinux >=1.14")
+%build-required: ("libglibc >=2.3.3", "libselinux >=1.14", "texinfo >=4.6")
 %description: A collection of core GNU utils.
 %name: coreutils
 %version: 5.2.1
