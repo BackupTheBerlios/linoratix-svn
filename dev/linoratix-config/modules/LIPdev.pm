@@ -24,7 +24,6 @@ $MOD_VERSION = "0.0.10";
 our $compile_dir;
 our $start_date;
 our $files;
-our $linoratix = Linoratix->new();
 our $REBUILD_LINE=0;
 our $CONFIGURE_PATH=".";
 
@@ -637,14 +636,15 @@ sub lip_sed
 
 sub manifest
 {
+	my $self = shift;
 	my $file = getcwd() . "/$_";
 	my @stat = stat($file);
-	my $p    = $linoratix->param("bin-dir");
+	my $p    = $self->param("bin-dir");
 	chomp($p);
 
-	if($linoratix->param("bin-dir")) {
+	if($self->param("bin-dir")) {
 		$file =~ s/^$p//;
-		open(FH, ">>".$linoratix->param("bin-dir")."/MANIFEST") or exit 340;
+		open(FH, ">>".$self->param("bin-dir")."/MANIFEST") or exit 340;
 	} else {
 		$file =~ s:^/var/cache/lip/mklip::;
 		open(FH, ">>/var/cache/lip/mklip/MANIFEST") or exit 341;
