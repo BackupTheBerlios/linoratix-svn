@@ -1,0 +1,28 @@
+#
+# package build script for metalog
+#
+%author: jfried
+%package-group: sys-logd -
+%sub-group: metalog -
+%required: ("libpcre >=4.5")
+%build-required: ()
+%description: A modern replacement for sysklogd.
+%name: metalog
+%version: 0.7
+%build: $DATA
+%sourcefile: metalog-0.7.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+%provides: system-logger
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_mkdir %install_dir/etc -p
+lip_get_file metalog.conf %install_dir/etc/metalog.conf
+lip_cd %compile_dir
+lip_configure --prefix=/usr --sysconfdir=/etc --libexecdir=/usr/lib
+lip_make
+lip_install prefix=%install_dir/usr mandir=%man_dir infodir=%info_dir libexecdir=%libexec_dir sysconfdir=%install_dir/etc
+# -- execution of post-install-scritps
+__DATA__
+

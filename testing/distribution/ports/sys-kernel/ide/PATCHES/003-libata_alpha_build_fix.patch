@@ -1,0 +1,21 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/27 15:41:28-05:00 stkn@gentoo.org 
+#   [libata] add #include (fixes 2.4 alpha build)
+# 
+# drivers/scsi/libata-core.c
+#   2004/12/27 15:41:22-05:00 stkn@gentoo.org +1 -0
+#   [libata] add #include (fixes 2.4 alpha build)
+# 
+diff -Nru a/drivers/scsi/libata-core.c b/drivers/scsi/libata-core.c
+--- a/drivers/scsi/libata-core.c	2005-01-04 17:45:44 -08:00
++++ b/drivers/scsi/libata-core.c	2005-01-04 17:45:44 -08:00
+@@ -28,6 +28,7 @@
+ #include <linux/pci.h>
+ #include <linux/init.h>
+ #include <linux/list.h>
++#include <linux/mm.h>
+ #include <linux/highmem.h>
+ #include <linux/spinlock.h>
+ #include <linux/blkdev.h>

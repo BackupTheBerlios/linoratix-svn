@@ -1,0 +1,28 @@
+#
+# package build script for e2fsprogs
+#
+%author: jfried
+%package-group: sys-base -
+%sub-group: e2fsprogs -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: Ext2 filesystem utilities (also for ext3).
+%name: e2fsprogs
+%version: 1.35
+%build: $DATA
+%sourcefile: e2fsprogs-1.35.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_mkdir %compile_dir/buildme
+lip_cd %compile_dir/buildme
+-CONFIGURE_PATH=%compile_dir
+lip_configure --prefix=/usr --enable-elf-shlibs --with-root-prefix=""
+lip_make
+lip_install root_prefix=%install_dir prefix=%install_dir/usr mandir=%install_dir/usr/share/man infodir=%install_dir/usr/share/info libdir=%install_dir/lib sbindir=%install_dir/sbinprefix=%install_dir/usr mandir=%install_dir/usr/share/man infodir=%install_dir/usr/share/info libdir=%install_dir/lib sbindir=%install_dir/sbin
+lip_make install-libs root_prefix=%install_dir prefix=%install_dir/usr mandir=%install_dir/usr/share/man infodir=%install_dir/usr/share/info libdir=%install_dir/lib sbindir=%install_dir/sbinprefix=%install_dir/usr mandir=%install_dir/usr/share/man infodir=%install_dir/usr/share/info libdir=%install_dir/lib sbindir=%install_dir/sbin
+# -- execution of post-install-scritps
+__DATA__
+

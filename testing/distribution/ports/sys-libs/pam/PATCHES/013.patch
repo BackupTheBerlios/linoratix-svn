@@ -1,0 +1,41 @@
+diff -uNr Linux-PAM-0.75/modules/pam_group/pam_group.c Linux-PAM-0.75/modules/pam_group/pam_group.c
+--- Linux-PAM-0.75/modules/pam_group/pam_group.c	Sun Nov 26 02:32:39 2000
++++ Linux-PAM-0.75/modules/pam_group/pam_group.c	Tue Jul 10 00:14:23 2001
+@@ -146,8 +146,9 @@
+ 		}
+ 	    }
+ 	    switch ((*buf)[i]) {
+-		int j,c;
++		int j, c;
+ 	    case '#':
++		j = c = 0;
+ 		for (j=i; j < *to && (c = (*buf)[j]) != '\n'; ++j);
+ 		if (j >= *to) {
+ 		    (*buf)[*to = ++i] = '\0';
+@@ -172,6 +173,7 @@
+ 	    case '!':
+ 	    case ' ':
+ 	    case '\t':
++		j = c = 0;
+ 		if ((*buf)[i] != '!')
+ 		    (*buf)[i] = ',';
+ 		/* delete any trailing spaces */
+diff -uNr Linux-PAM-0.75/modules/pam_time/pam_time.c Linux-PAM-0.75/modules/pam_time/pam_time.c
+--- Linux-PAM-0.75/modules/pam_time/pam_time.c	Sun Nov 26 02:32:39 2000
++++ Linux-PAM-0.75/modules/pam_time/pam_time.c	Tue Jul 10 00:14:23 2001
+@@ -149,6 +149,7 @@
+ 	    switch ((*buf)[i]) {
+ 		int j,c;
+ 	    case '#':
++		j = c = 0;
+ 		for (j=i; j < *to && (c = (*buf)[j]) != '\n'; ++j);
+ 		if (j >= *to) {
+ 		    (*buf)[*to = ++i] = '\0';
+@@ -173,6 +174,7 @@
+ 	    case '!':
+ 	    case ' ':
+ 	    case '\t':
++		j = c = 0;
+ 		if ((*buf)[i] != '!')
+ 		    (*buf)[i] = ',';
+ 		/* delete any trailing spaces */

@@ -1,0 +1,27 @@
+#
+# package build script for mingetty
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: mingetty -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: Small getty clone.
+%name: mingetty
+%version: 1.06
+%build: $DATA
+%sourcefile: mingetty_1.06.orig.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_patch -Np1 -i %patch_dir/%name_%version-2.diff
+lip_make
+lip_mkdir -p %install_dir/sbin
+lip_mkdir -p %install_dir/usr/share/man/man8
+lip_install DESTDIR=%install_dir
+# -- execution of post-install-scritps
+__DATA__
+

@@ -1,0 +1,45 @@
+#
+# build script for coreutils
+#
+%author: jfried
+%package-group: sys-base -
+%sub-group: coreutils -
+%required: ("libglibc >=2.3.3", "libselinux >=1.14")
+%build-required: ("texinfo >=4.6")
+%description: A collection of core GNU utils.
+%name: coreutils
+%version: 5.2.1
+%build: $DATA
+%sourcefile: coreutils-5.2.1.tar.bz2
+%source-url: ("ftp://ftp.gnu.org/gnu/coreutils")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_other for p in 001 002 003 004 005 006 007 008 009 010; do patch -Np1 -i %patch_dir/$p.patch; done
+lip_other for p in 011 012 013 014 015 016 017 018 019 020; do patch -Np1 -i %patch_dir/$p.patch; done
+lip_other for p in 021 022 023 024 025 026; do patch -Np1 -i %patch_dir/$p.patch; done
+lip_other for p in 027 028 029; do patch -p0 < %patch_dir/$p.patch; done
+lip_other for p in 030 031 032; do patch -Np1 -i %patch_dir/$p.patch; done
+lip_export DEFAULT_POSIX2_VERSION=199209
+lip_mv %compile_dir/m4/inttypes.m4 %compile_dir/m4/inttypes-eggert.m4
+lip_other touch aclocal.m4 configure config.hin Makefile.in */Makefile.in */*/Makefile.in
+lip_other aclocal -I m4
+lip_other autoconf
+lip_other automake
+lip_configure --prefix=/usr --enable-largefile --enable-selinux
+lip_make
+lip_install prefix=%install_dir/usr libdir=%install_dir/usr/lib infodir=%install_dir/usr/share/info mandir=%install_dir/usr/share/man includedir=%install_dir/usr/include
+lip_mkdir %install_dir/bin
+lip_other mv %install_dir/usr/bin/{basename,cat,chgrp,chmod,chown,cp,dd,df} %install_dir/bin
+lip_other mv %install_dir/usr/bin/{date,echo,false,head,install,ln,ls} %install_dir/bin
+lip_other mv %install_dir/usr/bin/{mkdir,mknod,mv,pwd,rm,rmdir,sync} %install_dir/bin
+lip_other mv %install_dir/usr/bin/{sleep,stty,test,touch,true,uname} %install_dir/bin
+lip_mkdir %install_dir/usr/sbin -p
+lip_other mv %install_dir/usr/bin/chroot %install_dir/usr/sbin
+lip_ln -svf test %install_dir/bin/[
+lip_ln -svf ../../bin/install %install_dir/usr/bin
+# -- execution of post-install-scritps
+__DATA__
+

@@ -1,0 +1,27 @@
+#
+# package build script for slang
+#
+%author: jfried
+%package-group: dev-libs -
+%sub-group: slang -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: Console display library used by most text viewer
+%name: libslang
+%version: 1.4.9
+%build: $DATA
+%sourcefile: slang-1.4.9.tar.bz2
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make all elf
+lip_install install-elf DESTDIR=%install_dir
+#prefix=%install_dir/usr mandir=%man_dir infodir=%info_dir
+lip_chmod 755 %install_dir/usr/lib/*.so*
+# -- execution of post-install-scritps
+__DATA__
+

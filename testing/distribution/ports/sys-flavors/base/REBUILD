@@ -1,0 +1,29 @@
+#
+# linoratix base system
+# 
+
+%author: jfried
+%package-group: sys-flavors -
+%sub-group: base -
+%required: ("libglibc >=2.3.3", "bash >=3.0", "binutils >=2.15.92.0.2", "bzip2 >=1.0.2", "coreutils >=5.2.1", "dev >=0.4", "gawk >=3.1.3", "grep >=2.5.1", "gzip >=1.3.5", "kernel >=2.6.7", "libgettext >=0.14.1", "libgpm >=1.20.1", "libiconv >=1.9.1", "libncurses >=5.4", "libopenssl >=0.9.7e", "libpam >=0.77", "libpcre >=4.5", "libselinux >=1.14", "libsoapbox >=0.3.1", "module-init-tools >=3.0", "perl >=5.8.3", "sed >=4.0.9", "shadow >=4.0.4.1", "sysvinit >=2.85", "tar >=1.13.93", "vim >=6.3", "wget >=1.9.1", "system-logger >=0", "hotplug >=2004_09_23","udev >=050","libreadline >=4.3", "file >=4.07","kbd >=1.12","e2fsprogs >=1.35","procps >=3.2.0","psmisc >=21.5","grub >=0.95", "util-linux >=2.12","net-tools >=1.60","libzlib >=1.2.1","pciutils >=2.1.11","usbutils >=0.11","which >=2.14","bc >=1.06","at >=3.1.8","fcron >=2.9.4","sh-utils >=2.0.15","mail-transport-agent >=0","diffutils >=2.8.1","less >=382", "findutils >=4.1.20")
+%build-required: ("bash >=3.0", "libglibc >=2.3.3", "mktemp >=1.5", "gcc3 >=3.4.3", "m4 >=1.4","bison >=1.875","groff >=1.19","flex >=2.5.31","automake >=1.8.3", "patch >=2.5.4")
+%description: Linoratix base-system
+%name: linoratix-base
+%version: 0.8
+%build: $DATA
+%sourcefile: linoratix-base-0.8.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+
+__DATA__
+lip_extract %sourcefile
+lip_cd %compile_dir
+lip_other ./install.sh %install_dir
+lip_mkdir -p %install_dir/var/log
+lip_mkdir -p %install_dir/tmp
+lip_mkdir -p %install_dir/mnt
+lip_mkdir -p %install_dir/var/run
+lip_mkdir -p %install_dir/var/lock
+lip_mkdir -p %install_dir/sys
+lip_other touch %install_dir/var/log/wtmp
+__DATA__

@@ -1,0 +1,26 @@
+#
+# build script for at
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: at -
+%required: ("libglibc >=2.3.3", "mail-transport-agent >=0")
+%build-required: ()
+%description: at and batch.
+%name: at
+%version: 3.1.8
+%build: $DATA
+%sourcefile: at-3.1.8.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-etcdir=/etc --with-jobdir=/var/spool/atjobs --with-atspool=/var/spool/atspool
+lip_make
+lip_install IROOT=%install_dir
+# prefix=%install_dir/usr libdir=%install_dir/usr/lib infodir=%install_dir/usr/share/info mandir=%install_dir/usr/share/man includedir=%install_dir/usr/include
+# -- execution of post-install-scritps
+__DATA__
+

@@ -1,0 +1,11 @@
+--- coreutils-5.0.91/lib/physmem.c.64bit-fixes	2004-01-08 16:23:09.000000000 +0100
++++ coreutils-5.0.91/lib/physmem.c	2004-01-08 16:27:37.000000000 +0100
+@@ -84,7 +84,7 @@ typedef WINBOOL (WINAPI *PFN_MS_EX) (lME
+ static double
+ physmem_cap (double mem)
+ {
+-  double max = 1 << (sizeof(void *)*8 - 4);
++  double max = 1L << (sizeof(void *)*8 - 4);
+   return mem > max ? max : mem;
+ }
+ 

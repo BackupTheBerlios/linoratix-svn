@@ -1,0 +1,46 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/04 19:36:01+01:00 trond.myklebust@fys.uio.no 
+#   RPC: Add missing calls to flush_dcache_page() in net/sunrpc/xdr.c
+#   
+#   Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+# 
+# net/sunrpc/xdr.c
+#   2005/01/04 01:00:00+01:00 trond.myklebust@fys.uio.no +4 -0
+#   RPC: Add missing calls to flush_dcache_page() in net/sunrpc/xdr.c
+# 
+diff -Nru a/net/sunrpc/xdr.c b/net/sunrpc/xdr.c
+--- a/net/sunrpc/xdr.c	2005-01-04 19:53:04 -08:00
++++ b/net/sunrpc/xdr.c	2005-01-04 19:53:04 -08:00
+@@ -371,6 +371,7 @@
+ 	do {
+ 		/* Are any pointers crossing a page boundary? */
+ 		if (pgto_base == 0) {
++			flush_dcache_page(*pgto);
+ 			pgto_base = PAGE_CACHE_SIZE;
+ 			pgto--;
+ 		}
+@@ -394,6 +395,7 @@
+ 		kunmap_atomic(vto, KM_USER0);
+ 
+ 	} while ((len -= copy) != 0);
++	flush_dcache_page(*pgto);
+ }
+ 
+ /*
+@@ -427,12 +429,14 @@
+ 
+ 		pgbase += copy;
+ 		if (pgbase == PAGE_CACHE_SIZE) {
++			flush_dcache_page(*pgto);
+ 			pgbase = 0;
+ 			pgto++;
+ 		}
+ 		p += copy;
+ 
+ 	} while ((len -= copy) != 0);
++	flush_dcache_page(*pgto);
+ }
+ 
+ /*

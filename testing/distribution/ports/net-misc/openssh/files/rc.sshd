@@ -1,0 +1,60 @@
+#!/bin/sh
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+KEYGEN=/usr/bin/ssh-keygen
+RSA1_KEY=/etc/ssh/ssh_host_key
+RSA_KEY=/etc/ssh/ssh_host_rsa_key
+DSA_KEY=/etc/ssh/ssh_host_dsa_key
+
+start() 
+{
+	if [ ! -f ${RSA1_KEY} ]; then
+		write_message "Generating SSH1 RSA host key..." "warn"
+		${KEYGEN} -t rsa1 -f ${RSA1_KEY} -C '' -N '' > /dev/null 2> /dev/null
+		check_success $?
+	fi
+	if [ ! -f ${RSA_KEY} ]; then
+		write_message "Generating SSH RSA host key..." "warn"
+		${KEYGEN} -t rsa -f ${RSA_KEY} -C '' -N '' > /dev/null 2> /dev/null
+		check_success $?
+	fi
+	if [ ! -f ${DSA_KEY} ]; then
+		write_message "Generating SSH DSA host key..." "warn"
+		${KEYGEN} -t dsa -f ${DSA_KEY} -C '' -N '' > /dev/null 2> /dev/null
+		check_success $?
+	fi
+	write_message "Starting OpenBSD Secure Shell server..."
+	/usr/sbin/sshd > /dev/null 2> /dev/null
+	check_success $?
+}
+
+stop()
+{
+	write_message "Stopping OpenBSD Secure Shell server..."
+	killall -KILL sshd
+	check_success $?
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		write_message "Use $0 {start|stop|restart}"
+		;;
+esac
+
+
+

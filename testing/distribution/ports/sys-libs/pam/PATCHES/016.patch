@@ -1,0 +1,12 @@
+o Strictly speaking, unnecessary, but clear the entire options structure.
+
+--- Linux-PAM-0.77/modules/pam_cracklib/pam_cracklib.c	2003-06-27 19:02:27.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_cracklib/pam_cracklib.c	2003-06-27 19:03:45.000000000 -0400
+@@ -559,6 +559,7 @@
+ 
+     D(("called."));
+ 
++    memset(&options, 0, sizeof(options));
+     options.retry_times = CO_RETRY_TIMES;
+     options.diff_ok = CO_DIFF_OK;
+     options.diff_ignore = CO_DIFF_IGNORE;

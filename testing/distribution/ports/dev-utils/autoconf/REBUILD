@@ -1,0 +1,25 @@
+#
+# package build script for autoconf
+#
+%author: jfried
+%package-group: dev-util -
+%sub-group: autoconf -
+%required: ("m4 >=1.4", "gawk >=3.1.3", "sed >=4.0.9", "bash >=2.05b", "grep >=2.5.1")
+%build-required: ()
+%description: The autoconf package contains programs for producing shell scripts that can automatically configure sourcecode.
+%name: autoconf
+%version: 2.59
+%build: $DATA
+%sourcefile: autoconf-2.59.tar.bz2
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make
+lip_install DESTDIR=%install_dir
+# -- execution of post-install-scritps
+__DATA__
+

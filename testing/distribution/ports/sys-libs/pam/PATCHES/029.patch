@@ -1,0 +1,26 @@
+o Look under the arch-specific library directory, and error out if we find
+  nothing, to require the dictionaries to be found for a successful build.
+--- Linux-PAM-0.77/configure.in	2003-06-30 22:38:44.000000000 -0400
++++ Linux-PAM-0.77/configure.in	2003-06-30 22:42:48.000000000 -0400
+@@ -260,8 +260,10 @@
+ 
+ dnl Look for cracklib dictionary
+ AC_MSG_CHECKING(path to cracklib dictionary)
+-DICT_DIR_CANDIDATES="/usr/lib /usr/share/dict /usr/share/lib \
+-  /usr/local/lib /usr/local/share/lib"
++lib=`basename "$libdir"`
++DICT_DIR_CANDIDATES="/usr/$lib /usr/share/dict /usr/share/$lib \
++  /usr/local/$lib /usr/local/share/$lib"
++unset lib
+ DICT_FILE_CANDIDATES="pw_dict cracklib_dict"
+ CRACKLIB_DICTPATH=""
+ for d in $DICT_DIR_CANDIDATES ; do
+@@ -276,7 +278,7 @@
+       done
+ done
+ if test -z "$CRACKLIB_DICTPATH" ; then
+-      AC_MSG_RESULT(none found)
++      AC_MSG_ERROR(none found)
+ else
+       AC_MSG_RESULT($CRACKLIB_DICTPATH)
+ fi

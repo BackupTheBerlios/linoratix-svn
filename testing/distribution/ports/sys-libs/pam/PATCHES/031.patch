@@ -1,0 +1,95 @@
+--- Linux-PAM-0.77/modules/pam_unix/support.c	2003-06-30 22:44:10.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/support.c	2003-06-30 22:44:10.000000000 -0400
+@@ -125,16 +125,19 @@
+ 	curr_tty = ttyname(0);
+ 	if (curr_tty != NULL) {
+ 		D(("PAM_getlogin ttyname: %s", curr_tty));
+-		curr_tty += 5;
+-		setutent();
+-		strncpy(line.ut_line, curr_tty, sizeof(line.ut_line));
+-		line.ut_line[sizeof(line.ut_line) - 1] = '\0';
+-		if ((ut = getutline(&line)) != NULL) {
+-			strncpy(curr_user, ut->ut_user, sizeof(ut->ut_user));
+-			curr_user[sizeof(curr_user) - 1] = '\0';
+-			retval = curr_user;
++		/* utmp/utmpx only lists ttys under /dev. */
++		if (strncmp(curr_tty, "/dev/", 5) == 0) {
++			curr_tty += 5;
++			setutent();
++			strncpy(line.ut_line, curr_tty, sizeof(line.ut_line));
++			line.ut_line[sizeof(line.ut_line) - 1] = '\0';
++			if ((ut = getutline(&line)) != NULL) {
++				strncpy(curr_user, ut->ut_user, sizeof(ut->ut_user));
++				curr_user[sizeof(curr_user) - 1] = '\0';
++				retval = curr_user;
++			}
++			endutent();
+ 		}
+-		endutent();
+ 	}
+ 	D(("PAM_getlogin retval: %s", retval));
+ 
+--- Linux-PAM-0.77/modules/pam_wheel/pam_wheel.c	2002-07-13 01:48:19.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_wheel/pam_wheel.c	2003-06-30 22:51:50.000000000 -0400
+@@ -23,6 +23,7 @@
+ 
+ #define _BSD_SOURCE
+ 
++#include <security/_pam_macros.h>
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <string.h>
+@@ -31,6 +32,7 @@
+ #include <sys/types.h>
+ #include <pwd.h>
+ #include <grp.h>
++#include <utmp.h>
+ 
+ /*
+  * here, we make a definition for the externally accessible function
+@@ -106,6 +108,36 @@
+      return ctrl;
+ }
+ 
++static char *PAM_getlogin(void)
++{
++	struct utmp *ut, line;
++	char *curr_tty, *retval;
++	static char curr_user[sizeof(ut->ut_user) + 4];
++
++	retval = NULL;
++
++	curr_tty = ttyname(0);
++	if (curr_tty != NULL) {
++		D(("PAM_getlogin ttyname: %s", curr_tty));
++		/* utmp/utmpx only lists ttys under /dev. */
++		if (strncmp(curr_tty, "/dev/", 5) == 0) {
++			curr_tty += 5;
++			setutent();
++			strncpy(line.ut_line, curr_tty, sizeof(line.ut_line));
++			line.ut_line[sizeof(line.ut_line) - 1] = '\0';
++			if ((ut = getutline(&line)) != NULL) {
++				strncpy(curr_user, ut->ut_user, sizeof(ut->ut_user));
++				curr_user[sizeof(curr_user) - 1] = '\0';
++				retval = curr_user;
++			}
++			endutent();
++		}
++	}
++	D(("PAM_getlogin retval: %s", retval));
++
++	return retval;
++}
++
+ static int perform_check(pam_handle_t *pamh, int flags, int ctrl,
+ 			 const char *use_group)
+ {
+@@ -142,7 +174,7 @@
+ 	}
+ 	fromsu = tpwd->pw_name;
+     } else {
+-	fromsu = getlogin();
++	fromsu = PAM_getlogin();
+ 	if (fromsu) {
+ 	    tpwd = getpwnam(fromsu);
+ 	}

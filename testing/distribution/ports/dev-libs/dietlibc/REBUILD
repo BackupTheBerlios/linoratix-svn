@@ -1,0 +1,28 @@
+#
+# package build script for dietlibc
+#
+%author: jfried
+%package-group: dev-libs -
+%sub-group: dietlibc -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: A minimal libc
+%name: libdietlibc
+%version: 0.27
+%build: $DATA
+%sourcefile: dietlibc-0.27.tar.bz2
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_patch -Np1 -i %patch_dir/0.24-dirent-prototype.patch
+lip_patch -p0 < %patch_dir/gcc-33-r2.patch
+lip_patch -Np1 -i %patch_dir/dietlibc-0.26-ssp.patch
+lip_sed -i -e "s:^prefix.*:prefix=/usr/diet:" Makefile
+lip_make
+lip_install prefix=%install_dir/usr/diet
+# -- execution of post-install-scritps
+__DATA__
+

@@ -1,0 +1,41 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/03 20:19:17-08:00 rusty@rustcorp.com.au 
+#   [PATCH] netfilter: Fix cleanup in ipt_recent should ipt_registrater_match error
+#   
+#   When ipt_registrater_match() fails, ipt_recent doesn't remove its proc
+#   entry.  Found by nfsim.
+#   
+#   Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# net/ipv4/netfilter/ipt_recent.c
+#   2005/01/03 15:49:17-08:00 rusty@rustcorp.com.au +5 -2
+#   netfilter: Fix cleanup in ipt_recent should ipt_registrater_match error
+# 
+diff -Nru a/net/ipv4/netfilter/ipt_recent.c b/net/ipv4/netfilter/ipt_recent.c
+--- a/net/ipv4/netfilter/ipt_recent.c	2005-01-04 18:49:55 -08:00
++++ b/net/ipv4/netfilter/ipt_recent.c	2005-01-04 18:49:55 -08:00
+@@ -959,7 +959,7 @@
+ /* Kernel module initialization. */
+ static int __init init(void)
+ {
+-	int count;
++	int err, count;
+ 
+ 	printk(version);
+ #ifdef CONFIG_PROC_FS
+@@ -983,7 +983,10 @@
+ 	if(debug) printk(KERN_INFO RECENT_NAME ": ip_list_hash_size: %d\n",ip_list_hash_size);
+ #endif
+ 
+-	return ipt_register_match(&recent_match);
++	err = ipt_register_match(&recent_match);
++	if (err)
++		remove_proc_entry("ipt_recent", proc_net);
++	return err;
+ }
+ 
+ /* Kernel module destruction. */

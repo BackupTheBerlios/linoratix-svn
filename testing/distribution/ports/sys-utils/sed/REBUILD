@@ -1,0 +1,25 @@
+#
+# package build script for sed
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: sed -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: A stream editor.
+%name: sed
+%version: 4.0.9
+%build: $DATA
+%sourcefile: sed-4.0.9.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --bindir=/bin --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make
+lip_install DESTDIR=%install_dir
+# -- execution of post-install-scritps
+__DATA__
+

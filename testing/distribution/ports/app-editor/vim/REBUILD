@@ -1,0 +1,31 @@
+#
+#	Example File for vim-6.3.tar.bz2
+#
+%author: jfried
+%package-group: app-editor -
+%sub-group: vim -
+%required: ("libglibc >=2.3.3")
+%build-required: ("libexpat >=1.95.6", "libgettext >=0.14.1", "libglib1 >=1.2.10", "libiconv >=1.9.1", "perl >=5.8.3", "pkgconfig >=0.15.0")
+%description: The VIM Editor
+%name: vim
+%version: 6.3
+%build: $DATA
+%sourcefile: vim-6.3.tar.bz2
+%source-url: ("ftp://ftp.vim.org/pub/vim/unix/")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib
+lip_make
+lip_install DESTDIR=%install_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__

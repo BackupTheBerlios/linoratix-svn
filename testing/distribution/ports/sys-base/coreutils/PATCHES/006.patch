@@ -1,0 +1,56 @@
+diff -urN coreutils-5.1.2.orig/src/Makefile.am coreutils-5.1.2/src/Makefile.am
+--- coreutils-5.1.2.orig/src/Makefile.am	2004-01-12 16:00:22.000000000 -0800
++++ coreutils-5.1.2/src/Makefile.am	2004-02-04 21:25:12.000000000 -0800
+@@ -32,10 +32,10 @@
+ # replacement functions defined in libfetish.a.
+ LDADD = ../lib/libfetish.a $(LIBINTL) ../lib/libfetish.a
+ 
+-dir_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME)
+-ls_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME)
++dir_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME) -lncurses
++ls_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME) -lncurses
+ shred_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME)
+-vdir_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME)
++vdir_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME) -lncurses
+ 
+ ## If necessary, add -lm to resolve use of pow in lib/strtod.c.
+ sort_LDADD = $(LDADD) $(POW_LIB)
+diff -urN coreutils-5.1.2.orig/src/Makefile.in coreutils-5.1.2/src/Makefile.in
+--- coreutils-5.1.2.orig/src/Makefile.in	2004-01-23 07:56:48.000000000 -0800
++++ coreutils-5.1.2/src/Makefile.in	2004-02-04 21:24:06.000000000 -0800
+@@ -834,10 +834,10 @@
+ # But libfetish.a must also follow $(LIBINTL), since libintl uses
+ # replacement functions defined in libfetish.a.
+ LDADD = ../lib/libfetish.a $(LIBINTL) ../lib/libfetish.a
+-dir_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME)
+-ls_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME)
++dir_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME) -lncurses
++ls_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME) -lncurses
+ shred_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME)
+-vdir_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME)
++vdir_LDADD = $(LDADD) $(LIB_CLOCK_GETTIME) -lncurses
+ sort_LDADD = $(LDADD) $(POW_LIB)
+ 
+ # for clock_gettime
+diff -urN coreutils-5.1.2.orig/src/ls.c coreutils-5.1.2/src/ls.c
+--- coreutils-5.1.2.orig/src/ls.c	2004-02-04 21:22:32.000000000 -0800
++++ coreutils-5.1.2/src/ls.c	2004-02-04 21:24:06.000000000 -0800
+@@ -90,6 +90,7 @@
+ 
+ #include "system.h"
+ #include <fnmatch.h>
++#include <termcap.h>
+ 
+ #include "acl.h"
+ #include "argmatch.h"
+@@ -1592,7 +1593,9 @@
+ 
+ 	    print_with_color = (i == color_always
+ 				|| (i == color_if_tty
+-				    && isatty (STDOUT_FILENO)));
++				    && isatty (STDOUT_FILENO))
++				    && tgetent(NULL, getenv("TERM")) > 0
++				    && tgetstr("md", NULL) > 0);
+ 
+ 	    if (print_with_color)
+ 	      {

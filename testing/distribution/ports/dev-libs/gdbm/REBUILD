@@ -1,0 +1,28 @@
+#
+# package build script for gdbm
+#
+%author: jfried
+%package-group: dev-libs -
+%sub-group: gdbm -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: The GDBM package contains the GNU Database Manager. This is useful for database routines that use extendible hashing.
+%name: libgdbm
+%version: 1.8.3
+%build: $DATA
+%sourcefile: gdbm-1.8.3.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man
+lip_make
+lip_export prefix="%install_dir"
+lip_install BINOWN=root BINGRP=root INSTALL_ROOT=%install_dir
+lip_make BINOWN=root BINGRP=root install-compat INSTALL_ROOT=%install_dir
+# -- execution of post-install-scritps 
+__DATA__
+
+

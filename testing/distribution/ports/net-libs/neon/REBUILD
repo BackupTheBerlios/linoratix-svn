@@ -1,0 +1,28 @@
+#
+#	Example File for neon-0.24.6.tar.gz
+#
+%author: jfried
+%package-group: net-libs -
+%sub-group: neon -
+%required: ("libopenssl >=0.9.7c")
+%description: HTTP and WebDAV client library
+%name: libneon
+%version: 0.24.7
+%build: $DATA
+%sourcefile: neon-0.24.7.tar.gz
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib
+lip_make
+lip_install DESTDIR=%install_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__

@@ -1,0 +1,11 @@
+--- ./src/touch.c.kk	2003-02-13 15:00:29.000000000 +0100
++++ ./src/touch.c	2003-02-13 15:02:09.000000000 +0100
+@@ -165,7 +165,7 @@
+ 	 or FILE is inaccessible or a directory, so we have to use stat.  */
+       if (fd != -1 ? fstat (fd, &sbuf) : stat (file, &sbuf))
+ 	{
+-	  if (open_errno)
++      if (open_errno && open_errno != EISDIR)
+ 	    error (0, open_errno, _("creating %s"), quote (file));
+ 	  else
+ 	    {

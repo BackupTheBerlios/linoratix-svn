@@ -1,0 +1,30 @@
+#
+# build script for fcron
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: fcron -
+%required: ("libglibc >=2.3.3", "libpam >=0.77", "system-logger >=0", "ssmtp >=2.61", "libselinux >=1.14")
+%build-required: ()
+%description: cronjo utility
+%name: fcron
+%version: 2.9.4
+%build: $DATA
+%sourcefile: fcron-2.9.4.src.tar.gz
+%source-url: ("http://fcron.free.fr/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --with-answer-all=no
+lip_make
+lip_install DESTDIR=%install_dir
+lip_mkdir %install_dir/etc/crontab -p
+lip_mkdir %install_dir/etc/pam.d -p
+lip_get_file fcron.pam %install_dir/etc/pam.d/fcron
+lip_get_file fcrontab.pam %install_dir/etc/pam.d/fcrontab
+# prefix=%install_dir/usr libdir=%install_dir/usr/lib infodir=%install_dir/usr/share/info mandir=%install_dir/usr/share/man includedir=%install_dir/usr/include
+# -- execution of post-install-scritps
+__DATA__
+

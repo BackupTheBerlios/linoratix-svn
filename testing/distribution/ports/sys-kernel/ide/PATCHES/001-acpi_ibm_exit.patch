@@ -1,0 +1,29 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/27 10:24:28-08:00 arjan@infradead.org 
+#   [PATCH] drivers/acpi/ibm_acpi.o .init.text refers to .exit.text
+#   
+#   the ibm_acpi.c driver references acpi_ibm_exit() from it's __init function,
+#   which means the exit function isn't allowed to be __exit since __exit
+#   functions are not part of vmlinux while __init functions are.
+#   
+#   Signed-off-by: Arjan van de Ven <arjan@infradead.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# drivers/acpi/ibm_acpi.c
+#   2004/12/27 02:20:31-08:00 arjan@infradead.org +1 -1
+#   drivers/acpi/ibm_acpi.o .init.text refers to .exit.text
+# 
+diff -Nru a/drivers/acpi/ibm_acpi.c b/drivers/acpi/ibm_acpi.c
+--- a/drivers/acpi/ibm_acpi.c	2005-01-04 17:37:08 -08:00
++++ b/drivers/acpi/ibm_acpi.c	2005-01-04 17:37:08 -08:00
+@@ -1168,7 +1168,7 @@
+ #define IBM_PARAM(feature) \
+ 	module_param_call(feature, set_ibm_param, NULL, NULL, 0)
+ 
+-static void __exit acpi_ibm_exit(void)
++static void acpi_ibm_exit(void)
+ {
+ 	int i;
+ 

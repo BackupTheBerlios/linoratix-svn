@@ -1,0 +1,40 @@
+#
+# package build script pciutils
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: pciutils -
+%required: ("libglibc >=2.3.3","which >=2.14")
+%build-required: ()
+%description: Various utilities dealing with the PCI bus
+%name: pciutils
+%version: 2.1.11
+%build: $DATA
+%sourcefile: pciutils-2.1.11.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_patch -Np1 -i %patch_dir/pcimodules-pciutils-2.1.11.diff
+lip_patch -Np1 -i %patch_dir/2.1.11-sysfs.patch
+lip_other ./update-pciids.sh
+lip_make PREFIX=/usr lib/config.h
+lip_cd %compile_dir/lib
+lip_sed -i "s:/usr/share/pci.ids:/usr/share/misc/pci.ids:" config.h
+lip_cd %compile_dir
+lip_make PREFIX=/usr
+lip_sed -i "s:/usr/share/pci.ids:/usr/share/misc/pci.ids:" update-pciids
+lip_sed -i "s:/usr/share/pci.ids:/usr/share/misc/pci.ids:" lspci.8
+lip_sed -i "s:/usr/share/pci.ids:/usr/share/misc/pci.ids:" update-pciids.8
+lip_install PREFIX=%install_dir/usr MANDIR=%man_dir
+lip_mkdir %install_dir/usr/share/misc -p
+lip_mkdir -p %install_dir/usr/lib
+lip_cp lib/libpci.a %install_dir/usr/lib
+lip_mkdir -p %install_dir/usr/include/pci
+lip_cp lib/*.h %install_dir/usr/include/pci
+lip_mv %install_dir/usr/share/pci.ids %install_dir/usr/share/misc
+# -- execution of post-install-scritps
+__DATA__
+

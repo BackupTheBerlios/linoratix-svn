@@ -1,0 +1,33 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/30 15:21:16-08:00 acme@conectiva.com.br 
+#   [PATCH] Fix net/core/sock.o build failure
+#   
+#   This fixes a build failure that happens when you don't select IPV6.
+#   
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# include/linux/ipv6.h
+#   2004/12/29 14:22:45-08:00 acme@conectiva.com.br +1 -1
+#   Fix net/core/sock.o build failure
+# 
+diff -Nru a/include/linux/ipv6.h b/include/linux/ipv6.h
+--- a/include/linux/ipv6.h	2005-01-04 18:11:40 -08:00
++++ b/include/linux/ipv6.h	2005-01-04 18:11:40 -08:00
+@@ -273,6 +273,7 @@
+ 	struct ipv6_pinfo inet6;
+ };
+ 
++#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
+ static inline struct ipv6_pinfo * inet6_sk(const struct sock *__sk)
+ {
+ 	return inet_sk(__sk)->pinet6;
+@@ -283,7 +284,6 @@
+ 	return &((struct raw6_sock *)__sk)->raw6;
+ }
+ 
+-#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
+ #define __ipv6_only_sock(sk)	(inet6_sk(sk)->ipv6only)
+ #define ipv6_only_sock(sk)	((sk)->sk_family == PF_INET6 && __ipv6_only_sock(sk))
+ #else
