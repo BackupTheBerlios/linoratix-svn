@@ -858,8 +858,8 @@ sub get_name_from_rebuild
 		close(FH);
 		foreach my $zeile (@inhalt)
 		{
-			$zeile =~ m/^\%name: (.*?)$/;
-			if($1 eq $WANTED_PACKAGE)
+			$zeile =~ m/^\%(name|provides): (.*?)$/;
+			if($2 eq $WANTED_PACKAGE)
 			{
 				chomp($WANTED_PACKAGE_PATH = `pwd`);
 				$WANTED_PACKAGE_PATH=~s/$ENV{"PORTS_PATH"}//;

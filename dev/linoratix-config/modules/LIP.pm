@@ -62,7 +62,7 @@ sub help
 	
 	$self->message("linoratix-config $BASE_VERSION\n");
 	$self->message("	module: LIP $MOD_VERSION\n\n");
-	print "	--install <package>			install package\n";
+	print "	--install <package> [--fake]			install package\n";
 	print "	--remove <package/version>			remove package\n";
 	print "	--upgrade				upgrades all installed packages to the newest\n						available version.\n";
 	print "	--policy <package>			show package policy\n";
@@ -209,19 +209,33 @@ sub _install
 		. "/$pkg-$version.lip";
 
 	# und das hauptpacket installieren
-	if($self->_extract_files($version, $file, $package_to_install)) {
+	unless($self->option("fake"))
+	{
+		if($self->_extract_files($version, $file, $package_to_install)) {
 
-		# und in die liste der installierten packete aufnehmen
+			# und in die liste der installierten packete aufnehmen
+			$installed_packages->{$group}->{$subgroup}->{$pkg} = 
+				$package_to_install;
+			$installed_packages->{$group}->{$subgroup}->{$pkg}->{$version}->{"__installed-date"} = 
+				time();
+			$base->save_installed_packages($installed_packages);
+		
+			$self->message("$package successfully installed.\n");
+		} else {
+			$self->error("error installing $package");
+			return 2;
+		}
+	}
+	else
+	{
+		$self->warning("Only fake install...\n");
 		$installed_packages->{$group}->{$subgroup}->{$pkg} = 
 			$package_to_install;
 		$installed_packages->{$group}->{$subgroup}->{$pkg}->{$version}->{"__installed-date"} = 
 			time();
 		$base->save_installed_packages($installed_packages);
-	
+		
 		$self->message("$package successfully installed.\n");
-	} else {
-		$self->error("error installing $package");
-		return 2;
 	}
 
 	return 1;

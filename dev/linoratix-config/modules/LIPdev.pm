@@ -71,7 +71,7 @@ sub help
 	$self->message("linoratix-config $BASE_VERSION\n");
 	$self->message("	module: LIPdev $MOD_VERSION\n\n");
 	print "	--rebuild <package> [--spec buildfile]	rebuild a Linoratix package from source\n";
-	print "	--ports-build <package> [--install]		rebuild from ports\n";
+	print "	--ports-build <package> [--install [--fake]]		rebuild from ports\n";
 	print "	--rebuild-package-cache [path]			rebuilds package cache for path\n";
 	print "	--help						display help message\n\n";
 }
@@ -147,6 +147,12 @@ sub read_spec_file
 		}
 	}
 
+	if($base->get_in_package_by_path_and_version($build_script{"name"}, $build_script{"version"}))
+	{
+		$self->warning("Package $build_script{name}, $build_script{version} allready installed.\n");
+		exit 2;
+	}
+
 	# REQUIRED
 	if($build_script{"required"} ne "undef") {
 		unless($build_script{"required"} =~ m/^\(/) {
@@ -208,12 +214,59 @@ sub read_spec_file
 			my $package_path = $base->find_package_path_in_ports($n);
 			$self->warning("$n, $v not installed. going to do this now!\n");
 			#$self->read_spec_file($ENV{"PORTS_PATH"}."/$package_path/REBUILD");
-			system("linoratix-config --plugin LIPdev --ports-build $package_path");
+			if($self->option("fake"))
+			{
+				system("linoratix-config --plugin LIPdev --ports-build $package_path --install --fake");
+			}
+			else
+			{
+				system("linoratix-config --plugin LIPdev --ports-build $package_path --install");
+			}
 		} else {
 			$self->message("$n, $v already installed. skipping...\n");
 		}
 	}
+	my $count = 0;	
+	foreach my $del (@required)
+	{
+		foreach my $todel (@build_required)
+		{
+			if($todel eq $del)
+			{
+				splice(@required, $count, 1);
+			}
+		}
+		$count++;
+	}
 
+	# danach muessen noch die normalen abhaengikeiten jeprieft werden
+	# aber nur bei der option --install
+	if($self->option("install"))
+	{
+		foreach my $d(@required) 
+		{
+			chomp($d);
+			my($n,$v) = split(/ /, $d);
+			# kucken ob packet installiert + richtige version
+			my $p = $base->_find_in_i_package_dep_by_name($n, $v);
+			unless($p) {	# packet nicht installiert oder ein
+					# falsche version
+				#my $package_path = $base->find_package_by_name($n);
+				my $package_path = $base->find_package_path_in_ports($n);
+				$self->warning("$n, $v not installed. going to do this now!\n");
+				if($self->option("fake"))
+				{
+					system("linoratix-config --plugin LIPdev --ports-build $package_path --install --fake");
+				}
+				else
+				{
+					system("linoratix-config --plugin LIPdev --ports-build $package_path --install");
+				}
+			} else {
+				$self->message("$n, $v already installed. skipping...\n");
+			}
+		}
+	}
 
 	system("rm -rfv /var/cache/lip/mklip ");
 	system("rm -rfv /var/cache/lip/build/* ");
@@ -316,10 +369,22 @@ use File::Find;
 	mkdir("/usr/src/LIPS/BUILDS") unless(-d "/usr/src/LIPS/BUILDS");
 	system("tar cvzf /usr/src/LIPS/BUILDS/" . $build_script{"name"} . "-" . $build_script{"version"} . ".lip * ");
 
+	print "HIER!!";
+	die;
+
 	if($self->option("install"))
 	{
+		print "huhu"; die;
 		$self->message("now installing package: " . $build_script{"name"} . "-" . $build_script{"version"} . "\n");
-		system("linoratix-config --plugin LIP --install /usr/src/LIPS/BUILDS/".$build_script{"version"} . "-" . $build_script{"version"} . ".lip");
+		if($self->option("fake"))
+		{
+			system("linoratix-config --plugin LIP --install /usr/src/LIPS/BUILDS/".$build_script{"name"} . "-" . $build_script{"version"} . ".lip --fake");
+		}
+		else
+		{
+			print "hier"; die;
+			system("linoratix-config --plugin LIP --install /usr/src/LIPS/BUILDS/".$build_script{"name"} . "-" . $build_script{"version"} . ".lip");
+		}
 	}
 
 	$self->message("done.\n\n");
