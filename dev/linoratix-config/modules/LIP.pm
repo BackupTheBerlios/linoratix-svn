@@ -24,6 +24,8 @@ our $base;
 our $pkgdb;
 our @durchlauf;
 
+our $FROM_DB=1;
+
 sub new
 {
 	my $linoratix = shift;
@@ -60,17 +62,17 @@ sub help
 	
 	$self->message("linoratix-config $BASE_VERSION\n");
 	$self->message("	module: LIP $MOD_VERSION\n\n");
-	print "	--install [package]			install package\n";
-	print "	--remove [package/version]			remove package\n";
+	print "	--install <package>			install package\n";
+	print "	--remove <package/version>			remove package\n";
 	print "	--upgrade				upgrades all installed packages to the newest\n						available version.\n";
-	print "	--policy [package]			show package policy\n";
-	print "	--list-files [package]			list all files of a package\n";
+	print "	--policy <package>			show package policy\n";
+	print "	--list-files <package>			list all files of a package\n";
 	print "\n";
-	print "	--search-file [filename]		search a file in the package db\n";
-	print "	--search [string]			search the package db\n";
+	print "	--search-file <filename>		search a file in the package db\n";
+	print "	--search <string>			search the package db\n";
 	print "\n";
-	print "	--prepend --install [package]		display which packages we will install\n";
-	print "	--prepend --remove [package]		display which packages we will remove\n";
+	print "	--prepend --install <package>		display which packages we will install\n";
+	print "	--prepend --remove <package>		display which packages we will remove\n";
 	print "\n";
 	print "	--help					display help message\n\n";
 }
@@ -82,6 +84,8 @@ sub install_by_version
 	my $version = shift;
 	my($group, $subgroup, $pkg) = split(/\//, $package);
 	my $iversion;
+
+	$FROM_DB=1;
 
 	if(!$base->find_in_i_package_dep_by_name($pkg, $version)) {
 		my $p = $base->get_package_by_path($package);
@@ -95,9 +99,26 @@ sub install
 {
 	my $self    = shift;
 	my $package = shift;
-	if(!$package) {
-		$package = $base->find_package_by_name($self->param("install"));
-	} else {
+
+	if(!$package) 
+	{
+		$package = $self->param("install");
+	}
+
+	if(-f "$package" && $package =~ m/\.lip$/)
+	{
+		my @_package = `tar xOzf $package GROUP`;
+		my @_name = `tar xOzf $package NAME`;
+		chomp(@_package);
+		chomp(@_name);
+		my @_ps = split(/\//, $_package[0]);
+		$_ps[0] =~ s/ [!?-]$//;
+		$_ps[1] =~ s/ [!?-]$//;
+		$package = $_ps[0] . "/" . $_ps[1] . "/" . $_name[0];
+		$FROM_DB=0;
+	}
+	else 
+	{
 		$package = $base->find_package_by_name($package);
 	}
 
@@ -110,8 +131,23 @@ sub _install
 	my $self = shift;
 	my $package = shift;
 	my $version = shift;
-	my @versions = $base->get_versions_from_pkg($package);
-	my($group, $subgroup, $pkg) = split(/\//, $package);
+	my @versions = ();
+	my $bin_install = 0;
+	my($group, $subgroup, $pkg);
+	my $bin_pkg = "";
+	#soll ein binaer packet direkt installiert werden
+
+	if(-f $self->param("install") && $FROM_DB eq "0")
+	{
+		$bin_pkg = $self->param("install");
+		chomp(@versions = `tar xzOf $bin_pkg VERSION`);
+		$bin_install = 1;
+	}
+	else
+	{	
+		@versions = $base->get_versions_from_pkg($package);
+		($group, $subgroup, $pkg) = split(/\//, $package);
+	}
 
 	# ueberpruefen ob das aktuelle packet schonmal installiert werden sollte.
 	# z.b. durch falsche eingetragene dependencies (kreis)
@@ -135,9 +171,30 @@ sub _install
 		$self->warning("Package $package, $version allready installed.\n");
 		return 2;
 	}
-	
-	my $package_to_install = $base->get_package_by_path($package);
-	my $deps = $base->get_package_deps($version, $package_to_install);
+	my $package_to_install;
+
+	if($bin_install)
+	{
+		$package_to_install->{$version}->{"__server"} = "file://".dirname($bin_pkg);
+		$package_to_install->{$version}->{"rebuild-url"} = undef;
+		my @_req = `/bin/tar xzOf $bin_pkg REQUIRED`;
+		chomp(@_req);
+		$package_to_install->{$version}->{"required"} = \@_req;
+		my @_files = `/bin/tar xzOf $bin_pkg MANIFEST | grep ^/FILES`;
+		chomp(@_files);
+		$package_to_install->{$version}->{"files"} = \@_files;
+		$package_to_install->{$version}->{"status"} = "-";
+		$package_to_install->{$version}->{"md5"} = "";
+		my @_desc = `/bin/tar xzOf $bin_pkg DESCRIPTION`;
+		chomp(@_desc);
+		$package_to_install->{$version}->{"description"} = \@_desc;
+	}
+	else
+	{
+		$package_to_install = $base->get_package_by_path($package);
+	}
+
+	my $deps = $package_to_install->{$version}->{"required"};
 	foreach my $d (@{$deps}) {
 		chomp($d);
 		my($n,$v) = split(/ /, $d);
@@ -147,15 +204,16 @@ sub _install
 			);
 	}
 	my($group, $subgroup, $pkg) = split(/\//, $package);
-	my $file = $base->get_server_from_package($package, $version)
+	# my $file = $base->get_server_from_package($package, $version)
+	my $file = $package_to_install->{$version}->{"__server"}
 		. "/$pkg-$version.lip";
 
 	# und das hauptpacket installieren
-	if($self->_extract_files($version, $file, $base->get_package_by_path($package))) {
+	if($self->_extract_files($version, $file, $package_to_install)) {
 
 		# und in die liste der installierten packete aufnehmen
 		$installed_packages->{$group}->{$subgroup}->{$pkg} = 
-			$base->get_package_by_path($package);
+			$package_to_install;
 		$installed_packages->{$group}->{$subgroup}->{$pkg}->{$version}->{"__installed-date"} = 
 			time();
 		$base->save_installed_packages($installed_packages);
