@@ -18,9 +18,27 @@ sub _()
 								.  "\n"
 								.  "\n"
 								.  "Drücken Sie CTRL + N um zum nächsten Schritt zu gelangen.",
+		"MSG_TARGET_DISK"				=> "Zielfestplatte",
+		"MSG_DISK"					=> "Festplatte",
+		"MSG_INIT_SETUP"				=> "Bitte warten. Setup untersucht Ihre Hardware...",
+		"MSG_USE_ENTIRE_DISK"				=> "Die ganze Festplatte verwenden.",
+		"MSG_USE_ONLY_FREE_SPACE"			=> "Nur den freien Speicherplatz verwenden.",
+		"MSG_PARTITION_BY_HAND"				=> "Partitionen selber verwalten. (nur für Experten).",
+		"MSG_HOWTO_PARTITION"				=> "Wie soll partitioniert werden?",
+		"MSG_PARTITION_MODI"				=> "Art der Partitionierung",
+		
 		"MNU_FILE"					=> "Datei",
+		
 		"SCR_WELCOME"					=> "Willkommen",
-		"HLP_WELCOME"					=> "Nächster Schritt: Wahl des Installationsziels.",
+		"SCR_TARGET_DISK"				=> "Zeilfestplatte wählen",
+		"SCR_HOWTO_PARTITION"				=> "Wie soll partitioniert werden?",
+		"SCR_PARTITIONING"				=> "Partitionieren",
+		
+		"HLP_TARGET_DISK"				=> "Wählen Sie hier die Festplatte aus auf der Linoratix GNU/Linux installiert"
+								.  "\n"
+								.  "werden soll."
+								.  "\n\n"
+								.  "Danach können Sie die Partitierung bestimmen.",
 	);
 	return $texte{$_[0]};
 }
