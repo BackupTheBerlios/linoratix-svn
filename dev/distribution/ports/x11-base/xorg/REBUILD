@@ -1,0 +1,90 @@
+#
+# example package build script
+#
+%author: ogu
+%package-group: x-base -
+%sub-group: xorg -
+%required: ("libglibc >=2.3.3","libpng >=1.2.5","libexpat >=1.95.6","libfreetype2 >=2.1.9","libfontconfig >=2.2.3")
+%build-required: ()
+%description: A fork of the XFree86 Project with a GPL-compatible license 
+%name: xorg
+%version: 6.8.2
+%build: $DATA
+%sourcefile: X11R6.8.2-src.tar.bz2
+%source-url: ("http://ftp.skynet.be/pub/ftp.x.org/pub/X11R6.8.2/src-single")
+%conflicts: ()
+
+%host_def: $HOST
+
+__DATA__
+lip_extract %sourcefile
+
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_add_file %compile_dir/config/cf/host.def %host_def
+lip_make World
+lip_install DESTDIR=%install_dir
+lip_make install.man DESTDIR=%install_dir
+lip_mkdir -p %install_dir/usr/{bin,lib}
+lip_ln -sf /usr/X11R6/bin %install_dir/usr/bin/X11
+lip_ln -sf /usr/X11R6/lib/X11 %install_dir/usr/lib/X11
+lip_ln -sf /usr/X11R6/include/X11 %install_dir/usr/include/X11
+lip_other echo /usr/X11R6/lib >> %install_dir/etc/ld.so.conf
+# -- execution of post-install-scritps
+__DATA__
+
+
+__HOST__
+
+/* Begin Xorg host.def file */
+
+/* System Related Information.  If you read and configure only one
+ * section then it should be this one.  The Intel architecture defaults are
+ * set for a i686 and higher.  Axp is for the Alpha architecture and Ppc is
+ * for the Power PC.  AMD64 is for the Opteron processor. Note that there have
+ * been reports that the Ppc optimization line causes segmentation faults during
+ * build.  If that happens, try building without the DefaultGcc2PpcOpt line.
+ ***********/
+
+/* #define DefaultGcc2i386Opt -O2 -fno-strength-reduce -fno-strict-aliasing -march=i686 */
+/* #define DefaultGccAMD64Opt -O2 -fno-strength-reduce -fno-strict-aliasing */
+/* #define DefaultGcc2AxpOpt  -O2 -mcpu=ev6 */
+/* #define DefaultGcc2PpcOpt  -O2 -mcpu=750 */
+
+#define HasFreetype2            YES
+#define HasFontconfig           YES
+#define HasExpat                YES
+#define HasLibpng               YES
+#define HasZlib                 YES
+
+/*
+ * Which drivers to build.  When building a static server, each of these
+ * will be included in it.  When building the loadable server each of these
+ * modules will be built.
+ */
+#define XF86CardDrivers         mga glint nv tga s3virge sis rendition \
+                                neomagic i740 tdfx savage \
+                                cirrus vmware tseng trident chips apm \
+                                GlideDriver fbdev i128 \
+                                ati DevelDrivers ark cyrix \
+                                siliconmotion \
+                                vesa vga XF86OSCardDrivers XF86ExtraCardDrivers
+
+
+/*
+ * Select the XInput devices you want by uncommenting this.
+ *
+ **************/
+#define XInputDrivers           mouse keyboard acecad calcomp citron \
+                                digitaledge dmc dynapro elographics \
+                                microtouch mutouch penmount spaceorb summa \
+                                wacom void magictouch aiptek
+
+
+/* Disable everything Xprint related until we get it figured out. */
+
+#define BuildXprint             NO
+
+/* End Xorg host.def file */
+
+__HOST__
