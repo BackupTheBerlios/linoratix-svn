@@ -23,8 +23,16 @@ lip_configure --prefix=/usr --datadir=/usr/share --sysconfdir=/etc --localstated
 lip_make
 lip_install DESTDIR=%install_dir
 
-lip_rm -rf %install_dir/etc/init.d
+lip_mkdir %install_dir/usr/bin -p
+lip_get_file mkvserver %install_dir/usr/bin/mkvserver
+lip_chmod 700 %install_dir/usr/bin/mkvserver
 
+lip_mkdir %install_dir/etc/rc.d
+lip_get_file rc.vprocunhide %install_dir/etc/rc.d/rc.vprocunhide
+lip_get_file rc.vserver %install_dir/etc/rc.d/rc.vserver
+lip_chmod 700 %install_dir/etc/rc.d/*
+
+lip_rm -rf %install_dir/etc/init.d
 
 # -- execution of post-install-scritps
 __DATA__

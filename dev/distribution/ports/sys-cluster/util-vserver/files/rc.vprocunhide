@@ -1,0 +1,38 @@
+#!/bin/sh
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+start() 
+{
+	write_message "Executing vprocunhide for vservers"
+	/usr/lib/util-vserver/vprocunhide
+	check_success $?
+}
+
+stop()
+{
+	write_message "Nothing to stop" warn
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		write_message "Use $0 {start|stop|restart}"
+		;;
+esac
+
+
+

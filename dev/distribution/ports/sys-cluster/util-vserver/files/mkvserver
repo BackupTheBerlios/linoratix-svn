@@ -1,0 +1,105 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+# adjust this to where your packages live
+PKG_SERVER="file:///__files"
+DNSDOMAIN="build.linoratix.com"
+
+if (($# != 3)); then
+  write_message "usage: $0 <server-name> <ip> <gateway>" warn
+  exit 1
+fi
+
+server=$1
+mkdir /vservers/$server
+
+
+write_message "Creating directory structure..."
+	mkdir -p /vservers/$server/{tmp,etc,var,root,proc,sys}
+	mkdir /vservers/$server/etc/conf.d
+	mkdir /vservers/$server/var/cache/lip/ldb -p
+check_success $?
+
+write_message "Adding package server..."
+	linoratix-config --plugin LIPbase --add-server $PKG_SERVER --prefix /vservers/$server >>/var/log/mkvserver.log 2>&1
+check_success $?
+
+write_message "Installing Linoratix..."
+	linoratix-config --plugin LIP --install linoratix-dev --prefix /vservers/$server >>/var/log/mkvserver.log 2>&1
+check_success $?
+
+
+write_message "Copying some config files..."
+	echo -n "   "; write_message "/etc/resolv.conf..."
+		cp /etc/resolv.conf /vservers/$server/etc/
+	check_success $?
+
+	echo -n "   "; write_message "/etc/conf.d/rc.conf..."	
+		cp /etc/conf.d/rc.conf /vservers/$server/etc/conf.d
+	check_success $?
+
+	echo -n "   "; write_message "creating /etc/fstab..."
+		echo "none            /proc   proc    defaults        0 0" > /vservers/$server/etc/fstab
+		echo "none            /sys    sysfs   defaults        0 0" >>/vservers/$server/etc/fstab
+	check_success $?
+
+	echo -n "   "; write_message "creating /etc/hosts..."
+		echo "127.0.0.1	localhost.localdomain	localhost" > /vservers/$server/etc/hosts
+		echo "$2	$server.$DNSDOMAIN	$server" >> /vservers/$server/etc/hosts
+	check_success $?
+
+	echo -n "   "; write_message "creating /etc/conf.d/net.eth0..."
+		echo "IP=$2" > /vservers/$server/etc/conf.d/net.eth0
+		echo "NETMASK=255.255.255.0" >> /vservers/$server/etc/conf.d/net.eth0
+		echo "GATEWAY=$3" >> /vservers/$server/etc/conf.d/net.eth0
+	check_success $?
+	
+	echo -n "   "; write_message "createing /etc/passwd..."
+		echo "root:x:0:0:root:/root:/bin/bash" > /vservers/$server/etc/passwd
+		echo "sshd:x:71:65:SSH daemon:/var/lib/sshd:/bin/false" >> /vservers/$server/etc/passwd
+	check_success $?
+
+	echo -n "   "; write_message "creating /etc/shadow..."
+		echo "root:$1$mFZznblz$ts8FPzt5fuPxTzdWRy63m.:12827:0:10000::::" > /vservers/$server/etc/shadow
+		echo "sshd:!:12541:0:99999:7:::" >> /vservers/$server/etc/shadow
+	check_success $?
+
+write_message "Creating dependency cache..."
+	chroot /vservers/$server/ /sbin/ldconfig
+check_success $?
+
+write_message "Some Linoratix 0.8 Bugfixes..."
+	cd /vservers/$server/bin
+	echo -n "   "; write_message "/bin/whoami..."
+		ln -s ../usr/bin/whoami
+	check_success $?
+	cd $OLDPWD
+
+write_message "Creating config file"
+	echo "$server" > /vservers/$server/etc/HOSTNAME
+	echo "$DNSDOMAIN" > /vservers/$server/etc/dnsdomainname
+#	echo "S_CONTEXT=1" > /etc/vservers/$server.conf
+	echo "IPROOT=$2" >> /etc/vservers/$server.conf
+	echo "IPROOTDEV=eth0" >> /etc/vservers/$server.conf
+	echo "ONBOOT=yes" >> /etc/vservers/$server.conf
+	echo "S_HOSTNAME=$server" >> /etc/vservers/$server.conf
+	echo "S_CAPS=\"CAP_NET_RAW\"" >> /etc/vservers/$server.conf
+	echo "S_START=\"/etc/rc.d/rc.2\"" >> /etc/vservers/$server.conf
+	echo "S_STOP=\"/etc/rc.d/rc.6\"" >> /etc/vservers/$server.conf
+check_success $?
+
+write_message "Creating bootscript..."
+	echo "#!/bin/bash" > /vservers/$server/etc/rc.d/rc
+	echo "/etc/rc.d/rc.2" >> /vservers/$server/etc/rc.d/rc
+	chmod 755 /vservers/$server/etc/rc.d/rc
+check_success $?
+
+write_message " "
+write_message "VSERVER installation finished!"
+write_message " "
+write_message "dont forget to change your vserver's root passwd" warn
+write_message "and check the config file!" warn
+write_message " "
+

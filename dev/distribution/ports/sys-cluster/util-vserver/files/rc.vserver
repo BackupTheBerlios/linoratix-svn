@@ -1,0 +1,56 @@
+#!/bin/sh
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+start() 
+{
+	write_message "Starting vserver..."
+	for server in /etc/vservers/*.conf
+	do
+		. $server
+		if [ "$ONBOOT" = "yes" ]
+		then
+			echo -n "   "; write_message "`basename ${server/\.conf/}`"
+			/usr/sbin/vserver `basename ${server/\.conf/}` start >> /var/log/vserver/`basename ${server/\.conf/}`.start 2>&1
+			check_success $?
+		fi
+	done
+}
+
+stop()
+{
+	write_message "Stopping vserver..."
+	for server in /etc/vservers/*.conf
+	do
+		. $server
+		if [ "$ONBOOT" = "yes" ]
+		then
+			echo -n "   "; write_message "`basename ${server/\.conf/}`"
+			/usr/sbin/vserver `basename ${server/\.conf/}` stop >> /var/log/vserver/`basename ${server/\.conf/}`.stop 2>&1
+			check_success $?
+		fi
+	done
+}
+
+
+case "$1" in 
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		write_message "Use $0 {start|stop|restart}"
+		;;
+esac
+
+
+
