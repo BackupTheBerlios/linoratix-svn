@@ -19,5 +19,11 @@ __DATA__
 lip_extract %sourcefile
 lip_cd %compile_dir
 lip_other ./install.sh %install_dir
-
+lip_mkdir -p %install_dir/var/log
+lip_mkdir -p %install_dir/tmp
+lip_mkdir -p %install_dir/mnt
+lip_mkdir -p %install_dir/var/run
+lip_mkdir -p %install_dir/var/lock
+lip_mkdir -p %install_dir/sys
+lip_other touch %install_dir/var/log/wtmp
 __DATA__
