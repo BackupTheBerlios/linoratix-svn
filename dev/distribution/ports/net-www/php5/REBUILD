@@ -8,9 +8,9 @@
 %build-required: ()
 %description: A high-level scripting language
 %name: php5
-%version: 5.0.3
+%version: 5.0.4
 %build: $DATA
-%sourcefile: php-5.0.3.tar.gz
+%sourcefile: php-5.0.4.tar.gz
 %source-url: ("http://www.php.net/distributions")
 %conflicts: ()
 
