@@ -4,14 +4,14 @@
 %author: jfried
 %package-group: dev-utils -
 %sub-group: libtool -
-%required: ("libglibc >=2.3.4")
+%required: ("libglibc >=2.3.4", "bash >=3.0")
 %build-required: ()
 %description: A shared library tool for developers.
 %name: libtool
-%version: 1.5.10
+%version: 1.5.14
 %build: $DATA
-%sourcefile: libtool-1.5.10.tar.gz
-%source-url: ("ftp://ftp.gnu.org/gnu/libtool/")
+%sourcefile: libtool-1.5.14.tar.gz
+%source-url: ("http://ftp.gnu.org/gnu/libtool")
 
 __DATA__
 lip_extract %sourcefile
