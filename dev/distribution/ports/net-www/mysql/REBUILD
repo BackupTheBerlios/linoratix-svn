@@ -4,7 +4,7 @@
 %author: ogu	
 %package-group: net-www -
 %sub-group: mysql -
-%required: ("libglibc >=2.3.4", "libopenssl >=0.9.7e", "zlib >=1.2.1", "gcc >=3.4.3")
+%required: ("libglibc >=2.3.4", "libopenssl >=0.9.7e", "libzlib >=1.2.1", "gcc3 >=3.4.3", "libreadline >=4.3")
 %build-required: ()
 %description: A fast SQL database server
 %name: mysql
@@ -19,14 +19,18 @@ __DATA__
 lip_extract %sourcefile
 # -- execution of pre-install-scipts
 lip_cd %compile_dir
-# lip_patch %patch_dir/<patchfile>
-#lip_patch -Np1 -i %patch_dir/linuxthreads-2.2.2.patch
-lip_configure --prefix=/usr --disable-dependency-tracking --without-bench --without-debug --enable-assembler --localstatedir=/var/lib/mysql --mandir=/usr/share/man --with-extra-charset=all --with-pthread --with-named-thread-libs=-lpthread
-lip_make
-lip_install DESTDIR=%install_dir
-# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
-#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
-#   oder andere
-# if your not sure READ the MAKEFILE
+
+
+lip_other CPPFLAGS="-D_GNU_SOURCE" ./configure --prefix=/usr --sysconfdir=/etc --libexecdir=/usr/sbin --localstatedir=/srv/mysql --enable-thread-safe-client --enable-assembler --enable-local-infile --with-named-thread-libs=-lpthread --with-unix-socket-path=/var/run/mysql/mysql.sock --without-debug --without-bench --with-readline --mandir=/usr/share/man --infodir=/usr/share/info
+
+lip_make testdir=/usr/lib/mysql/mysql-test
+
+lip_mkdir -p %install_dir/usr/lib
+lip_cd %install_dir/usr/lib
+lip_ln -sf mysql/libmysqlclient{,_r}.so* .
+
+lip_cd %compile_dir
+lip_install testdir=/usr/lib/mysql/mysql-test DESTDIR=%install_dir
+
 # -- execution of post-install-scripts
 __DATA__

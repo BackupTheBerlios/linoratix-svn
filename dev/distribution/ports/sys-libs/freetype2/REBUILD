@@ -1,11 +1,11 @@
 #
-#rebuild file for freetype2.1.9	
+#rebuild file for freetype2.1.9
 #
 %author: ogu
 %package-group: sys-libs -
 %sub-group: freetype -
-%required: ("libglibc >=2.3.3", "zlib >=1.2.1")
-%build-required: () 
+%required: ("libglibc >=2.3.3", "libzlib >=1.2.1")
+%build-required: ()
 %description: TrueType font rendering library (v2)
 %name: libfreetype2
 %version: 2.1.9
