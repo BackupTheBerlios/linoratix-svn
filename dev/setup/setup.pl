@@ -886,9 +886,11 @@ sub dialog_6
 		# alles in $setup_config speichern
 		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}1"}->{"format"} = 1;
 		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}1"}->{"mountpoint"} = "/boot";
+		$setup_config->{"boot-partition"} = "$setup_config->{target_disk}1";
 
 		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}2"}->{"format"} = 1;
 		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}2"}->{"mountpoint"} = "/";
+		$setup_config->{"root-partition"} = "$setup_config->{target_disk}2";
 
 		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}3"}->{"format"} = 1;
 		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}3"}->{"mountpoint"} = "/home";
@@ -989,6 +991,8 @@ sub dialog_6
 			{
 				$w{6}->getobj('progress_partition')->pos(2);
 				$w{6}->getobj('progress_label')->text(_("MSG_PART_FORMAT_ROOT"));
+				$setup_config->{"root-partition"} = $val;
+				$setup_config->{"root-partition"} =~ s:^/dev/::;	# hier sollte kein /dev/ drin stehn
 				$w{6}->draw;
 			}
 
@@ -1380,7 +1384,7 @@ sub dialog_10
 	close(FH);
 	
 	system("chroot /mnt/root /sbin/ldconfig");
-	system("ln -sf /boot /mnt/root/boot");
+	system("cd /mnt/root/boot; ln -sf . boot");
 	system("chroot /mnt/root /usr/sbin/grub-install --no-floppy hd0 > /dev/null");
 	
 	$w{10}->getobj('mbr_progress')->pos($_p);
@@ -1607,6 +1611,9 @@ sub dialog_14
 	open(FH, ">/mnt/root/root/setup.dump");
 		print FH Dumper($setup_config);
 	close(FH);
+	
+	# nur nne kleiner bugfix... sollte in das packet uebernommen werden...
+	system("mv /mnt/root/usr/bin/whoami /mnt/root/bin");
 	
 	system("sync; sync");
 	system("umount /mnt/root/*");
