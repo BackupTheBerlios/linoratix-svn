@@ -1312,9 +1312,11 @@ sub dialog_10
 	open(GRUB, ">/mnt/root/boot/grub/menu.lst");
 	print GRUB "timeout 10\ndefault 0\n\n";
 	
-	#print GRUB "title Linoratix 0.8\n";
-	#print GRUB "kernel " . convert_to_grub();
-	# hda2 in grub => hd wegnehmen ascii wert von a - (ascii a) = 0 , 2-1 = (hd0,1)
+	print GRUB "title Linoratix 0.8\n";
+	print GRUB "root " . convert_to_grub($setup_config->{"boot-partition"}) . "\n";
+	print GRUB "kernel /bzImage-XXX root=/dev/" . $setup_config->{"root-partition"} . "\n\n";
+	# <toactive> ^^^^   das richtige kernel image
+	
 	
 	foreach my $part (@partitions)
 	{
@@ -1330,8 +1332,10 @@ sub dialog_10
 			|| $fs[0] eq "fat16"
 			|| $fs[0] eq "fat12")
 		{
-			# windows eintrag in mbr
-			
+			# windows eintrag in grub
+			print GRUB "title Windows ($fp$id)\n";
+			print GRUB "rootnoverify " . convert_to_grub($fp.$id) . "\n";
+			print GRUB "makeactive\nchainloader +1\n\n";
 		}
 	}
 }
