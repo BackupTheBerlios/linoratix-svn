@@ -1,0 +1,266 @@
+--- util-linux-2.11y/login-utils/Makefile.selinux	2001-09-29 14:11:24.000000000 -0400
++++ util-linux-2.11y/login-utils/Makefile	2003-07-09 10:56:36.284260520 -0400
+@@ -48,6 +48,12 @@ PAM=-lpam -ldl -lpam_misc
+ PAMFL=-DUSE_PAM=1
+ endif
+ 
++ifeq "$(HAVE_SELINUX)" "yes"
++CFLAGS += -DWITH_SELINUX=1 -g
++SELINUXLLIB=-lselinux
++SELINUXOBJS=selinux_utils.o
++endif
++
+ ifeq "$(HAVE_SHADOW)" "no"
+ ifeq "$(HAVE_PAM)" "no"
+ ifeq "$(HAVE_PASSWD)" "no"
+@@ -96,18 +102,18 @@ shutdown.o simpleinit.o: $(LIB)/linux_re
+ wall.o: ttymsg.h $(LIB)/carefulputc.h
+ 
+ agetty: agetty.o $(LIB)/xstrncpy.o
+-chfn: chfn.o islocal.o setpwnam.o $(LIB)/env.o $(LIB)/xstrncpy.o
+-	$(CC) $(LDFLAGS) -o $@ $^ $(CRYPT) $(PAM)
+-chsh: chsh.o islocal.o setpwnam.o $(LIB)/env.o
+-	$(CC) $(LDFLAGS) -o $@ $^ $(CRYPT) $(PAM)
++chfn: chfn.o islocal.o setpwnam.o $(SELINUXOBJS) $(LIB)/env.o $(LIB)/xstrncpy.o
++	$(CC) $(LDFLAGS) -o $@ $^ $(CRYPT) $(PAM) $(SELINUXLLIB)
++chsh: chsh.o islocal.o setpwnam.o $(SELINUXOBJS) $(LIB)/env.o
++	$(CC) $(LDFLAGS) -o $@ $^ $(CRYPT) $(PAM) $(SELINUXLLIB)
+ last: last.o
+ 
+ ifeq "$(HAVE_PAM)" "yes"
+ login: login.o $(LIB)/setproctitle.o $(LIB)/xstrncpy.o
+-	$(CC) $(LDFLAGS) -o $@ $^ $(CRYPT) $(PAM)
++	$(CC) $(LDFLAGS) -o $@ $^ $(CRYPT) $(PAM) $(SELINUXLLIB)
+ else
+ login: login.o $(LIB)/xstrncpy.o $(LIB)/setproctitle.o checktty.o 
+-	$(CC) $(LDFLAGS) -o $@ $^ $(CRYPT) 
++	$(CC) $(LDFLAGS) -o $@ $^ $(CRYPT) $(SELINUXLLIB)
+ endif
+ 
+ mesg: mesg.o $(ERR_O)
+@@ -124,6 +130,7 @@ initctl: initctl.o
+ 	$(CC) $(LDFLAGS) -o $@ $^
+ 
+ vipw: vipw.o $(LIB)/xstrncpy.o
++	$(CC) $(LDFLAGS) -o $@ $^ $(SELINUXLLIB)
+ 
+ newgrp.o: $(LIB)/pathnames.h
+ 	$(CC) -c $(CFLAGS) $(PAMFL) newgrp.c 
+--- util-linux-2.11y/login-utils/chfn.c.selinux	2003-07-09 10:56:35.030451128 -0400
++++ util-linux-2.11y/login-utils/chfn.c	2003-07-09 10:56:36.287260064 -0400
+@@ -40,6 +40,12 @@
+ #include "nls.h"
+ #include "env.h"
+ 
++#ifdef WITH_SELINUX
++#include <selinux/selinux.h>
++#include <selinux/av_permissions.h>
++#include "selinux_utils.h"
++#endif
++
+ #if REQUIRE_PASSWORD && USE_PAM
+ #include <security/pam_appl.h>
+ #include <security/pam_misc.h>
+@@ -136,6 +142,27 @@ int main (int argc, char **argv) {
+        exit(1);
+     }
+ 
++#ifdef WITH_SELINUX
++    if (is_selinux_enabled()) {
++      if(uid == 0) {
++	if (checkAccess(oldf.username,PASSWD__CHFN)!=0) {
++	  security_context_t user_context;
++	  if (getprevcon(&user_context) < 0)
++	    user_context=(security_context_t) strdup(_("Unknown user context"));
++	  fprintf(stderr, _("%s: %s is not authorized to change the finger info of %s\n"),
++		  whoami, user_context, oldf.username);
++	  freecon(user_context);
++	  exit(1);
++	}
++      }
++      if (setupDefaultContext("/etc/passwd") != 0) {
++	fprintf(stderr,_("%s: Can't set default context for /etc/passwd"),
++		whoami);
++	exit(1);
++      }
++    }
++#endif
++
+     /* Reality check */
+     if (uid != 0 && uid != oldf.pw->pw_uid) {
+ 	errno = EACCES;
+--- util-linux-2.11y/login-utils/vipw.c.selinux	2001-10-20 03:23:57.000000000 -0400
++++ util-linux-2.11y/login-utils/vipw.c	2003-07-09 13:18:56.581937928 -0400
+@@ -67,6 +67,10 @@ static char version_string[] = "vipw 1.4
+ #include "xstrncpy.h"
+ #include "nls.h"
+ 
++#ifdef WITH_SELINUX
++#include <selinux/selinux.h>
++#endif
++
+ #define FILENAMELEN 67
+ 
+ char *progname;
+@@ -189,6 +193,24 @@ pw_unlock(void) {
+ 	sprintf(tmp, "%s%s", orig_file, ".OLD");
+ 	unlink(tmp);
+ 	link(orig_file, tmp);
++
++#ifdef WITH_SELINUX
++	if (is_selinux_enabled()) {
++	  security_context_t passwd_context=NULL;
++	  int ret=0;
++	  if (getfilecon(orig_file,&passwd_context) < 0) {
++	    (void) fprintf(stderr,_("%s: Can't get context for %s"),progname,orig_file);
++	    pw_error(orig_file, 1, 1);
++	  }
++	  ret=setfilecon(tmp_file,passwd_context);
++	  freecon(passwd_context);
++	  if (ret!=0) {
++	    (void) fprintf(stderr,_("%s: Can't set context for %s"),progname,tmp_file);
++	    pw_error(tmp_file, 1, 1);
++	  }
++	}
++#endif
++
+ 	if (rename(tmp_file, orig_file) == -1) {
+ 		int errsv = errno;
+ 		fprintf(stderr, 
+@@ -266,7 +288,9 @@ edit_file(int is_shadow)
+ 
+ 	if (stat(tmp_file, &begin))
+ 		pw_error(tmp_file, 1, 1);
++
+ 	pw_edit(0);
++
+ 	if (stat(tmp_file, &end))
+ 		pw_error(tmp_file, 1, 1);
+ 	if (begin.st_mtime == end.st_mtime) {
+@@ -281,6 +305,7 @@ edit_file(int is_shadow)
+ 		chmod(tmp_file, 0400);
+ #endif
+ 	pw_unlock();
++
+ }
+ 
+ int main(int argc, char *argv[]) {
+--- util-linux-2.11y/login-utils/chsh.c.selinux	2002-03-08 17:59:30.000000000 -0500
++++ util-linux-2.11y/login-utils/chsh.c	2003-07-09 10:56:36.289259760 -0400
+@@ -47,6 +47,12 @@
+ #include <security/pam_misc.h>
+ #endif
+ 
++#ifdef WITH_SELINUX
++#include <selinux/selinux.h>
++#include <selinux/av_permissions.h>
++#include "selinux_utils.h"
++#endif
++
+ typedef unsigned char boolean;
+ #define false 0
+ #define true 1
+@@ -121,6 +127,27 @@ main (int argc, char *argv[]) {
+        exit(1);
+     }
+ 
++#ifdef WITH_SELINUX
++    if (is_selinux_enabled()) {
++      if(uid == 0) {
++	if (checkAccess(pw->pw_name,PASSWD__CHSH)!=0) {
++	  security_context_t user_context;
++	  if (getprevcon(&user_context) < 0)
++	    user_context=(security_context_t) strdup(_("Unknown user context"));
++	  fprintf(stderr, _("%s: %s is not authorized to change the shell of %s\n"),
++		  whoami, user_context, pw->pw_name);
++	  freecon(user_context);
++	  exit(1);
++	}
++      }
++      if (setupDefaultContext("/etc/passwd") != 0) {
++	fprintf(stderr,_("%s: Can't set default context for /etc/passwd"),
++		whoami);
++	exit(1);
++      }
++    }
++#endif
++
+     oldshell = pw->pw_shell;
+     if (!oldshell[0]) oldshell = "/bin/sh";
+ 
+--- /dev/null	2003-01-30 05:24:37.000000000 -0500
++++ util-linux-2.11y/login-utils/selinux_utils.h	2003-07-09 10:56:36.289259760 -0400
+@@ -0,0 +1,2 @@
++extern int checkAccess(char *name,int access);
++extern int setupDefaultContext(char *orig_file);
+--- /dev/null	2003-01-30 05:24:37.000000000 -0500
++++ util-linux-2.11y/login-utils/selinux_utils.c	2003-07-09 10:56:36.290259608 -0400
+@@ -0,0 +1,55 @@
++#ifdef WITH_SELINUX
++#include <sys/types.h>
++#include <stdio.h>
++#include <selinux/selinux.h>
++#include <selinux/flask.h>
++#include <selinux/av_permissions.h>
++#include <selinux/context.h>
++#include "selinux_utils.h"
++
++int checkAccess(char *chuser, int access) {
++  int status=-1;
++  security_context_t user_context;
++  char *user=NULL;
++  if( getprevcon(&user_context)==0 ) {
++    context_t c=context_new(user_context);
++    user=context_user_get(c);
++    if (strcmp(chuser, user) == 0) {
++      status=0;
++    } else {
++      struct av_decision avd;
++      int retval = security_compute_av(user_context,
++				       user_context,
++				       SECCLASS_PASSWD,
++				       access,
++				       &avd);
++	  
++      if ((retval == 0) && 
++	  ((access & avd.allowed) == access)) {
++	status=0;
++      }
++    }
++    context_free(c);
++    freecon(user_context);
++  }
++  return status;
++}
++
++int setupDefaultContext(char *orig_file) {
++  if (is_selinux_enabled()) {
++    security_context_t scontext;
++    
++    if (getfilecon(orig_file,&scontext)<0) {
++      return 1;
++    }
++    
++    if (setfscreatecon(scontext) < 0) 
++      {
++	freecon(scontext);
++	return 1;
++      }
++    freecon(scontext);
++  }
++  return 0;
++}
++#endif
+--- util-linux-2.11y/MCONFIG.selinux	2003-07-09 10:56:35.392396104 -0400
++++ util-linux-2.11y/MCONFIG	2003-07-09 10:56:36.291259456 -0400
+@@ -18,6 +18,10 @@ ARCH=$(shell echo $(CPU) | sed 's/i.86/i
+ # installed as it is not PAM aware.
+ HAVE_PAM=yes
+ 
++# If HAVE_SELINUX is set to "yes", the login will make sure the user is
++# logged into an appropriate security context
++HAVE_SELINUX=yes
++
+ # If HAVE_SHADOW is set to "yes", then login, chfn, chsh, newgrp, passwd,
+ # and vipw will not be built or installed from the login-utils
+ # subdirectory.  
