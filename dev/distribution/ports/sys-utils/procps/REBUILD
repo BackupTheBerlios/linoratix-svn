@@ -1,0 +1,26 @@
+#
+# package build script procps
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: procps -
+%required: ("libglibc >=2.3.4", "libncurses >=5.4", "libselinux >=1.14")
+%build-required: ()
+%description: The procps package contains programs to monitor processes.
+%name: procps
+%version: 3.2.0
+%build: $DATA
+%sourcefile: procps-3.2.0.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_patch -Np1 -i %patch_dir/001.patch
+lip_make
+lip_install DESTDIR=%install_dir
+lip_rm %install_dir/lib/libproc.so
+# -- execution of post-install-scritps
+__DATA__
+

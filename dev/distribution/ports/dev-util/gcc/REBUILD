@@ -5,7 +5,7 @@
 %package-group: dev-util -
 %sub-group: gcc3 -
 %required: ("binutils >=2.14")
-%build-required: ("binutils >=2.14")
+%build-required: ()
 %description: The GNU Compiler.
 %name: gcc3
 %version: 3.4.3

@@ -5,7 +5,7 @@
 %package-group: app-arch -
 %sub-group: tar -
 %required: ("libiconv >=1.9.1")
-%build-required: ("libiconv >=1.9.1")
+%build-required: ()
 %description: utility used to store, backup or transport files.
 %name: tar
 %version: 1.13.93

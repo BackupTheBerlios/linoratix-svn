@@ -5,7 +5,7 @@
 %package-group: sys-libs -
 %sub-group: iconv -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: Unicode library.
 %name: libiconv
 %version: 1.9.1

@@ -5,7 +5,7 @@
 %package-group: sys-libs -
 %sub-group: ncurses -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: A System V Release 4.0 curses emulation library.
 %name: libncurses
 %version: 5.4

@@ -5,7 +5,7 @@
 %package-group: sys-utils -
 %sub-group: grep -
 %required: ("libpcre >=4.5")
-%build-required: ("libpcre >=4.5")
+%build-required: ()
 %description: GNU grep
 %name: grep
 %version: 2.5.1

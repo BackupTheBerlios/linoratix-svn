@@ -5,7 +5,7 @@
 %package-group: sys-libs -
 %sub-group: selinux -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: The SELinux libraries.
 %name: libselinux
 %version: 1.14

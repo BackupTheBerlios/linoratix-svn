@@ -5,7 +5,7 @@
 %package-group: crypto-libs -
 %sub-group: openssl -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: The Open Source toolkit for Secure Sockets Layer and Transport Layer Security.
 %name: libopenssl
 %version: 0.9.7c

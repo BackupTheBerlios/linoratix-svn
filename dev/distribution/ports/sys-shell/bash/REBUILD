@@ -5,7 +5,7 @@
 %package-group: sys-shell -
 %sub-group: bash -
 %required: ("libglibc >=2.3.3","libncurses >=5.4")
-%build-required: ("libglibc >=2.3.3", "libncurses >=5.4")
+%build-required: ()
 %description: The bourne again shell.
 %name: bash
 %version: 3.0

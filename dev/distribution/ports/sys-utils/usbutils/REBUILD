@@ -5,7 +5,7 @@
 %package-group: sys-utils -
 %sub-group: usbutils -
 %required: ("libglibc >=2.3.4")
-%build-required: ("libglibc >=2.3.4")
+%build-required: ()
 %description: USB enumeration utilities.
 %name: usbutils
 %version: 0.11

@@ -5,7 +5,7 @@
 %package-group: dev-lang -
 %sub-group: gawk -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: A pattern scanning and processing language.
 %name: gawk
 %version: 3.1.3

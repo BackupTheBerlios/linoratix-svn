@@ -5,7 +5,7 @@
 %package-group: sys-libs -
 %sub-group: pam -
 %required: ("libglibc >=2.3.3", "libselinux >=1.14")
-%build-required: ("libglibc >=2.3.3", "libselinux >=1.14")
+%build-required: ()
 %description: Linux PAM authetication.
 %name: libpam
 %version: 0.77

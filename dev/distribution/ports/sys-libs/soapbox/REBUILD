@@ -5,7 +5,7 @@
 %package-group: sys-libs -
 %sub-group: soapbox -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: Restrict processes from tampering with files.
 %name: libsoapbox
 %version: 0.3.1

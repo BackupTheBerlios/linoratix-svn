@@ -5,7 +5,7 @@
 %package-group: sys-kernel -
 %sub-group: module-init-tools -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: The Module Init tools contains programs that you can use to work with kernel modules
 %name: module-init-tools
 %version: 3.0

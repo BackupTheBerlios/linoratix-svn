@@ -5,7 +5,7 @@
 %package-group: sys-libs -
 %sub-group: pcre -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: A library that implements Perl-5 like regular expresions.
 %name: libpcre
 %version: 4.5

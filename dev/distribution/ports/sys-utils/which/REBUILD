@@ -5,7 +5,7 @@
 %package-group: sys-utils -
 %sub-group: which -
 %required: ("libglibc >=2.3.4")
-%build-required: ("libglibc >=2.3.4")
+%build-required: ()
 %description: The which program
 %name: which
 %version: 2.14

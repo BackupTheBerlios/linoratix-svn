@@ -5,7 +5,7 @@
 %package-group: sys-base -
 %sub-group: hotplug -
 %required: ("bash >=2.05b", "pciutils >=2.1.11", "usbutils >=0.11")
-%build-required: ("libglibc >=2.3.4")
+%build-required: ()
 %description: The hotplug user space utilities.
 %name: hotplug
 %version: 2004_09_23

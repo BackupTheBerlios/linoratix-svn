@@ -5,7 +5,7 @@
 %package-group: sys-utils -
 %sub-group: pciutils -
 %required: ("libglibc >=2.3.3","which >=2.14")
-%build-required: ("which >=2.14")
+%build-required: ()
 %description: Various utilities dealing with the PCI bus
 %name: pciutils
 %version: 2.1.11

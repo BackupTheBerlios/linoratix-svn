@@ -5,7 +5,7 @@
 %package-group: sys-base -
 %sub-group: binutils -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: Provides programs to assemble and manipulate binary and object files.
 %name: binutils
 %version: 2.15.92.0.2

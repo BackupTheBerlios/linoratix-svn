@@ -2,7 +2,7 @@
 %package-group: sys-base -
 %sub-group: shadow -
 %required: ("libpam >=0.77")
-%build-required: ("libpam >=0.77")
+%build-required: ()
 %description: shadow password file utilities.
 %name: shadow
 %version: 4.0.4.1

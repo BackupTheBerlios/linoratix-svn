@@ -5,7 +5,7 @@
 %package-group: dev-lang -
 %sub-group: perl -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3", "bash >=3.0", "coreutils >=5.2.1")
+%build-required: ("bash >=3.0", "coreutils >=5.2.1")
 %description: The Perl scripting language.
 %name: perl
 %version: 5.8.3

@@ -5,7 +5,7 @@
 %package-group: sys-base -
 %sub-group: sysvinit -
 %required: ("libglibc >=2.3.3", "libselinux >=1.14")
-%build-required: ("libglibc >=2.3.3", "libselinux >=1.14")
+%build-required: ()
 %description: The Linux System V Init
 %name: sysvinit
 %version: 2.85

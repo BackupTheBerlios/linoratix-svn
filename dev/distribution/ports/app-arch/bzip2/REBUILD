@@ -5,7 +5,7 @@
 %package-group: app-arch -
 %sub-group: bzip2 -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: A very high quality data compression program.
 %name: bzip2
 %version: 1.0.2

@@ -5,7 +5,7 @@
 %package-group: sys-utils -
 %sub-group: sed -
 %required: ("libglibc >=2.3.3")
-%build-required: ("libglibc >=2.3.3")
+%build-required: ()
 %description: A stream editor.
 %name: sed
 %version: 4.0.9
