@@ -47,6 +47,7 @@ sub new
 	$self->policy() if($self->param("policy"));
 	$self->list_files() if($self->param("list-files"));
 	$self->search() if($self->param("search"));
+	$self->search_file() if($self->param("search-file"));
 	$self->prepend_install() if($self->option("prepend") && $self->param("install"));
 	$self->prepend_remove() if($self->option("prepend") && $self->param("remove"));
 
@@ -64,6 +65,8 @@ sub help
 	print "	--upgrade				upgrades all installed packages to the newest\n						available version.\n";
 	print "	--policy [package]			show package policy\n";
 	print "	--list-files [package]			list all files of a package\n";
+	print "\n";
+	print "	--search-file [filename]		search a file in the package db\n";
 	print "	--search [string]			search the package db\n";
 	print "\n";
 	print "	--prepend --install [package]		display which packages we will install\n";
@@ -205,6 +208,30 @@ sub _extract_files
 		return 0;
 	}
 	
+}
+
+sub search_file 
+{
+	my $self = shift;
+	my $filename = $self->param("search-file");
+
+	$self->message("Found $filename in: \n\n");
+
+	foreach my $group (keys %{$pkgdb}) {
+		foreach my $subgroup (keys %{$pkgdb->{$group}}) {
+			foreach my $pkg (keys %{$pkgdb->{$group}->{$subgroup}}) {
+				foreach my $ver (keys %{$pkgdb->{$group}->{$subgroup}->{$pkg}}) {
+					foreach my $file (@{$pkgdb->{$group}->{$subgroup}->{$pkg}->{$ver}->{"files"}}) {
+						if($file =~ m/$filename/i) {
+							my @file = split(/\t/, $file);
+							$file[0] =~ s/^\/FILES//;
+							$self->msg_package("$pkg, $ver ($file[0])\n");
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 sub list_files
