@@ -4,7 +4,7 @@
 %author: ogu
 %package-group: sys-libs -
 %sub-group: freetype -
-%required: ("libglibc >=2.3.3" "zlib >=1.2.1")
+%required: ("libglibc >=2.3.3", "zlib >=1.2.1")
 %build-required: () 
 %description: TrueType font rendering library (v2)
 %name: libfreetype2
