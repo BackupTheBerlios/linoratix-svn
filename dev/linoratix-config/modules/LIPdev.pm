@@ -440,16 +440,26 @@ sub mkcd
 
 	$self->message("Copying Packages...\n");
 	push(@required, "$this_name =$this_version");
+	my @a_copied = ();
 	foreach(@required)
 	{
 		m/^(.*?) .*$/;
 		my $name = $1;
+
+		next if(grep { /^$name$/ } @a_copied );
+		push(@a_copied, $name);
+
 		my $path = $ENV{"PORTS_PATH"} . $base->find_package_path_in_ports($name);
 		open(FH, "<$path/REBUILD") or die($!);
 		chomp(@content = <FH>);
 		close(FH);
 		@version = grep { /^\%version:(.*)$/ } @content;
 		@name = grep { /^\%name:(.*)$/ } @content;
+		my @p_required = grep { /^\%required:(.*)$/ } @content;
+		$p_required[0] =~ m/\%required:(.*)$/;
+		my $req = $1;
+		my @new_req = eval($req);
+		push(@required, @new_req);
 		$version[0] =~ m/^\%version:(.*)$/;
 		my $v = $1;
 		$name[0] =~ m/^\%name:(.*)$/;
@@ -477,6 +487,12 @@ sub mkcd
 	copy("/usr/src/LIPS/BUILDS/libslang-1.4.9.lip", "$cd_path/Linoratix");
 	copy("/usr/src/LIPS/BUILDS/hwdata-0.148.lip", "$cd_path/Linoratix");
 	copy("/usr/src/LIPS/BUILDS/kudzu-1.1.67.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/term-readkey-2.30.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/curses-1.08b.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/curses-ui-0.95.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/parted-1.6.21.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/findutils-4.1.20.lip", "$cd_path/Linoratix");
+	copy("/usr/src/LIPS/BUILDS/gcc3-3.4.3.lip", "$cd_path/Linoratix");
 
 	$self->message("Rebuilding package-cache...\n");
 	system("cd $cd_path/Linoratix; linoratix-config --plugin LIPdev --rebuild-package-cache . > /dev/null 2>&1");
@@ -505,9 +521,7 @@ sub mkcd
 		my $p = $base->get_package_by_path($group . "/" . $subgroup . "/" . $pkg);
 		mkdir("$cd_path/install/groups/$group") unless(-d "$cd_path/install/groups/$group");
 		print PKGS "$group/$subgroup.install\n";
-		open(FH, ">$cd_path/install/groups/$group/$subgroup.install") or die($!);
-			print FH Dumper($p);
-		close(FH);
+		store($p, "$cd_path/install/groups/$group/$subgroup.install");
 		copy($ENV{"PORTS_PATH"} . "/$group/DESC", "$cd_path/install/groups/$group");
 	}
 	close(PKGS);
@@ -538,11 +552,34 @@ sub mkcd
 	$self->message("Installing bootcd specific software...\n\n");
 	system("linoratix-config --plugin LIP --install kudzu --prefix $cd_path");
 	die if($? ne "0");
+
+	print "\n\n";
+	$self->message("Installing needed perl modules...\n\n");
+	system("linoratix-config --plugin LIP --install curses-ui --prefix $cd_path");
+	die if($? ne "0");
+	
 	
 	print "\n\n";
 	$self->message("Installing mingetty for autologin...\n\n");
 	system("linoratix-config --plugin LIP --install mingetty --prefix $cd_path");
 	die if($? ne "0");
+
+	print "\n\n";
+	$self->message("Installing parted...\n\n");
+	system("linoratix-config --plugin LIP --install parted --prefix $cd_path");
+	die if($? ne "0");
+
+	print "\n\n";
+	$self->message("Installing findutils...\n\n");
+	system("linoratix-config --plugin LIP --install findutils --prefix $cd_path");
+	die if($? ne "0");
+
+	print "\n\n";
+	$self->message("Installing gcc...\n\n");
+	system("linoratix-config --plugin LIP --install gcc3 --prefix $cd_path");
+	die if($? ne "0");
+
+
 
 	open(FH, ">$cd_path/etc/fstab");
 		print FH "/proc	/proc	proc	defaults	0 0\n";
@@ -578,7 +615,7 @@ sub mkcd
 		print FH "\n\n\n";
 		print FH "Welcome to the Installation of Linoratix 0.8\n\n";
 		print FH "Please login as root with no password.\n";
-		print FH "After that you can run 'setup' to start the installation.\n\n";
+		print FH "Run 'setup' to start the installation.\n\n";
 		print FH "\n";
 		print FH "="x80;
 		print FH "\n\n";
@@ -621,10 +658,35 @@ sub mkcd
 	# copy("/usr/share/linoratix/bootcd/inittab", "$cd_path/etc");
 
 	# die verschiedenen flavors
+
+	$self->message("Copying essential utilities...\n");
+
 	open(FH, ">$cd_path/install/flavors");
 		print FH "$this_name|$this_description\n";
 	close(FH);
 	
+	mkdir("$cd_path/install/setup");
+	system("cp -R /usr/share/linoratix/bootcd/setup $cd_path/install");
+	chmod(0755, "$cd_path/install/setup/setup.pl");
+
+	open(FH, ">$cd_path/usr/sbin/setup") or die($!);
+		print FH "#!/bin/bash\n\n";
+		print FH "echo You have been warned...\n";
+		print FH "cd /\nln -s mnt/cdrom install_cd\n\n";
+		print FH "cd /\nln -s mnt/cdrom/install\n\n";
+		print FH "mkdir /mnt/root\n\n";
+		print FH "cd /mnt/cdrom/install/setup\n";
+		print FH "./setup.pl 2>/var/log/setup.log";
+	close(FH);
+
+	copy("/usr/share/linoratix/bootcd/partinfo", "$cd_path/usr/sbin");
+	copy("/usr/share/linoratix/bootcd/createpart", "$cd_path/usr/sbin");
+	copy("/usr/share/linoratix/bootcd/shwdev.sh", "$cd_path/usr/sbin");
+	chmod(0755, "$cd_path/usr/sbin/shwdev.sh");
+	chmod(0755, "$cd_path/usr/sbin/partinfo");
+	chmod(0755, "$cd_path/usr/sbin/createpart");
+
+	chmod(0755, "$cd_path/usr/sbin/setup");
 }
 
 sub create_bin_lip

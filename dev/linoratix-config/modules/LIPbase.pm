@@ -102,7 +102,9 @@ sub update_server
 		$self->message("downloading cache file.\n");
 
 		if($proto eq "media" || $proto eq "file") {
-			copy("$server/packages.cache", "$prefix/tmp/lip-tmp.cache");
+			my $_server = $server;
+			$_server =~ s#^media://|file://##;
+			copy("$_server/packages.cache", "$prefix/tmp/lip-tmp.cache");
 		} elsif($proto eq "http") {
 			system("wget -O $prefix/tmp/lip-tmp.cache $server/packages.cache");
 		} elsif($proto eq "ftp") {
@@ -353,7 +355,7 @@ sub _find_package_by_name
 				}
 				else
 				{
-					$do_provide = $pkg;
+					$do_provide = ""; #$pkg;
 				}
 				if($do_provide eq $name || $pkg eq $name) {
 					return "$group/$subgroup/$pkg";
@@ -361,6 +363,9 @@ sub _find_package_by_name
 			}
 		}
 	}
+
+	my $installed_p = $self->_find_in_i_package_by_name($name);
+	return $installed_p if($installed_p);
 
 	return 0;
 }
@@ -410,7 +415,7 @@ sub _find_package_dep_by_name
 					}
 					else
 					{
-						$do_provide = $pkg;
+						$do_provide = ""; # $pkg;
 					}
 					if( ($do_provide eq $package || $pkg eq $package)  && $self->_check_version($version,
 							$pkgdb->{$group}->{$subgroup}->{$pkg}
@@ -476,7 +481,7 @@ sub check_if_package_is_required_by_installed_package
 	}
 	else
 	{
-		$do_provide = $package;
+		$do_provide = ""; #$package;
 	}
 
 	foreach my $group (keys %{$ip}) {
@@ -527,13 +532,21 @@ sub _find_in_i_package_dep_by_name
 					}
 					else
 					{
-						$do_provide = $package;
+						$do_provide = ""; # $package;
 					}
 					
 					if(($package eq $do_provide || $package eq $pkg) && $self->_check_version($version,
 							$ip->{$group}->{$subgroup}->{$pkg}
 						)
 					) {
+						print "package: $package\n";
+						print "do_provide: $do_provide\n";
+						print "provide: $provide\n";
+						print "pkg: $pkg\n";
+						print "version: $version\n";
+						print "group: $group\n";
+						print "subgroup: $subgroup\n";
+
 						return $ip->{$group}->{$subgroup}->{$pkg};
 					}
 				}
@@ -616,7 +629,7 @@ sub _check_version
 		}
 		else
 		{
-			print "hmm...\n @!\n $!\n";
+			print "hmm... $eval :: ".print(eval($eval))."\n @!\n $!\n";
 		}
 	}
 	return 0;
