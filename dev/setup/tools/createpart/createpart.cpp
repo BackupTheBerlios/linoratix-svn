@@ -1,13 +1,14 @@
 #include <iostream>
-#include <partedpp/partedpp.h>
+#include <parted/parted.h>
 #include <cstdlib>
 #include <string>
 #include <cstdio>
 
 using namespace std;
 
-Ped::Device *device;
+//Ped::Device *device;
 string s2;
+PedDevice* device;
 
 bool create_one_disk();
 bool create_remain_disk();
@@ -26,176 +27,182 @@ int main(int argc, char *argv[])
 		create_remain_disk();
 	}
 	
-	delete device;
 	return EXIT_SUCCESS;
 }
 
 bool create_remain_disk()
 { // erzeugt eine extended partition mit swap, home und root
   // es darf keine extended partition schon vorhanden sein.
-	device = new Ped::Device(s2);
-	Ped::Disk *disk = new Ped::Disk(*device);
-	
+	PedPartition* part;
+	PedDisk* disk;
+	PedConstraint* constraint;
+	PedPartitionType part_type;
+	PedSector start,end;
+	const PedDiskType* type;
 	long long len_start, len_end, dev_len, len_rest, len_swap, len_root, len_home;
 	
-	dev_len = device->get_length() / 2 / 1024;
-	cout << "dev_len	" << dev_len << endl;
+	const PedFileSystemType* fs_type = ped_file_system_type_get ("ext3");
 	
-	len_swap = 512; // MB
-	cout << "swap...	" << len_swap << endl;
+	// das ist die gewaehlte platte
+	device = ped_device_get(s2.c_str());
+	disk = ped_disk_new (device);
 	
+	// die geometrydaten der platte
+	constraint = ped_constraint_any(device);
+
+	// wie lang ist denn die platte?
+	dev_len = device->length;
 	
-	len_start = disk->get_partition(disk->get_primary_partition_count()).get_geometry().get_end() / 2 / 1024;
+	len_swap = 512 * 1024 * 2; // swap sollte 512mb sein
 	
-	len_rest = dev_len - len_start - len_swap;
+	int last_part = ped_disk_get_primary_partition_count(disk);
+	part = ped_disk_get_partition(disk, last_part);
 	
-	string create_part = "/sbin/parted " + s2 + " mkpart extended";
-	char exec[create_part.length() + 500];
+	len_start = part->geom.end;
 	
-	sprintf(exec, "%s %i", create_part.c_str(), len_start);
-	sprintf(exec, "%s %i", exec, dev_len);
-	
-	// cout << exec << endl;
-	system(exec);   // extended
-	
+	len_rest = dev_len - len_swap - len_start;
 	len_root = len_rest * 70 / 100;
-	cout << "root...	" << len_root << endl;
 	
 	if(len_root <= 4096)  // wenn root part kleiner ist wie 4GiB
 	{
 		exit(6);
 	}
 	
-	len_rest = len_rest - len_root;
-	len_home = len_rest;    // der rest ischd home
-	
-	cout << "home...	" << len_home << endl;
-	
-	if(len_home + len_root + len_swap  > dev_len)
-	{
-		exit(9);
-	}
-	
-	create_part = "/sbin/parted " + s2 + " mkpart logical ext3";
-	sprintf(exec, "%s %i", create_part.c_str(), len_start);
-	sprintf(exec, "%s %i", exec, len_start + len_root);
-	
-	// cout << exec << endl;
-	system(exec); // root
-	
-	
-	create_part = "/sbin/parted " + s2 + " mkpart logical ext3";
-	sprintf(exec, "%s %i", create_part.c_str(), len_start + len_root);
-	sprintf(exec, "%s %i", exec, len_start + len_root + len_home);
-	
-	// cout << exec << endl;
-	system(exec); // home
-	
-	create_part = "/sbin/parted " + s2 + " mkpart logical ext3";
-	sprintf(exec, "%s %i", create_part.c_str(), len_start + len_root + len_home);
-	sprintf(exec, "%s %i", exec, dev_len);
-	
-	// cout << exec << endl;
-	system(exec); // swap
-	
-	return true;
-}
-
-bool create_one_disk()
-{
-	string s_label = "/sbin/parted " + s2 + " mklabel msdos";
-	
-	long long dev_len, len_boot, len_home, len_root, len_swap, len_rest;
-	
-	system(s_label.c_str());
-	
-	device = new Ped::Device(s2);
-	cout << "Die ganze Platte verwenden" << endl;
-	
-	dev_len = device->get_length() / 2 / 1024; // / 2;  // das sind wenn ich das richtig kappiert hab KiB => MB
-	
-	cout << "dev_len	" << dev_len << endl;
-	
-	len_swap = 512; // MB
-
-	cout << "swap...	" << len_swap << endl;
-	
-	len_boot = 50; // 50MB
-	
-	cout << "boot...	"  << len_boot << endl;
-
-	if((len_swap + len_boot ) >= dev_len)
-	{
-		exit(5);
-	}
-	
-	len_rest = dev_len - len_swap - len_boot;
-	
-	cout << "rest...	" << len_rest << endl;
-	
-	   // die 20 einfach so zur sicherheit ;)
-	len_root = len_rest * 70 / 100;
-
-	cout << "root...	" << len_root << endl;
-
-		
-	if(len_root <= 4096)  // wenn root part kleiner ist wie 4GiB
-	{
-		exit(6);
-	}
-	
-	len_rest = len_rest - len_root;
-	len_home = len_rest;    // der rest ischd home
-	
-	cout << "home...	" << len_home << endl;
+	len_rest = len_rest - len_root;   // was bleibt uns jetzt noch?
+	len_home = len_rest;    // de reschd ischd home
 	
 	if(len_home <= 1024)   // kleiner wie nen gig soll /home auch net sein...
 	{
 		exit(7);
 	}
 	
-	Ped::Disk *disk = new Ped::Disk(*device);
-	
-	cout << "alles loeschen..." << endl;
-	
-	if(len_home + len_root + len_swap + len_boot > dev_len)
+	if(len_home + len_root + len_swap > dev_len) // mal kucken ob wir jetzt nicht zuviel hamm...
 	{
 		exit(9);
 	}
 	
-	disk->delete_all();
+	// Was fuer nen partitionstyp solls denn sein
+	part_type = PED_PARTITION_EXTENDED;
 	
-	string create_part = "/sbin/parted " + s2 + " mkpart primary ext3 0";
-	char exec[create_part.length() + 500];
+	part = ped_partition_new (disk, part_type, fs_type, len_start, dev_len-1);
+	ped_disk_add_partition (disk, part, constraint);
+	ped_partition_set_system (part, fs_type);
 	
-	sprintf(exec, "%s %i", create_part.c_str(), len_boot);
-	
-	//cout << exec << endl;
-	system(exec);   // boot
-	
-	create_part = "/sbin/parted " + s2 + " mkpart primary ext3";
-	sprintf(exec, "%s %i", create_part.c_str(), len_boot);
-	sprintf(exec, "%s %i", exec, len_boot + len_root);
-	
-	//cout << exec << endl;
-	system(exec); // root
-		
-	create_part = "/sbin/parted " + s2 + " mkpart primary ext3";
-	sprintf(exec, "%s %i", create_part.c_str(), len_boot+len_root);
-	sprintf(exec, "%s %i", exec, len_boot + len_root + len_home);
-	
-	//cout << exec << endl;
-	system(exec); // root
+	// Was fuer nen partitionstyp solls denn sein
+	part_type = PED_PARTITION_LOGICAL;
 
-	// cout << exec << endl;
-	create_part = "/sbin/parted " + s2 + " mkpart primary linux-swap";
-	sprintf(exec, "%s %i", create_part.c_str(), len_boot+len_root+len_home);
-	sprintf(exec, "%s %i", exec, dev_len);
+	// root	
+	part = ped_partition_new (disk, part_type, fs_type, len_start, len_start + len_root);
+	ped_disk_add_partition (disk, part, constraint);
+	ped_partition_set_system (part, fs_type);
+	cout << "root:" << s2 << "5" << endl;
 	
-	//cout << exec << endl;
-	system(exec); // root	
+	// home
+	part = ped_partition_new (disk, part_type, fs_type, len_start + len_root, len_start + len_root + len_home);
+	ped_disk_add_partition (disk, part, constraint);
+	ped_partition_set_system (part, fs_type);
+	cout << "home:" << s2 << "6" << endl;
+
+	// swap
+	part = ped_partition_new (disk, part_type, fs_type, len_start + len_root + len_home, dev_len-1);
+	ped_disk_add_partition (disk, part, constraint);
+	fs_type = ped_file_system_type_get ("linux-swap");
+	ped_partition_set_system (part, fs_type);
+	cout << "swap:" << s2 << "7" << endl;
+
 	
-	delete disk;
+	ped_disk_commit (disk);
 	
+	return true;
+}
+
+bool create_one_disk()
+{
+	PedPartition* part;
+	PedDisk* disk;
+	PedConstraint* constraint;
+	PedPartitionType part_type;
+	PedSector start,end;
+	const PedDiskType* type;
+	
+	const PedFileSystemType* fs_type = ped_file_system_type_get ("ext3");
+	long long dev_len, len_boot, len_home, len_root, len_swap, len_rest;
+	
+	// das ist die gewaehlte platte
+	device = ped_device_get(s2.c_str());
+
+	// gleich ein msdos label machen
+	type = ped_disk_type_get("msdos");
+	disk = ped_disk_new_fresh (device, type);
+		
+	// die geometrydaten der platte
+	constraint = ped_constraint_any(device);
+	
+	// Was fuer nen partitionstyp solls denn sein
+	part_type = PED_PARTITION_NORMAL;
+	
+	// wie lang ist denn die platte?
+	dev_len = device->length;
+	
+	len_swap = 512 * 1024 * 2; // swap sollte 512mb sein
+	len_boot = 50 * 1024 * 2; // boot partition ist 50 mb
+	
+	if((len_swap + len_boot ) >= dev_len) // kucken ob es zu gross wird
+	{
+		exit(5);
+	}
+	
+	len_rest = dev_len - len_swap - len_boot;  // was haben wir noch uebrig
+	len_root = len_rest * 70 / 100;   // 70% von dem was wir noch haben ist fuer / (root)
+		
+	if(len_root <= 4096)  // wenn root part kleiner ist wie 4GiB
+	{
+		exit(6);
+	}
+	
+	len_rest = len_rest - len_root;   // was bleibt uns jetzt noch?
+	len_home = len_rest;    // de reschd ischd home
+	
+	if(len_home <= 1024)   // kleiner wie nen gig soll /home auch net sein...
+	{
+		exit(7);
+	}
+	
+	if(len_home + len_root + len_swap + len_boot > dev_len) // mal kucken ob wir jetzt nicht zuviel hamm...
+	{
+		exit(9);
+	}
+	
+	// jetzt wird erstmal alles geplaett
+	ped_disk_delete_all(disk);
+	
+	// die boot partition erzeugen
+	part = ped_partition_new (disk, part_type, fs_type, 0, len_boot);
+	ped_disk_add_partition (disk, part, constraint);
+	ped_partition_set_system (part, fs_type);
+	cout << "boot:" << s2 << "1" << endl;
+	
+	// nun die root partitions
+	part = ped_partition_new (disk, part_type, fs_type, len_boot, len_boot + len_root);
+	ped_disk_add_partition (disk, part, constraint);
+	ped_partition_set_system (part, fs_type);
+	cout << "root:" << s2 << "2" << endl;
+	
+	// und die home
+	part = ped_partition_new (disk, part_type, fs_type, len_boot + len_root, len_boot + len_root + len_home);
+	ped_disk_add_partition (disk, part, constraint);
+	ped_partition_set_system (part, fs_type);
+	cout << "home:" << s2 << "3" << endl;
+
+	// und die swap
+	part = ped_partition_new (disk, part_type, fs_type, len_boot + len_root + len_home, dev_len-1);
+	ped_disk_add_partition (disk, part, constraint);
+	fs_type = ped_file_system_type_get ("linux-swap");
+	ped_partition_set_system (part, fs_type);
+	cout << "swap:" << s2 << "4" << endl;
+
+	// und den ganzen kram auf die platte schreiben
+	ped_disk_commit (disk);
+		
 	return true;
 }
