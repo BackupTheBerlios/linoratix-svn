@@ -61,14 +61,10 @@ extern "C" bool l_connect(map <string, string> con_data) { // this does make the
 extern "C" bool l_disconnect() {
    if(!m_isconnected) return true; // not connected so disconnect is good =)
 
-   if(sqlite3_close(db) == SQLITE_OK) {
-      DEBUG("disconnect from database succeded")
-      return true;
-   } else {
-      clearstmt();
-      DEBUG(sqlite3_errmsg(db))
-      return false;
-   }
+   // TODO error checking
+   sqlite3_close(db);
+   DEBUG("disconnected from database")
+   return true;
 }
 
 

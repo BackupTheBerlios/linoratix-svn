@@ -27,7 +27,8 @@ int main(int argc, char **argv)
 	   my_con["client_flag"] = NULL; */
 	
 //	   db *datenbank = new db("./mysql-backend.so");
-      db *datenbank = new db(argv[1]);
+      db *datenbank = new db(argv[1]); // hier wird ein zeiger auf ein objekt gelegt das neu im speicher erstellt wird
+                                       // der adressbereich auf den dieses objekt zeigt darf nicht verloren gehen sonst --> speicher verloren
 	
 	
 	   datenbank->Connect(my_con);
@@ -77,7 +78,9 @@ int main(int argc, char **argv)
    	datenbank->Insert(my_insert, my_set);
 */
 
-      
+   delete datenbank; // der speicher den das Objekt benutzt muss allerdings auch wieder frei gegeben werden
+                     // sonst ist irgendwann der speicher voll mit objekten die nichtmehr benutzt werden --> das ist schlecht
+
    } catch (std::exception& e) {
       cout << "Exception: " << e.what() << endl;
       return -1;
