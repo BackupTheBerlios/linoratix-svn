@@ -4,6 +4,8 @@ nach prioritaet geordnet
 fuer 1.0
 --------------------------------------------------
 
+INPUTRC
+
 linoratix-config:
 	LIP:
 		updaten von packeten
