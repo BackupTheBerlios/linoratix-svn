@@ -70,6 +70,7 @@ sub _()
 										. "\n"
 										. "müssen Sie einen Bootmanager installieren",
 		"MSG_SCANNING_PARTITIONS"		=> "Scanne Partitionen...",
+		"MSG_INSTALL_GRUB"			=> "Installiere GRUB",
 		
 		"MNU_FILE"					=> "Datei",
 		

@@ -328,6 +328,14 @@ sub part_button_box_callback($;)
 					. _("MSG_MOUNTPOINT") . ": ".$partinfo->{$selected_partition}->{"mountpoint"}."\n"
 					. _("MSG_SEKTOREN") . ": " . $partinfo->{$selected_partition}->{"sector_start"} . " - " . $partinfo->{$selected_partition}->{"sector_end"});
 		$setup_config->{"partitions"}->{"/dev/".$setup_config->{"target_disk"} . $selected_partition}->{"mountpoint"} = $mp;
+		if($mp eq "/")
+		{
+			$setup_config->{"root-partition"} = $setup_config->{"target_disk"} . $selected_partition;
+		}
+		if($mp eq "/boot")
+		{
+			$setup_config->{"boot-partition"} = $setup_config->{"target_disk"} . $selected_partition;
+		}
 		if($mp eq "/" || $mp eq "swap" || $setup_config->{"partitions"}->{"/dev/".$setup_config->{"target_disk"} . $selected_partition}->{"format"})
 		{
 			$setup_config->{"partitions"}->{"/dev/".$setup_config->{"target_disk"} . $selected_partition}->{"format"} = "1";
@@ -408,7 +416,7 @@ sub part_button_box_callback($;)
 		
 		if($np eq "free")
 		{
-			system("/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $partinfo->{$selected_partition}->{"sector_end"} . " " . $partinfo->{$selected_partition}->{"fs"} . " >>error.txt 2>&1");
+			system("/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $partinfo->{$selected_partition}->{"sector_end"} . " " . $partinfo->{$selected_partition}->{"fs"} . " >>/dev/null");
 		}
 		else
 		{
@@ -417,7 +425,7 @@ sub part_button_box_callback($;)
 			$new_end_sector = $new_end_sector + ($np * 1024 * 2);
 			$partinfo->{$selected_partition}->{"sector_start"} = 0 if($partinfo->{$selected_partition}->{"sector_start"} eq "1");
 			#print STDERR "/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $new_end_sector . " " . $partinfo->{$selected_partition}->{"fs"} . " >>error.txt 2>&1";
-			system("/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $new_end_sector . " " . $partinfo->{$selected_partition}->{"fs"} . " >>error.txt 2>&1");
+			system("/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $new_end_sector . " " . $partinfo->{$selected_partition}->{"fs"} . " >>/dev/null");
 		}
 		
 		@partinfo = ();
@@ -527,7 +535,7 @@ sub part_button_box_callback($;)
 				$w{6}->getobj('progress_partition')->pos($count);
 				$w{6}->getobj('progress_label')->text(_("MSG_PART_FORMAT") . ": " . "$_");
 				$w{6}->draw;
-				system("/sbin/mkfs.ext3 $_ >>./error.txt 2>&1" );
+				system("/sbin/mkfs.ext3 $_ >>/dev/null" );
 				$count++;
 			}
 			if($setup_config->{"partitions"}->{$_}->{"mountpoint"} eq "swap")
@@ -535,7 +543,7 @@ sub part_button_box_callback($;)
 				$w{6}->getobj('progress_partition')->pos($count);
 				$w{6}->getobj('progress_label')->text(_("MSG_PART_FORMAT") . ": " . "$_");
 				$w{6}->draw;
-				system("/sbin/mkswap $_ >>./error.txt 2>&1" );
+				system("/sbin/mkswap $_ >>/dev/null" );
 				$count++;				
 			}
 		}
@@ -544,7 +552,7 @@ sub part_button_box_callback($;)
 		{
 			if($setup_config->{"partitions"}->{$_}->{"mountpoint"} eq "/")
 			{
-				system("/bin/mount $_ /mnt/root" . $setup_config->{"partitions"}->{$_}->{"mountpoint"} . "  >>./error.txt 2>&1");				
+				system("/bin/mount $_ /mnt/root" . $setup_config->{"partitions"}->{$_}->{"mountpoint"} . "  >>/dev/null");				
 			}
 		}
 		
@@ -556,12 +564,12 @@ sub part_button_box_callback($;)
 				$w{6}->getobj('progress_label')->text(_("MSG_MOUNT_PART") . ": " . "$_");
 				$w{6}->draw;
 				system("mkdir -p /mnt/root" . $setup_config->{"partitions"}->{$_}->{"mountpoint"} . " >/dev/null 2>&1");
-				system("/bin/mount $_ /mnt/root" . $setup_config->{"partitions"}->{$_}->{"mountpoint"} . "  >>./error.txt 2>&1");
+				system("/bin/mount $_ /mnt/root" . $setup_config->{"partitions"}->{$_}->{"mountpoint"} . "  >>/dev/null");
 				$count++;
 			}
 			if($setup_config->{"partitions"}->{$_}->{"mountpoint"} eq "swap")
 			{
-				# <toactivate> <swap> system("/sbin/swapon $_ >>./error.txt 2>&1");
+				system("/sbin/swapon $_ >>/dev/null");
 			}
 		}
 		
@@ -574,7 +582,7 @@ sub flavors_callback($;)
 {
 	my $listbox = shift;
 	@{$setup_config->{"categories"}} = $listbox->get;
-	print STDERR Dumper($setup_config);
+	#print STDERR Dumper($setup_config);
 }
 
 sub convert_to_grub($;)
@@ -1180,10 +1188,10 @@ sub dialog_8
 	
 	my $all_pkgs_count = 0;
 	my @all_pkgs = @{$setup_config->{"categories"}};
-	print STDERR Dumper(@{$setup_config->{"categories"}});
-	print STDERR "-"x80;
-	print STDERR Dumper(@all_pkgs);
-	print STDERR "-"x80;
+	#print STDERR Dumper(@{$setup_config->{"categories"}});
+	#print STDERR "-"x80;
+	#print STDERR Dumper(@all_pkgs);
+	#print STDERR "-"x80;
 	foreach my $p (@all_pkgs)
 	{
 		open(FH, "</install/$p.pkgs");
@@ -1217,7 +1225,7 @@ sub dialog_8
 	system("mkdir -p /mnt/root/proc");
 	system("mkdir -p /mnt/root/tmp");
 	
-	system("linoratix-config --plugin LIPbase --add-server file:///mnt/cdrom/Linoratix --prefix /mnt/root > /dev/null 2>&1");
+	system("linoratix-config --plugin LIPbase --add-server file:///mnt/cdrom/Linoratix --prefix /mnt/root > /dev/null");
 	
 	my $akt_pos = 1;
 	my $pkg = {};
@@ -1242,7 +1250,7 @@ sub dialog_8
 				$w{8}->getobj('setup_progress')->pos($akt_pos);
 				$w{8}->getobj('setup_label')->text(_("MSG_INSTALLING") . ": " . $pkg->{$version}->{"name"} . "\n" . _("MSG_VERSION") . ": $version\n\n" . $pkg->{$version}->{"description"});
 				$w{8}->draw;
-				system("linoratix-config --plugin LIP --install " . $pkg->{"$version"}->{"name"} . " --prefix /mnt/root > /dev/null 2>&1");
+				system("linoratix-config --plugin LIP --install " . $pkg->{"$version"}->{"name"} . " --prefix /mnt/root > /dev/null");
 				$akt_pos++;
 				$pkg = {};
 			}
@@ -1280,6 +1288,9 @@ sub dialog_9
 
 sub dialog_10
 {
+	my $partitions = `/usr/sbin/shwdev.sh -partion`;
+	my @partitions = split(/ /, $partitions);
+	
 	$w{10}->add
 	(
 		undef, 'Label',
@@ -1298,26 +1309,27 @@ sub dialog_10
 		'mbr_progress', 'Progressbar',
 		-x => 2,
 		-y => 10, #==
-		-max => 5,
+		-max => 2 + scalar(@partitions),
 		-width => 70,
 	);
 	
 	$w{10}->getobj('mbr_progress')->pos(1);
 	$w{10}->getobj('mbr_label')->text(_("MSG_SCANNING_PARTITIONS"));
 	$w{10}->draw;
-	my $partitions = `/usr/sbin/shwdev.sh -partion`;
-	my @partitions = split(/ /, $partitions);
+
 	
 	system("mkdir -p /mnt/root/boot/grub");
 	open(GRUB, ">/mnt/root/boot/grub/menu.lst");
 	print GRUB "timeout 10\ndefault 0\n\n";
 	
+	my $boot_p = $setup_config->{"boot-partition"}?$setup_config->{"boot-partition"}:$setup_config->{"root-partition"};
+	
 	print GRUB "title Linoratix 0.8\n";
-	print GRUB "root " . convert_to_grub($setup_config->{"boot-partition"}) . "\n";
-	print GRUB "kernel /bzImage-XXX root=/dev/" . $setup_config->{"root-partition"} . "\n\n";
+	print GRUB "root " . convert_to_grub($boot_p) . "\n";
+	print GRUB "kernel /boot/bzImage-2.6.10-kernel-linoratix-ide root=/dev/" . $setup_config->{"root-partition"} . "\n\n";
 	# <toactive> ^^^^   das richtige kernel image
 	
-	
+	my $_p = 1;
 	foreach my $part (@partitions)
 	{
 		$part =~ m/^([a-z]+)(\d+)$/;
@@ -1337,5 +1349,33 @@ sub dialog_10
 			print GRUB "rootnoverify " . convert_to_grub($fp.$id) . "\n";
 			print GRUB "makeactive\nchainloader +1\n\n";
 		}
+		$w{10}->getobj('mbr_progress')->pos($_p);
+		$w{10}->getobj('mbr_label')->text(_("MSG_SCANNING_PARTITIONS"));
+		$w{10}->draw;
+		$_p++;
 	}
+	$_p++;
+	
+	# <toactivate> 
+	system("mount -o bind /proc /mnt/root/proc");
+	system("mount -o bind /sys /mnt/root/sys");
+	
+	open(FH, ">/mnt/root/etc/mtab") or die($!);
+	open(MTAB, "</etc/mtab") or die($!);
+		while(<MTAB>)
+		{
+			chomp;
+			$_ =~ s:/mnt/root::;
+			print FH $_."\n";
+		}
+	close(MTAB);
+	close(FH);
+	
+	system("chroot /mnt/root /sbin/ldconfig");
+	system("ln -sf /boot /mnt/root/boot");
+	system("chroot /mnt/root /usr/sbin/grub-install hd0 > /dev/null");
+	
+	$w{10}->getobj('mbr_progress')->pos($_p);
+	$w{10}->getobj('mbr_label')->text(_("MSG_INSTALL_GRUB"));
+	$w{10}->draw;
 }
