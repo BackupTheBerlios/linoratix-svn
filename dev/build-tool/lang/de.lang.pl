@@ -46,9 +46,17 @@ sub _()
 		"MSG_OPTIMIZED_FOR_amd_athlon_4"		=> "Optimiert für AMD Athlon 4",
 		"MSG_OPTIMIZED_FOR_amd_athlon_xp"		=> "Optimiert für AMD Athlon XP",
 		"MSG_OPTIMIZED_FOR_amd_athlon_mp"		=> "Optimiert für AMD Athlon MP",
+		"MSG_TARGET_DISTRIBUTION"			=> "Wählen Sie hier den Einsatzzweck der Distribution aus",
+		"MSG_TARGET_DISTRIBUTION_TITLE"			=> "Einsatzzweck wählen",
+		"MSG_TARGET_SERVER"				=> "Server Linux",
+		"MSG_TARGET_DESKTOP"				=> "Desktop Linux",
+		"MSG_TARGET_ROUTER_FIREWALL"			=> "Special Router/Firewall Linux",
+		"MSG_TARGET_RESCUE_SYSTEM"			=> "Rescuesystem on a CD/DVD",
+		"MSG_TARGET_GENERIC_LINORATIX"			=> "Generic Linoratix Build (all packages)",
 		"MNU_FILE"					=> "Datei",
 		"SCR_WELCOME"					=> "Willkommen",
-		"SCR_OPTIMIZE"					=> "Prozessoroptimierung"
+		"SCR_OPTIMIZE"					=> "Prozessoroptimierung",
+		"SCR_TARGET_DISTRIBUTION"			=> "Zieldistribution"
 	);
 	return $texte{$_[0]};
 }

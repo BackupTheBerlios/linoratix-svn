@@ -26,6 +26,7 @@ my $cui = new Curses::UI
 ( 
 	-clear_on_exit => 1, 
 	-debug => $debug,
+	-color_support => 1
 );
 
 # Wizard index
@@ -53,8 +54,9 @@ my $w0 = $cui->add(
 
 # all the different screens
 my %screens = (
-	'1'  => _("SCR_WELCOME"),
-	'2'  => _("SCR_OPTIMIZE")
+	'1'	=> _("SCR_WELCOME"),
+	'2'	=> _("SCR_OPTIMIZE"),
+	'3'	=> _("SCR_TARGET_DISTRIBUTION")
 );
 
 # bring all screens to the right 
@@ -62,11 +64,13 @@ my @screens = sort {$a<=>$b} keys %screens;
 
 # different options for curses
 my %args = (
-	-border       => 1, 
-	-titlereverse => 0, 
-	-padtop       => 2, 
-	-padbottom    => 3, 
-	-ipad         => 1,
+	-border		=> 1, 
+	-titlereverse	=> 0, 
+	-padtop		=> 2, 
+	-padbottom	=> 3, 
+	-ipad		=> 1,
+	-tfg		=> "blue",
+	-bfg		=> "red"
 );
 
 my $optimization_values = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ];
@@ -93,6 +97,15 @@ my $optimization_labels =
 	19  => _("MSG_OPTIMIZED_FOR_amd_athlon_mp"),
 };
 
+my $target_distribution_values = [ 1, 2, 3, 4, 5 ];
+my $target_distribution_labels = 
+{
+	1	=> _("MSG_TARGET_SERVER"),
+	2	=> _("MSG_TARGET_DESKTOP"),
+	3	=> _("MSG_TARGET_ROUTER_FIREWALL"),
+	4	=> _("MSG_TARGET_RESCUE_SYSTEM"),
+	5	=> _("MSG_TARGET_GENERIC_LINORATIX")
+};
 
 # ---------------------------------------------------------------------
 # Functions
@@ -125,6 +138,11 @@ sub optimize_callback()
 	my $sel = $listbox->get;
 }
 
+sub target_callback()
+{
+	my $listbox = shift;
+	my $sel = $listbox->get;
+}
 
 # ----------------------------------------------------------------------
 # Create a menu
@@ -191,7 +209,30 @@ $w{2}->add
 );
 
 
+# ----------------------------------------------------------------------
+# Choose Targetdistribution
+# ----------------------------------------------------------------------
 
+
+$w{3}->add
+(
+	undef, 'Label',
+	-text => _("MSG_TARGET_DISTRIBUTION")
+);
+
+$w{3}->add
+(
+	undef, 'Radiobuttonbox',
+	-y          => 2,
+	-x          => 2,
+	-values     => $target_distribution_values,
+	-labels     => $target_distribution_labels,
+	-width      => 50,
+	-border     => 1,
+	-title      => _("MSG_TARGET_DISTRIBUTION_TITLE"),
+	-vscrollbar => 1,
+	-onchange   => \&target_callback,
+);
 
 # ----------------------------------------------------------------------
 # Setup bindings and focus 
