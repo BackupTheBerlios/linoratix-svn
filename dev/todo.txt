@@ -14,7 +14,7 @@ LIP-new:
 
 	LIP:
 		updaten von packeten
-		wenn installation abbricht, weitermachen (wie: apt-get -f install)
+		wenn installation abbricht, weitermachen (wie: apt-get -force-xxxx install)
 		installation von quellcode packeten, diese dann prozessoroptimiert compilieren => wir brauchen so wie gentoo eine datei in der man die prozessoroptimierung einstellen kann.
 		bei entfernen von packeten muss drauf geachtet werden ob ein anderes packete diese datei auch installiert hat
 		
@@ -49,7 +49,7 @@ acpid:
 
 installation:
 	richtigen kernel installieren, -> fuer ide, ide-kernel, scsi-kernel, usb-kernel fuer usb stick installationen
-	framebuffer mit bootsplash
+	framebuffer mit bootsplash (funtkioniert auf manchen system nicht!)
 	prozessortyp erkennung, das die besten optimierungsflags eingestellt werden koennen (fuer selbst gebaute packete)
 	bei installation fragen ob die uhrzeit mit einem zeitserver abgeglichen werden soll
 
@@ -154,4 +154,5 @@ fuer 2.0
 hotplug:
 	wenn neue hardware eingesteckt wird, diese automatisch einrichten -> wenn usb stick fstab bearbeiten
 
-
+submount:
+   zum automatischen mounten/umounten z.B. von cd-rom laufwerken
