@@ -26,7 +26,6 @@ using namespace std;
 static bool m_isconnected = false;
 static sqlite3 *db;
 static sqlite3_stmt *stmt;
-static bool fetched = false;
 
 
 extern "C" bool l_is_driver() // for extern test that this is a linoratix db backend driver
@@ -66,7 +65,6 @@ bool clearstmt() {
          return false;
       } else {
          DEBUG("precompiled statement deleted")
-         fetched = false;
          return true;
       }
    } 
@@ -87,12 +85,10 @@ int fetch() {
       switch (sqlite3_step(stmt)) {
          case SQLITE_ROW:
             DEBUG("query successfully executed")
-            fetched = true;
             return 1;
             break;
          case SQLITE_DONE:
             DEBUG("query successfully executed and at end of rows")
-            fetched = true;
             return 0;
             break;
          case SQLITE_ERROR:
