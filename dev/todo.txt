@@ -1,10 +1,6 @@
 fuer 1.0
 ----------
 
-subversion:
-	neon lib fuer subversion
-	./configure --prefix=/usr ... --with-apr=/usr --with-apr-util=/usr
-
 bash:
 	rebuild
 
