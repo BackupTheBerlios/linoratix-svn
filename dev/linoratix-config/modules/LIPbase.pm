@@ -17,8 +17,8 @@ use LWP::Simple;
 
 use vars qw(@ISA @EXPORT $MOD_VERSION @COMPATIBLE);
 use Exporter;
-$MOD_VERSION = "0.0.1";
-@COMPATIBLE = qw("0.0.1");
+$MOD_VERSION = "0.0.20";
+@COMPATIBLE = qw("0.0.20");
 @ISA = qw(Exporter);
 @EXPORT = qw(&new);
 
@@ -373,11 +373,24 @@ sub _find_package_dep_by_name
 	foreach my $group (keys %{$pkgdb}) {
 		foreach my $subgroup (keys %{$pkgdb->{$group}}) {
 			foreach my $pkg ( keys %{$pkgdb->{$group}->{$subgroup}}) {
-				if($pkg eq $package && $self->_check_version($version,
-						$pkgdb->{$group}->{$subgroup}->{$pkg}
-					)
-				) {
-					return $pkgdb->{$group}->{$subgroup}->{$pkg};
+				# wir muessen auch auf provides ueberpruefen
+				foreach my $ver (keys %{$pkgdb->{$group}->{$subgroup}->{$pkg}}) {
+					my $provides = $pkgdb->{$group}->{$subgroup}->{$pkg}->{$ver}->{"provides"};
+					my $do_provide = "";
+					if($provides)
+					{
+						$do_provide = $provides;
+					}
+					else
+					{
+						$do_provide = $pkg;
+					}
+					if( $do_provide eq $package && $self->_check_version($version,
+							$pkgdb->{$group}->{$subgroup}->{$pkg}
+						)
+					) {
+						return $pkgdb->{$group}->{$subgroup}->{$pkg};
+					}
 				}
 			}
 		}
@@ -426,6 +439,19 @@ sub check_if_package_is_required_by_installed_package
 	my $ip = $installed_packages;
 	my @needed = ();
 	
+	my $pkg_to_remove_path = $self->find_package_by_name($package);
+	my $pkg_to_remove = $self->get_package_by_path($pkg_to_remove_path);
+	my $provide = $pkg_to_remove->{$version}->{"provides"};
+	my $do_provide = "";
+	if($provide)
+	{
+		$do_provide = $provide;
+	}
+	else
+	{
+		$do_provide = $package;
+	}
+
 	foreach my $group (keys %{$ip}) {
 		next if($group eq "__global-information");
 		foreach my $subgroup (keys %{$ip->{$group}}) {
@@ -436,8 +462,9 @@ sub check_if_package_is_required_by_installed_package
 						{$subgroup}->{$pkg});
 						foreach my $d(@{$deps}) {
 							my($p,$v) = split(/ /, $d);
+							# kucken ob provides da ist
 #							print ">>$d = $package"."\n";
-							if($p eq $package) {
+							if($p eq $do_provide) {
 								if($self->_check_version($v, $ip->{$group}->{$subgroup}->{$pkg})) {
 									push(@needed, $pkg);
 								}
@@ -464,11 +491,24 @@ sub _find_in_i_package_dep_by_name
 		next if($group eq "__global-information");
 		foreach my $subgroup (keys %{$ip->{$group}}) {
 			foreach my $pkg ( keys %{$ip->{$group}->{$subgroup}}) {
-				if($pkg eq $package && $self->_check_version($version,
-						$ip->{$group}->{$subgroup}->{$pkg}
-					)
-				) {
-					return $ip->{$group}->{$subgroup}->{$pkg};
+				foreach my $ver (keys %{$ip->{$group}->{$subgroup}->{$pkg}})
+				{
+					my $provide = $ip->{$group}->{$subgroup}->{$pkg}->{$ver}->{"provides"};
+					my $do_provide = "";
+					if($provide)
+					{
+						$do_provide = $provide;
+					}
+					else
+					{
+						$do_provide = $package;
+					}
+					if($pkg eq $do_provide && $self->_check_version($version,
+							$ip->{$group}->{$subgroup}->{$pkg}
+						)
+					) {
+						return $ip->{$group}->{$subgroup}->{$pkg};
+					}
 				}
 			}
 		}

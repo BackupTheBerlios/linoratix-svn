@@ -18,8 +18,8 @@ use Linoratix::LIPbase;
 
 use vars qw(@ISA @EXPORT $MOD_VERSION @COMPATIBLE);
 use Exporter;
-$MOD_VERSION = "0.0.10";
-@COMPATIBLE = qw("0.0.1");
+$MOD_VERSION = "0.0.20";
+@COMPATIBLE = qw("0.0.20");
 @ISA = qw(Exporter);
 @EXPORT = qw(&new);
 
@@ -187,10 +187,15 @@ sub read_spec_file
 		my $success_dl = 0;
 		my $count_server = 0;
 		while($success_dl eq "0" or $count_server eq scalar(@download_urls)) {
-			system("/usr/bin/wget --passive-ftp -c -O " . $ENV{"DISTFILE_PATH"} . "/" . $build_script{"sourcefile"} . " " . $download_urls[$count_server] . "/" . $build_script{"sourcefile"});
-			if($? eq "0") {
+			unless(-f $ENV{"DISTFILE_PATH"}."/".$build_script{"sourcefile"}) {
+				system("/usr/bin/wget --passive-ftp -c -O " . $ENV{"DISTFILE_PATH"} . "/" . $build_script{"sourcefile"} . " " . $download_urls[$count_server] . "/" . $build_script{"sourcefile"});
+				if($? eq "0") {
+					$success_dl = 1;
+					$count_server = 0;
+					last;
+				}
+			} else {
 				$success_dl = 1;
-				$count_server = 0;
 				last;
 			}
 			$count_server++;
@@ -245,6 +250,16 @@ sub read_spec_file
 	open(FH, ">/var/cache/lip/mklip/DESCRIPTION") or exit 305;
 	print FH $build_script{"description"};
 	close(FH);
+
+	# PROVIDES
+	if($build_script{"provides"})
+	{
+		open(FH, ">/var/cache/lip/mklip/PROVIDES") or exit 305;
+		print FH $build_script{"provides"};
+		close(FH);
+	}
+
+
 
 	mkdir("/var/cache/lip/build") unless(-d "/var/cache/lip/build");
 	chdir("/var/cache/lip/build");
@@ -377,8 +392,14 @@ sub lip_get_file
 	$self->message("Extracting $parameter\n");
 	
 	($file, $to)  = split(/ /, $parameter);
-	
-	system("tar --get $file -v -O -z -f " . $self->param("rebuild") ." > $to  2> /dev/tty9");
+	if($self->param("ports-build"))
+	{
+		system("cp ".$ENV{"PORTS_PATH"}."/".$self->param("ports-build") . "/files/" . $file . " " . $to);
+	}
+	else
+	{
+		system("tar --get $file -v -O -z -f " . $self->param("rebuild") ." > $to  2> /dev/tty9");
+	}
 	if($? ne "0") {
 		$self->error("error in function lip_get_file, line ".$REBUILD_LINE);
 		exit 1;
@@ -480,7 +501,7 @@ sub lip_patch
 	
 	$self->message("Patching $parameter\n");
 		
-	system("patch -Np1 -i $parameter ");
+	system("patch $parameter ");
 	if($? ne "0") {
 		$self->error("error in function lip_patch, line ".$REBUILD_LINE);
 		exit 1;
@@ -754,6 +775,7 @@ sub build_package_cache
 	my $packages;
 	my $exec_get_manifest        = "/bin/tar --get MANIFEST -O -v -z -f $dir";
 	my $exec_get_description     = "/bin/tar --get DESCRIPTION -O -v -z -f $dir";
+	my $exec_get_provides        = "/bin/tar --get PROVIDES -O -v -z -f $dir";
 	my $exec_get_group           = "/bin/tar --get GROUP -O -v -z -f $dir";
 	my $exec_get_name            = "/bin/tar --get NAME -O -v -z -f $dir";
 	my $exec_get_version         = "/bin/tar --get VERSION -O -v -z -f $dir";
@@ -771,6 +793,7 @@ sub build_package_cache
 		print "$_\n";
 		my @manifest        = `$exec_get_manifest/$_ 2> /dev/tty9`;
 		my @description     = `$exec_get_description/$_ 2> /dev/tty9`;
+		my @provides        = `$exec_get_provides/$_ 2> /dev/tty9`;
 		my @group           = `$exec_get_group/$_ 2> /dev/tty9`;
 		my @package_name    = `$exec_get_name/$_ 2> /dev/tty9`;
 		my @package_version = `$exec_get_version/$_ 2> /dev/tty9`;
@@ -791,6 +814,7 @@ sub build_package_cache
 		my @md5sum = `/usr/bin/md5sum $_`;
 		my @md5    = split(/\s+/, $md5sum[0]);
 		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"description"} = $description[0];
+		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"provides"} = $provides[0];
 		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"rebuild-url"} = $rebuild_url[0];
 		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"status"} = $status;
 		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"files"} = \@manifest;
