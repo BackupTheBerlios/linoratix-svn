@@ -20,7 +20,7 @@ lip_extract %sourcefile
 # -- execution of pre-install-scipts
 lip_cd %compile_dir
 # include gnu style building
-include gnu_system_build.lih
+include gnu_system_build.lif
 
 # -- execution of post-install-scripts
 __DATA__
