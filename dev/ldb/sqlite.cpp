@@ -26,6 +26,7 @@ using namespace std;
 static bool m_isconnected = false;
 static sqlite3 *db;
 static sqlite3_stmt *stmt;
+static bool fetched = false;
 
 
 extern "C" bool l_is_driver() // for extern test that this is a linoratix db backend driver
@@ -61,10 +62,11 @@ extern "C" bool l_connect(map <string, string> con_data) // this does make the d
 bool clearstmt() {
    if(stmt != NULL) { 
       if(sqlite3_finalize(stmt) != SQLITE_OK) {
-         DEBUG("cant delet precompiled statement [" + string(sqlite3_errmsg(db)) + "]")
+         DEBUG("cant delete precompiled statement [" + string(sqlite3_errmsg(db)) + "]")
          return false;
       } else {
          DEBUG("precompiled statement deleted")
+         fetched = false;
          return true;
       }
    } 
@@ -81,6 +83,36 @@ bool stmtok(string& sql_query) {
    }
 }
 
+int fetch() {
+      switch (sqlite3_step(stmt)) {
+         case SQLITE_ROW:
+            DEBUG("query successfully executed")
+            fetched = true;
+            return 1;
+            break;
+         case SQLITE_DONE:
+            DEBUG("query successfully executed and at end of rows")
+            fetched = true;
+            return 0;
+            break;
+         case SQLITE_ERROR:
+            DEBUG("error while executing query: [" + string(sqlite3_errmsg(db)) + "]")
+            return -1;
+            break;
+         case SQLITE_BUSY:
+            DEBUG("the database is busy")
+            return -1;
+            break;
+         case SQLITE_MISUSE:
+            DEBUG("no query found to execute [" + string(sqlite3_errmsg(db)) + "]")
+            return -1;
+            break;
+         default:
+            DEBUG("unknown query return [" + string(sqlite3_errmsg(db)) + "]")
+            return -1;
+            break;
+      }
+}
 
 // builds the sql_query content to pass them into the l_query function
 extern "C" bool l_select(map<string, string>& query, string& sql_query)
@@ -166,32 +198,17 @@ extern "C" int l_query(string database, string sql_query) { // database var is n
       return -1;
    } else {
       DEBUG("statement is prepared")
-      switch (sqlite3_step(stmt)) {
-         case SQLITE_ROW:
-            DEBUG("query successfully executed")
-            return 2;
-            break;
-         case SQLITE_DONE:
-            DEBUG("query successfully executed and at end of rows")
-            return 1;
-            break;
-         case SQLITE_ERROR:
-            DEBUG("error while executing query: [" + string(sqlite3_errmsg(db)) + "]")
-            return -1;
-            break;
-         case SQLITE_BUSY:
-            DEBUG("the database is busy")
-            return -1;
-            break;
-         case SQLITE_MISUSE:
-            DEBUG("no query found to execute [" + string(sqlite3_errmsg(db)) + "]")
-            return -1;
-            break;
-         default:
-            DEBUG("unknown query return [" + string(sqlite3_errmsg(db)) + "]")
-            return -1;
-            break;
-      }
+      return fetch();
+   }
+}
+
+
+extern "C" int l_num_rows() {
+   if(stmt != NULL) {
+      return sqlite3_column_count(stmt);
+   } else {
+      DEBUG("no statement precompiled");
+      return -1;
    }
 }
 

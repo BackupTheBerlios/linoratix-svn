@@ -36,9 +36,8 @@ int main(int argc, char **argv)
       my_query["fields"] = "zahl int, text varchar(128)";
       cout << "The create test has returned: '" << datenbank->Create(my_query) << "'" << endl;
       
-
-/*
-	   my_query["table"] = "blocks";
+//	   my_query["table"] = "blocks";
+	   my_query["table"] = "test";
 	   my_query["fields"]= "*";
 
 	   if(! datenbank->Select(my_query))
@@ -49,14 +48,15 @@ int main(int argc, char **argv)
 	   		cout << datenbank->Record["direction"] << endl;
 	   	}
 	   }
-	
+
+/*
    	my_insert["table"] = "blocks";
    	my_set["direction"] = "t'op";
    	my_set["text"] = "joah mann";
 	
    	datenbank->Insert(my_insert, my_set);
 */
-
+      
    } catch (std::exception& e) {
       cout << "Exception: " << e.what() << endl;
       return -1;
