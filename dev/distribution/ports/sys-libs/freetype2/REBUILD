@@ -1,5 +1,5 @@
 #
-#rebuild file for freetype2	
+#rebuild file for freetype2.1.9	
 #
 %author: ogu
 %package-group: sys-libs -
