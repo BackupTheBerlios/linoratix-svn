@@ -331,7 +331,7 @@ sub policy
 	my $package = $self->param("policy");
 
 	my ($group, $subgroup, $pkg) = split(/\//, 
-			$base->find_package_by_name($package)); # gibt den pfad
+			$base->_find_in_i_package_by_name($package)); # gibt den pfad
 	print "\n";
 	
 	

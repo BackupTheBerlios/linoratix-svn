@@ -45,12 +45,8 @@ sub new
 
 	$base = Linoratix::LIPbase->new();
 
-	$self->message("Retrieving information for installed packages...   ");
-	if(-f $self->param("prefix") . "/var/cache/lip/installed_packages.cache") {
-		$installed_packages = retrieve($self->param("prefix") . "/var/cache/lip/installed_packages.cache");
-	}
-	print "done.\n";
-
+	$self->get_installed_packages();
+	
 	$self->{"path"} = getcwd();
 
 	$bin_dir = $self->param("bin-dir");
@@ -62,6 +58,17 @@ sub new
 	$self->read_spec_file($ENV{"PORTS_PATH"}."/".$self->param("ports-build")) if($self->param("ports-build"));
 
 	return $self;
+}
+
+sub get_installed_packages
+{
+	my $self = shift;
+	$self->message("Retrieving information for installed packages...   ");
+	if(-f $self->param("prefix") . "/var/cache/lip/installed_packages.cache") {
+		$installed_packages = retrieve($self->param("prefix") . "/var/cache/lip/installed_packages.cache");
+	}
+	
+print "done.\n";
 }
 
 sub help
@@ -225,6 +232,7 @@ sub read_spec_file
 		} else {
 			$self->message("$n, $v already installed. skipping...\n");
 		}
+		$self->get_installed_packages();
 	}
 	my $count = 0;	
 	foreach my $del (@required)
@@ -265,6 +273,7 @@ sub read_spec_file
 			} else {
 				$self->message("$n, $v already installed. skipping...\n");
 			}
+			$self->get_installed_packages();
 		}
 	}
 
@@ -369,12 +378,9 @@ use File::Find;
 	mkdir("/usr/src/LIPS/BUILDS") unless(-d "/usr/src/LIPS/BUILDS");
 	system("tar cvzf /usr/src/LIPS/BUILDS/" . $build_script{"name"} . "-" . $build_script{"version"} . ".lip * ");
 
-	print "HIER!!";
-	die;
 
 	if($self->option("install"))
 	{
-		print "huhu"; die;
 		$self->message("now installing package: " . $build_script{"name"} . "-" . $build_script{"version"} . "\n");
 		if($self->option("fake"))
 		{
@@ -382,7 +388,6 @@ use File::Find;
 		}
 		else
 		{
-			print "hier"; die;
 			system("linoratix-config --plugin LIP --install /usr/src/LIPS/BUILDS/".$build_script{"name"} . "-" . $build_script{"version"} . ".lip");
 		}
 	}
