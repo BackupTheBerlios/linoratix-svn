@@ -93,6 +93,8 @@ bool stmtok(string& sql_query) {
    }
 }
 
+
+// this does execute the statement 1 for rows left, 0 for no rows left and <0 if an error appears
 extern "C" int l_execute() {
       switch (sqlite3_step(stmt)) {
          case SQLITE_ROW:
@@ -197,12 +199,18 @@ extern "C" bool l_create(map<string, string>& con_data, string& sql_query) {
    
    sql_query += ";"; // end of statement!
    DEBUG("statement [" + sql_query + "]")
-
-   return stmtok(sql_query);
+   if(stmtok(sql_query)) {
+         int x = l_query("", sql_query);
+         if(x)
+            return l_execute();
+         else
+            return x;
+   }
+   return 0;
 }
 
 
-// this function does execute the statement... call this function for all results
+// this function does prepare the statement... call this function for all results
 extern "C" int l_query(string database, string sql_query) { // database var is not used here
    if(sqlite3_prepare(db, sql_query.c_str(), sizeof(sql_query.c_str()), &stmt, NULL) != SQLITE_OK) {
       DEBUG("precompiling of statement failed [" + string(sqlite3_errmsg(db)) + "]")

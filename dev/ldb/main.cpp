@@ -39,7 +39,6 @@ int main(int argc, char **argv)
       if(! datenbank->Create(my_query))
          cout << "The create test has returned: '" << datenbank->Execute() << "'" << endl;
       
-//	   my_query["table"] = "blocks";
 	   my_query["table"] = "test";
 	   my_query["fields"]= "*";
       my_query["order"]= "zahl";
@@ -53,6 +52,7 @@ int main(int argc, char **argv)
          cout << "Spaltenanzahl: " << columns << endl;
          string tmp;
          
+         // select test
          if(columns > 0) {
             // column name 
             for(int x = 0; x < columns; x++) {
@@ -69,12 +69,12 @@ int main(int argc, char **argv)
          }
       } // iam the stairs king :-P 
 
+      // insert test
       string table = "test";
       my_set["zahl"] = "123";
       my_set["text"] = "blah^asd'das";
 
       datenbank->Insert(table, my_set);
-
 
       delete datenbank; // der speicher den das Objekt benutzt muss allerdings auch wieder frei gegeben werden
                         // sonst ist irgendwann der speicher voll mit objekten die nichtmehr benutzt werden --> das ist schlecht

@@ -10,7 +10,7 @@ class db
 {
 	public:
 		// treibername
-		db(char*);
+		db(char*); // so file with driver
 		~db();
 		bool Connect(map<string,string>);
       bool Disconnect();
