@@ -1,0 +1,180 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/04 21:27:36-08:00 sct@redhat.com 
+#   [PATCH] ext3: handle attempted delete of bitmap blocks.
+#   
+#   This patch improves ext3's ability to deal with corruption on-disk.  If we
+#   ever get a corrupt inode or indirect block, then an attempt to delete it
+#   can end up trying to remove any block on the fs, including bitmap blocks.
+#   This can cause ext3 to assert-fail as we end up trying to do an ext3_forget
+#   on a buffer with b_committed_data set.
+#   
+#   The fix is to downgrade this to an IO error and journal abort, so that we
+#   take the filesystem readonly but don't bring down the whole kernel.
+#   
+#   Make J_EXPECT_JH() return a value so it can be easily tested and yet still
+#   retained as an assert failure if we build ext3 with full internal debugging
+#   enabled.  Make journal_forget() return an error code so that in this case
+#   the error can be passed up to the caller.
+#   
+#   This is easily reproduced with a sample ext3 fs image containing an inode
+#   whose direct and indirect blocks refer to a block bitmap block.  Allocating
+#   new blocks and then deleting that inode will BUG() with:
+#   
+#   Assertion failure in journal_forget() at fs/jbd/transaction.c:1228:
+#   "!jh->b_committed_data"
+#   
+#   With the fix, ext3 recovers gracefully.
+#   
+#   Signed-off-by: Stephen Tweedie <sct@redhat.com>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# fs/ext3/inode.c
+#   2005/01/04 20:24:31-08:00 sct@redhat.com +1 -1
+#   ext3: handle attempted delete of bitmap blocks.
+# 
+# fs/jbd/transaction.c
+#   2005/01/04 18:48:12-08:00 sct@redhat.com +12 -4
+#   ext3: handle attempted delete of bitmap blocks.
+# 
+# include/linux/ext3_jbd.h
+#   2005/01/04 18:48:12-08:00 sct@redhat.com +8 -3
+#   ext3: handle attempted delete of bitmap blocks.
+# 
+# include/linux/jbd.h
+#   2005/01/04 18:48:12-08:00 sct@redhat.com +7 -5
+#   ext3: handle attempted delete of bitmap blocks.
+# 
+diff -Nru a/fs/ext3/inode.c b/fs/ext3/inode.c
+--- a/fs/ext3/inode.c	2005-01-22 22:56:19 -08:00
++++ b/fs/ext3/inode.c	2005-01-22 22:56:19 -08:00
+@@ -84,7 +84,7 @@
+ 	    (!is_metadata && !ext3_should_journal_data(inode))) {
+ 		if (bh) {
+ 			BUFFER_TRACE(bh, "call journal_forget");
+-			ext3_journal_forget(handle, bh);
++			return ext3_journal_forget(handle, bh);
+ 		}
+ 		return 0;
+ 	}
+diff -Nru a/fs/jbd/transaction.c b/fs/jbd/transaction.c
+--- a/fs/jbd/transaction.c	2005-01-22 22:56:19 -08:00
++++ b/fs/jbd/transaction.c	2005-01-22 22:56:19 -08:00
+@@ -1198,11 +1198,12 @@
+  * Allow this call even if the handle has aborted --- it may be part of
+  * the caller's cleanup after an abort.
+  */
+-void journal_forget(handle_t *handle, struct buffer_head *bh)
++int journal_forget (handle_t *handle, struct buffer_head *bh)
+ {
+ 	transaction_t *transaction = handle->h_transaction;
+ 	journal_t *journal = transaction->t_journal;
+ 	struct journal_head *jh;
++	int err = 0;
+ 
+ 	BUFFER_TRACE(bh, "entry");
+ 
+@@ -1213,6 +1214,14 @@
+ 		goto not_jbd;
+ 	jh = bh2jh(bh);
+ 
++	/* Critical error: attempting to delete a bitmap buffer, maybe?
++	 * Don't do any jbd operations, and return an error. */
++	if (!J_EXPECT_JH(jh, !jh->b_committed_data,
++			 "inconsistent data on disk")) {
++		err = -EIO;
++		goto not_jbd;
++	}
++
+ 	if (jh->b_transaction == handle->h_transaction) {
+ 		J_ASSERT_JH(jh, !jh->b_frozen_data);
+ 
+@@ -1223,7 +1232,6 @@
+ 		clear_buffer_jbddirty(bh);
+ 
+ 		JBUFFER_TRACE(jh, "belongs to current transaction: unfile");
+-		J_ASSERT_JH(jh, !jh->b_committed_data);
+ 
+ 		__journal_unfile_buffer(jh);
+ 
+@@ -1248,7 +1256,7 @@
+ 				spin_unlock(&journal->j_list_lock);
+ 				jbd_unlock_bh_state(bh);
+ 				__bforget(bh);
+-				return;
++				return 0;
+ 			}
+ 		}
+ 	} else if (jh->b_transaction) {
+@@ -1270,7 +1278,7 @@
+ 	spin_unlock(&journal->j_list_lock);
+ 	jbd_unlock_bh_state(bh);
+ 	__brelse(bh);
+-	return;
++	return err;
+ }
+ 
+ /**
+diff -Nru a/include/linux/ext3_jbd.h b/include/linux/ext3_jbd.h
+--- a/include/linux/ext3_jbd.h	2005-01-22 22:56:19 -08:00
++++ b/include/linux/ext3_jbd.h	2005-01-22 22:56:19 -08:00
+@@ -138,10 +138,13 @@
+ 	journal_release_buffer(handle, bh, credits);
+ }
+ 
+-static inline void
+-ext3_journal_forget(handle_t *handle, struct buffer_head *bh)
++static inline int
++__ext3_journal_forget(const char *where, handle_t *handle, struct buffer_head *bh)
+ {
+-	journal_forget(handle, bh);
++	int err = journal_forget(handle, bh);
++	if (err)
++		ext3_journal_abort_handle(where, __FUNCTION__, bh, handle,err);
++	return err;
+ }
+ 
+ static inline int
+@@ -187,6 +190,8 @@
+ 	__ext3_journal_get_create_access(__FUNCTION__, (handle), (bh))
+ #define ext3_journal_dirty_metadata(handle, bh) \
+ 	__ext3_journal_dirty_metadata(__FUNCTION__, (handle), (bh))
++#define ext3_journal_forget(handle, bh) \
++	__ext3_journal_forget(__FUNCTION__, (handle), (bh))
+ 
+ int ext3_journal_dirty_data(handle_t *handle, struct buffer_head *bh);
+ 
+diff -Nru a/include/linux/jbd.h b/include/linux/jbd.h
+--- a/include/linux/jbd.h	2005-01-22 22:56:19 -08:00
++++ b/include/linux/jbd.h	2005-01-22 22:56:19 -08:00
+@@ -277,13 +277,15 @@
+ #define J_EXPECT_JH(jh, expr, why...)	J_ASSERT_JH(jh, expr)
+ #else
+ #define __journal_expect(expr, why...)					     \
+-	do {								     \
+-		if (!(expr)) {						     \
++	({								     \
++		int val = (expr);					     \
++		if (!val) {						     \
+ 			printk(KERN_ERR					     \
+ 				"EXT3-fs unexpected failure: %s;\n",# expr); \
+-			printk(KERN_ERR why);				     \
++			printk(KERN_ERR why "\n");			     \
+ 		}							     \
+-	} while (0)
++		val;							     \
++	})
+ #define J_EXPECT(expr, why...)		__journal_expect(expr, ## why)
+ #define J_EXPECT_BH(bh, expr, why...)	__journal_expect(expr, ## why)
+ #define J_EXPECT_JH(jh, expr, why...)	__journal_expect(expr, ## why)
+@@ -874,7 +876,7 @@
+ extern int	 journal_dirty_metadata (handle_t *, struct buffer_head *);
+ extern void	 journal_release_buffer (handle_t *, struct buffer_head *,
+ 						int credits);
+-extern void	 journal_forget (handle_t *, struct buffer_head *);
++extern int	 journal_forget (handle_t *, struct buffer_head *);
+ extern void	 journal_sync_buffer (struct buffer_head *);
+ extern int	 journal_invalidatepage(journal_t *,
+ 				struct page *, unsigned long);

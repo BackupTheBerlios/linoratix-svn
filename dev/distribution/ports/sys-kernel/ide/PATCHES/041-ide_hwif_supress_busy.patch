@@ -1,0 +1,33 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/15 02:31:51+01:00 bzolnier@trik.(none) 
+#   [ide] suppress output of error messages for non-existant interfaces
+#   
+#   From: Prarit Bhargava <prarit@sgi.com>
+#   
+#   Suppress output of "Wait for ready failed before probe !" messages for 
+#   non-existant interfaces.
+#   
+#   Please see 
+#   http://marc.theaimsgroup.com/?l=linux-ide&m=110553792013649&w=2 for 
+#   further context on this patch.
+#   
+#   Signed-off-by: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+# 
+# drivers/ide/ide-probe.c
+#   2005/01/12 15:01:25+01:00 bzolnier@trik.(none) +1 -1
+#   [ide] suppress output of error messages for non-existant interfaces
+# 
+diff -Nru a/drivers/ide/ide-probe.c b/drivers/ide/ide-probe.c
+--- a/drivers/ide/ide-probe.c	2005-01-15 16:59:15 -08:00
++++ b/drivers/ide/ide-probe.c	2005-01-15 16:59:15 -08:00
+@@ -749,7 +749,7 @@
+ 	 *  
+ 	 *  BenH.
+ 	 */
+-	if (wait_hwif_ready(hwif))
++	if (wait_hwif_ready(hwif) == -EBUSY)
+ 		printk(KERN_DEBUG "%s: Wait for ready failed before probe !\n", hwif->name);
+ 
+ 	/*

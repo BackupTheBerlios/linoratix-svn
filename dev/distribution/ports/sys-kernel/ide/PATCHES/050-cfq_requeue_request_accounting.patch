@@ -1,0 +1,32 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/12 08:49:02-08:00 axboe@suse.de 
+#   [PATCH] cfq-iosched: fix scsi requeue accounting
+#   
+#   The accounting can go bad in the requeue hook, it must check the
+#   accounted flag to make sure it was previously considered in the driver.
+#   
+#   Signed-off-by: Jens Axboe <axboe@suse.de>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# drivers/block/cfq-iosched.c
+#   2005/01/11 01:03:17-08:00 axboe@suse.de +4 -2
+#   cfq-iosched: fix scsi requeue accounting
+# 
+diff -Nru a/drivers/block/cfq-iosched.c b/drivers/block/cfq-iosched.c
+--- a/drivers/block/cfq-iosched.c	2005-01-15 20:41:34 -08:00
++++ b/drivers/block/cfq-iosched.c	2005-01-15 20:41:34 -08:00
+@@ -622,8 +622,10 @@
+ 			cfq_sort_rr_list(cfqq, 0);
+ 		}
+ 
+-		crq->accounted = 0;
+-		cfqq->cfqd->rq_in_driver--;
++		if (crq->accounted) {
++			crq->accounted = 0;
++			cfqq->cfqd->rq_in_driver--;
++		}
+ 	}
+ 	list_add(&rq->queuelist, &q->queue_head);
+ }

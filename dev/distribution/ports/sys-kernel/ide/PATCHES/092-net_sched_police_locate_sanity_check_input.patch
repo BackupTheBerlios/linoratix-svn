@@ -1,0 +1,81 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/27 18:06:57-08:00 tgraf@suug.ch 
+#   [PKT_SCHED]: Validate policer configuration TLVs.
+#   
+#   Signed-off-by: Thomas Graf <tgraf@suug.ch>
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+# net/sched/police.c
+#   2004/12/27 18:06:37-08:00 tgraf@suug.ch +22 -8
+#   [PKT_SCHED]: Validate policer configuration TLVs.
+#   
+#   Signed-off-by: Thomas Graf <tgraf@suug.ch>
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+diff -Nru a/net/sched/police.c b/net/sched/police.c
+--- a/net/sched/police.c	2005-02-14 02:43:40 -08:00
++++ b/net/sched/police.c	2005-02-14 02:43:40 -08:00
+@@ -180,7 +180,8 @@
+ 	if (rtattr_parse(tb, TCA_POLICE_MAX, RTA_DATA(rta), RTA_PAYLOAD(rta)) < 0)
+ 		return -1;
+ 
+-	if (tb[TCA_POLICE_TBF-1] == NULL)
++	if (tb[TCA_POLICE_TBF-1] == NULL ||
++	    RTA_PAYLOAD(tb[TCA_POLICE_TBF-1]) != sizeof(*parm))
+ 		return -1;
+ 
+ 	parm = RTA_DATA(tb[TCA_POLICE_TBF-1]);
+@@ -220,11 +221,17 @@
+ 			goto failure;
+ 		}
+ 	}
+-	if (tb[TCA_POLICE_RESULT-1])
+-		p->result = *(int*)RTA_DATA(tb[TCA_POLICE_RESULT-1]);
++	if (tb[TCA_POLICE_RESULT-1]) {
++		if (RTA_PAYLOAD(tb[TCA_POLICE_RESULT-1]) != sizeof(u32))
++			goto failure;
++		p->result = *(u32*)RTA_DATA(tb[TCA_POLICE_RESULT-1]);
++	}
+ #ifdef CONFIG_NET_ESTIMATOR
+-	if (tb[TCA_POLICE_AVRATE-1])
++	if (tb[TCA_POLICE_AVRATE-1]) {
++		if (RTA_PAYLOAD(tb[TCA_POLICE_AVRATE-1]) != sizeof(u32))
++			goto failure;
+ 		p->ewma_rate = *(u32*)RTA_DATA(tb[TCA_POLICE_AVRATE-1]);
++	}
+ #endif
+ 	p->toks = p->burst = parm->burst;
+ 	p->mtu = parm->mtu;
+@@ -424,7 +431,8 @@
+ 	if (rtattr_parse(tb, TCA_POLICE_MAX, RTA_DATA(rta), RTA_PAYLOAD(rta)) < 0)
+ 		return NULL;
+ 
+-	if (tb[TCA_POLICE_TBF-1] == NULL)
++	if (tb[TCA_POLICE_TBF-1] == NULL ||
++	    RTA_PAYLOAD(tb[TCA_POLICE_TBF-1]) != sizeof(*parm))
+ 		return NULL;
+ 
+ 	parm = RTA_DATA(tb[TCA_POLICE_TBF-1]);
+@@ -449,11 +457,17 @@
+ 		    (p->P_tab = qdisc_get_rtab(&parm->peakrate, tb[TCA_POLICE_PEAKRATE-1])) == NULL)
+ 			goto failure;
+ 	}
+-	if (tb[TCA_POLICE_RESULT-1])
+-		p->result = *(int*)RTA_DATA(tb[TCA_POLICE_RESULT-1]);
++	if (tb[TCA_POLICE_RESULT-1]) {
++		if (RTA_PAYLOAD(tb[TCA_POLICE_RESULT-1]) != sizeof(u32))
++			goto failure;
++		p->result = *(u32*)RTA_DATA(tb[TCA_POLICE_RESULT-1]);
++	}
+ #ifdef CONFIG_NET_ESTIMATOR
+-	if (tb[TCA_POLICE_AVRATE-1])
++	if (tb[TCA_POLICE_AVRATE-1]) {
++		if (RTA_PAYLOAD(tb[TCA_POLICE_AVRATE-1]) != sizeof(u32))
++			goto failure;
+ 		p->ewma_rate = *(u32*)RTA_DATA(tb[TCA_POLICE_AVRATE-1]);
++	}
+ #endif
+ 	p->toks = p->burst = parm->burst;
+ 	p->mtu = parm->mtu;

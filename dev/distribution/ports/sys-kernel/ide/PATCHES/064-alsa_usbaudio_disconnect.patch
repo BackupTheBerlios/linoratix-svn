@@ -1,0 +1,43 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/03 11:18:07+01:00 perex@suse.cz 
+#   [ALSA] Return -EBADFD when the device is disconnected
+#   
+#   USB generic driver
+#   The trigger callback returns -EBADFD when the device is disconnected.
+#   
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+# sound/usb/usbaudio.c
+#   2004/12/16 09:12:51+01:00 perex@suse.cz +4 -1
+#   [ALSA] Return -EBADFD when the device is disconnected
+#   
+#   D:2004/12/16 16:12:51
+#   C:USB generic driver
+#   F:usb/usbaudio.c:1.112->1.113 
+#   L:The trigger callback returns -EBADFD when the device is disconnected.
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+diff -Nru a/sound/usb/usbaudio.c b/sound/usb/usbaudio.c
+--- a/sound/usb/usbaudio.c	2005-01-22 22:17:09 -08:00
++++ b/sound/usb/usbaudio.c	2005-01-22 22:17:09 -08:00
+@@ -725,7 +725,7 @@
+ 	subs->running = 0;
+ 
+ 	if (!force && subs->stream->chip->shutdown) /* to be sure... */
+-		return 0;
++		return -EBADFD;
+ 
+ 	async = !can_sleep && async_unlink;
+ 
+@@ -769,6 +769,9 @@
+ {
+ 	unsigned int i;
+ 	int err;
++
++	if (subs->stream->chip->shutdown)
++		return -EBADFD;
+ 
+ 	for (i = 0; i < subs->nurbs; i++) {
+ 		snd_assert(subs->dataurb[i].urb, return -EINVAL);

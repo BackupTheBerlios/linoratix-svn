@@ -1,0 +1,91 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/20 10:58:16+00:00 dwmw2@shinybook.infradead.org 
+#   JFFS2: Fix memory leak if jffs2_scan_medium() fails.
+#   
+#   We weren't releasing all the temporary dirent structures we may have
+#   built up during the first part of the scan.
+#   
+#   Signed-off-by: Artem Bityuckiy <dedekind@infradead.org>
+#   Signed-off-by: David Woodhouse <dwmw2@infradead.org>
+# 
+# fs/jffs2/build.c
+#   2004/11/20 10:57:52+00:00 dwmw2@shinybook.infradead.org +17 -6
+#   revision 1.64
+#   date: 2004/11/20 10:44:07;  author: dwmw2;  state: Exp;  lines: +1 -2
+#   wbuf_sem is now nand-only
+#   ----------------------------
+#   revision 1.63
+#   date: 2004/11/20 08:45:15;  author: dwmw2;  state: Exp;  lines: +2 -2
+#   remove double semicolon
+#   ----------------------------
+#   revision 1.62
+#   date: 2004/11/19 13:41:16;  author: dedekind;  state: Exp;  lines: +2 -1
+#   Bugfix: fix the race bug when a writed and reader concurrently access
+#   the wbuf. Introduce new rw semaphore to fix this.
+#   ----------------------------
+#   revision 1.61
+#   date: 2004/11/18 11:17:41;  author: dedekind;  state: Exp;  lines: +17 -6
+#   Bugfix: do not forget to free memory if the jffs2_scan_inode_node()
+#   fails.
+# 
+diff -Nru a/fs/jffs2/build.c b/fs/jffs2/build.c
+--- a/fs/jffs2/build.c	2005-02-18 23:45:11 -08:00
++++ b/fs/jffs2/build.c	2005-02-18 23:45:11 -08:00
+@@ -89,6 +89,7 @@
+ 	int ret;
+ 	int i;
+ 	struct jffs2_inode_cache *ic;
++	struct jffs2_full_dirent *fd;
+ 	struct jffs2_full_dirent *dead_fds = NULL;
+ 
+ 	/* First, scan the medium and build all the inode caches with
+@@ -97,7 +98,7 @@
+ 	c->flags |= JFFS2_SB_FLAG_MOUNTING;
+ 
+ 	if (ret)
+-		return ret;
++		goto exit;
+ 
+ 	D1(printk(KERN_DEBUG "Scanned flash completely\n"));
+ 	D2(jffs2_dump_block_lists(c));
+@@ -136,9 +137,7 @@
+ 	D1(printk(KERN_DEBUG "Pass 2a starting\n"));
+ 
+ 	while (dead_fds) {
+-		struct jffs2_inode_cache *ic;
+-		struct jffs2_full_dirent *fd = dead_fds;
+-
++		fd = dead_fds;
+ 		dead_fds = fd->next;
+ 
+ 		ic = jffs2_get_ino_cache(c, fd->ino);
+@@ -153,7 +152,6 @@
+ 	
+ 	/* Finally, we can scan again and free the dirent structs */
+ 	for_each_inode(i, c, ic) {
+-		struct jffs2_full_dirent *fd;
+ 		D1(printk(KERN_DEBUG "Pass 3: ino #%u, ic %p, nodes %p\n", ic->ino, ic, ic->nodes));
+ 
+ 		while(ic->scan_dents) {
+@@ -169,6 +167,19 @@
+ 
+ 	/* Rotate the lists by some number to ensure wear levelling */
+ 	jffs2_rotate_lists(c);
++
++	ret = 0;
++
++exit:
++	if (ret) {
++		for_each_inode(i, c, ic) {
++			while(ic->scan_dents) {
++				fd = ic->scan_dents;
++				ic->scan_dents = fd->next;
++				jffs2_free_full_dirent(fd);
++			}
++		}
++	}
+ 
+ 	return ret;
+ }

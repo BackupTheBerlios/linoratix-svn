@@ -1,0 +1,26 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/28 00:11:59+00:00 dwmw2@shinybook.infradead.org 
+#   JFFS2: Initialise bad_count for each eraseblock correctly.
+#   
+#   Patch from Estelle Hammache <estelle.hammache@st.com>
+#   Signed-off-by: David Woodhouse <dwmw2@infradead.org>
+# 
+# fs/jffs2/build.c
+#   2004/11/28 00:11:36+00:00 dwmw2@shinybook.infradead.org +2 -1
+#   revision 1.66
+#   date: 2004/11/20 19:18:07;  author: dwmw2;  state: Exp;  lines: +2 -1
+#   Patch from Estelle Hammache: initialise bad_count.
+# 
+diff -Nru a/fs/jffs2/build.c b/fs/jffs2/build.c
+--- a/fs/jffs2/build.c	2005-02-14 01:25:59 -08:00
++++ b/fs/jffs2/build.c	2005-02-14 01:25:59 -08:00
+@@ -325,6 +325,7 @@
+ 		c->blocks[i].used_size = 0;
+ 		c->blocks[i].first_node = NULL;
+ 		c->blocks[i].last_node = NULL;
++		c->blocks[i].bad_count = 0;
+ 	}
+ 
+ 	init_MUTEX(&c->alloc_sem);

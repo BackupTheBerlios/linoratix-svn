@@ -1,0 +1,46 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/17 12:51:43-06:00 shaggy@austin.ibm.com 
+#   JFS: fix race in jfs_commit_inode
+#   
+#   There was a race that resulted in old, deleted inodes being written
+#   to disk after the inode number had been reused.  jfs_commit_inode
+#   needs to verify that the inode is still linked and dirty before
+#   committing it.
+#   
+#   Signed-off-by: Dave Kleikamp <shaggy@austin.ibm.com>
+# 
+# fs/jfs/inode.c
+#   2004/11/17 12:51:26-06:00 shaggy@austin.ibm.com +8 -3
+#   jfs_commit_inode needs to re-verify that inode is still linked
+#   and dirty
+# 
+diff -Nru a/fs/jfs/inode.c b/fs/jfs/inode.c
+--- a/fs/jfs/inode.c	2005-02-14 05:02:36 -08:00
++++ b/fs/jfs/inode.c	2005-02-14 05:02:36 -08:00
+@@ -81,8 +81,7 @@
+ 	 * Don't commit if inode has been committed since last being
+ 	 * marked dirty, or if it has been deleted.
+ 	 */
+-	if (test_cflag(COMMIT_Nolink, inode) ||
+-	    !test_cflag(COMMIT_Dirty, inode))
++	if (inode->i_nlink == 0 || !test_cflag(COMMIT_Dirty, inode))
+ 		return 0;
+ 
+ 	if (isReadOnly(inode)) {
+@@ -100,7 +99,13 @@
+ 
+ 	tid = txBegin(inode->i_sb, COMMIT_INODE);
+ 	down(&JFS_IP(inode)->commit_sem);
+-	rc = txCommit(tid, 1, &inode, wait ? COMMIT_SYNC : 0);
++
++	/*
++	 * Retest inode state after taking commit_sem
++	 */
++	if (inode->i_nlink && test_cflag(COMMIT_Dirty, inode))
++		rc = txCommit(tid, 1, &inode, wait ? COMMIT_SYNC : 0);
++
+ 	txEnd(tid);
+ 	up(&JFS_IP(inode)->commit_sem);
+ 	return rc;

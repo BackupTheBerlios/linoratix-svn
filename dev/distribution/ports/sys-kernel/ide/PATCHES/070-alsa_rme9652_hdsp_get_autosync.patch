@@ -1,0 +1,43 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/03 11:28:17+01:00 perex@suse.cz 
+#   [ALSA] Fix invalid 'AutoSync Reference' value
+#   
+#   RME HDSP driver
+#   The value returned by controllers for control number 14 ('AutoSync
+#   Reference') is incorrect and different from that reported by doing
+#   a cat /proc/asound/card0/hdsp.
+#   The value reported is not 'AutoSync Reference' but 'Preferred Sync
+#   Reference' instead.
+#   
+#   Signed-off-by: Remy Bruno <remy.bruno@trinnov.com>
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+# sound/pci/rme9652/hdsp.c
+#   2004/12/21 10:59:41+01:00 perex@suse.cz +1 -1
+#   [ALSA] Fix invalid 'AutoSync Reference' value
+#   
+#   D:2004/12/21 17:59:41
+#   C:RME HDSP driver
+#   F:pci/rme9652/hdsp.c:1.76->1.77 
+#   L:The value returned by controllers for control number 14 ('AutoSync
+#   L:Reference') is incorrect and different from that reported by doing
+#   L:a cat /proc/asound/card0/hdsp.
+#   L:The value reported is not 'AutoSync Reference' but 'Preferred Sync
+#   L:Reference' instead.
+#   Signed-off-by: Remy Bruno <remy.bruno@trinnov.com>
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+diff -Nru a/sound/pci/rme9652/hdsp.c b/sound/pci/rme9652/hdsp.c
+--- a/sound/pci/rme9652/hdsp.c	2005-01-22 21:54:51 -08:00
++++ b/sound/pci/rme9652/hdsp.c	2005-01-22 21:54:51 -08:00
+@@ -2729,7 +2729,7 @@
+ {
+ 	hdsp_t *hdsp = snd_kcontrol_chip(kcontrol);
+ 	
+-	ucontrol->value.enumerated.item[0] = hdsp_pref_sync_ref(hdsp);
++	ucontrol->value.enumerated.item[0] = hdsp_autosync_ref(hdsp);
+ 	return 0;
+ }
+ 

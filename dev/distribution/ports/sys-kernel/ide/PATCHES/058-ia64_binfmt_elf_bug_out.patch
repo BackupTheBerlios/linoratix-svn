@@ -1,0 +1,49 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/22 12:18:41-08:00 tony.luck@intel.com 
+#   [IA64] binfmt_elf32.c: BUG if insert_vm_struct fails
+#   
+#   It seems that in ia64_elf32_init, instead of calling return, if we insert
+#   an overlapping vma, we should instead BUG(). We should never get into this
+#   code path, because the vma's are set above PAGE_OFFSET, and thus a
+#   Xmalicious user can not trigger this code path. This change is being
+#   suggested mainly for clarity. Thanks to Stephen Tweedie for pointing out
+#   that returning early in ia64_elf32_init could have unpredictable results.
+#   
+#   Signed-off-by: Tony Luck <tony.luck@intel.com>
+# 
+# arch/ia64/ia32/binfmt_elf32.c
+#   2005/01/22 12:16:29-08:00 tony.luck@intel.com +3 -3
+#   BUG if insert_vm_struct fails
+# 
+diff -Nru a/arch/ia64/ia32/binfmt_elf32.c b/arch/ia64/ia32/binfmt_elf32.c
+--- a/arch/ia64/ia32/binfmt_elf32.c	2005-01-22 23:35:01 -08:00
++++ b/arch/ia64/ia32/binfmt_elf32.c	2005-01-22 23:35:01 -08:00
+@@ -103,7 +103,7 @@
+ 			if (insert_vm_struct(current->mm, vma)) {
+ 				kmem_cache_free(vm_area_cachep, vma);
+ 				up_write(&current->mm->mmap_sem);
+-				return;
++				BUG();
+ 			}
+ 		}
+ 		up_write(&current->mm->mmap_sem);
+@@ -130,7 +130,7 @@
+ 			if (insert_vm_struct(current->mm, vma)) {
+ 				kmem_cache_free(vm_area_cachep, vma);
+ 				up_write(&current->mm->mmap_sem);
+-				return;
++				BUG();
+ 			}
+ 		}
+ 		up_write(&current->mm->mmap_sem);
+@@ -153,7 +153,7 @@
+ 			if (insert_vm_struct(current->mm, vma)) {
+ 				kmem_cache_free(vm_area_cachep, vma);
+ 				up_write(&current->mm->mmap_sem);
+-				return;
++				BUG();
+ 			}
+ 		}
+ 		up_write(&current->mm->mmap_sem);

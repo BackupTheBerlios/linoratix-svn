@@ -1,0 +1,43 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/29 02:42:43-05:00 davej@redhat.com 
+#   [CPUFREQ] re-add call to cpufreq_driver->resume()
+#   
+#   (if anyone has a brown spare paper bag, feel free to send it to me:)
+#   
+#   The call to cpufreq_driver->resume() got lost in 2.6.6. Re-add it at the
+#   proper place.
+#   
+#   Signed-off-by: Dominik Brodowski <linux@brodo.de>
+#   Signed-off-by: Dave Jones <davej@redhat.com>
+# 
+# drivers/cpufreq/cpufreq.c
+#   2004/12/29 02:42:27-05:00 davej@redhat.com +7 -0
+#   [CPUFREQ] re-add call to cpufreq_driver->resume()
+#   
+#   (if anyone has a brown spare paper bag, feel free to send it to me:)
+#   
+#   The call to cpufreq_driver->resume() got lost in 2.6.6. Re-add it at the
+#   proper place.
+#   
+#   Signed-off-by: Dominik Brodowski <linux@brodo.de>
+#   Signed-off-by: Dave Jones <davej@redhat.com>
+# 
+diff -Nru a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
+--- a/drivers/cpufreq/cpufreq.c	2005-02-14 05:47:41 -08:00
++++ b/drivers/cpufreq/cpufreq.c	2005-02-14 05:47:41 -08:00
+@@ -893,6 +893,13 @@
+ 		return 0;
+ 	}
+ 
++	if (cpufreq_driver->resume) {
++		ret = cpufreq_driver->resume(cpu_policy);
++		printk(KERN_ERR "cpufreq: resume failed in ->resume step on CPU %u\n", cpu_policy->cpu);
++		cpufreq_cpu_put(cpu_policy);
++		return (ret);
++	}
++
+ 	if (!(cpufreq_driver->flags & CPUFREQ_CONST_LOOPS)) {
+ 		unsigned int cur_freq = 0;
+ 

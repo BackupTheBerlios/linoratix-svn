@@ -1,0 +1,41 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/29 02:41:40-05:00 davej@redhat.com 
+#   [CPUFREQ] powernow-k8: unregister from ACPI perflib in error path
+#   
+#   If something fails in the per-CPU initialization in powernow-k8, it should
+#   unregister itself from the ACPI performance library.
+#   
+#   Signed-off-by: Dominik Brodowski <linux@brodo.de>
+#   Signed-off-by: Dave Jones <davej@redhat.com>
+# 
+# arch/i386/kernel/cpu/cpufreq/powernow-k8.c
+#   2004/12/29 02:41:24-05:00 davej@redhat.com +2 -0
+#   [CPUFREQ] powernow-k8: unregister from ACPI perflib in error path
+#   
+#   If something fails in the per-CPU initialization in powernow-k8, it should
+#   unregister itself from the ACPI performance library.
+#   
+#   Signed-off-by: Dominik Brodowski <linux@brodo.de>
+#   Signed-off-by: Dave Jones <davej@redhat.com>
+# 
+diff -Nru a/arch/i386/kernel/cpu/cpufreq/powernow-k8.c b/arch/i386/kernel/cpu/cpufreq/powernow-k8.c
+--- a/arch/i386/kernel/cpu/cpufreq/powernow-k8.c	2005-01-22 22:03:03 -08:00
++++ b/arch/i386/kernel/cpu/cpufreq/powernow-k8.c	2005-01-22 22:03:03 -08:00
+@@ -1010,6 +1010,7 @@
+ 	/* min/max the cpu is capable of */
+ 	if (cpufreq_frequency_table_cpuinfo(pol, data->powernow_table)) {
+ 		printk(KERN_ERR PFX "invalid powernow_table\n");
++		powernow_k8_cpu_exit_acpi(data);
+ 		kfree(data->powernow_table);
+ 		kfree(data);
+ 		return -EINVAL;
+@@ -1027,6 +1028,7 @@
+ err_out:
+ 	set_cpus_allowed(current, oldmask);
+ 	schedule();
++	powernow_k8_cpu_exit_acpi(data);
+ 
+ 	kfree(data);
+ 	return -ENODEV;

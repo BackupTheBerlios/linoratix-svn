@@ -1,0 +1,38 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/11 15:17:24+11:00 nathans@sgi.com 
+#   [XFS] Add sanity checks before use of attr_multi opcount parameter.
+#   
+#   SGI-PV: 927535
+#   SGI-Modid: xfs-linux:xfs-kern:20991a
+#   Signed-off-by: Nathan Scott <nathans@sgi.com>
+# 
+# fs/xfs/linux-2.6/xfs_ioctl.c
+#   2005/01/11 15:16:56+11:00 nathans@sgi.com +6 -1
+#   [XFS] Add sanity checks before use of attr_multi opcount parameter.
+# 
+diff -Nru a/fs/xfs/linux-2.6/xfs_ioctl.c b/fs/xfs/linux-2.6/xfs_ioctl.c
+--- a/fs/xfs/linux-2.6/xfs_ioctl.c	2005-02-14 00:59:04 -08:00
++++ b/fs/xfs/linux-2.6/xfs_ioctl.c	2005-02-14 00:59:04 -08:00
+@@ -499,7 +499,7 @@
+ 	xfs_fsop_attrmulti_handlereq_t am_hreq;
+ 	struct inode		*inode;
+ 	vnode_t			*vp;
+-	int			i, size;
++	unsigned int		i, size;
+ 
+ 	error = xfs_vget_fsop_handlereq(mp, parinode, CAP_SYS_ADMIN, arg,
+ 					sizeof(xfs_fsop_attrmulti_handlereq_t),
+@@ -509,6 +509,11 @@
+ 		return -error;
+ 
+ 	size = am_hreq.opcount * sizeof(attr_multiop_t);
++	if (!size || size > 16 * PAGE_SIZE) {
++		VN_RELE(vp);
++		return -XFS_ERROR(E2BIG);
++	}
++
+ 	ops = (xfs_attr_multiop_t *)kmalloc(size, GFP_KERNEL);
+ 	if (!ops) {
+ 		VN_RELE(vp);

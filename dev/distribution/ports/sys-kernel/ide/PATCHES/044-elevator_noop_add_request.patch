@@ -1,0 +1,36 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/14 10:26:02-08:00 axboe@suse.de 
+#   [PATCH] noop-iosched: fix insertion point
+#   
+#   noop doesn't follow the instructions on where to insert a request,
+#   because it uses q->queue_head instead of the *insert assigned. Clean it
+#   up so it's easier to read.
+#   
+#   Signed-off-by: Jens Axboe <axboe@suse.de>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# drivers/block/noop-iosched.c
+#   2005/01/14 08:35:40-08:00 axboe@suse.de +3 -5
+#   noop-iosched: fix insertion point
+# 
+diff -Nru a/drivers/block/noop-iosched.c b/drivers/block/noop-iosched.c
+--- a/drivers/block/noop-iosched.c	2005-01-15 19:22:09 -08:00
++++ b/drivers/block/noop-iosched.c	2005-01-15 19:22:09 -08:00
+@@ -52,12 +52,10 @@
+ static void elevator_noop_add_request(request_queue_t *q, struct request *rq,
+ 				      int where)
+ {
+-	struct list_head *insert = q->queue_head.prev;
+-
+ 	if (where == ELEVATOR_INSERT_FRONT)
+-		insert = &q->queue_head;
+-
+-	list_add_tail(&rq->queuelist, &q->queue_head);
++		list_add(&rq->queuelist, &q->queue_head);
++	else
++		list_add_tail(&rq->queuelist, &q->queue_head);
+ 
+ 	/*
+ 	 * new merges must not precede this barrier

@@ -1,0 +1,26 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/08 19:59:53-08:00 alan@lxorguk.ukuu.org.uk 
+#   [PATCH] SDLA firmware upgrade should require CAP_SYS_RAWIO (not just CAP_NET_ADMIN)
+#   
+#   There were a few variants on the list trying to work out what the valid
+#   ranges to verify for write are but they sort of missed the point, if you
+#   can load new firmware you can have fun anyway.
+# 
+# drivers/net/wan/sdla.c
+#   2005/01/07 07:49:56-08:00 alan@lxorguk.ukuu.org.uk +2 -0
+#   SDLA firmware upgrade should require CAP_SYS_RAWIO (not just CAP_NET_ADMIN)
+# 
+diff -Nru a/drivers/net/wan/sdla.c b/drivers/net/wan/sdla.c
+--- a/drivers/net/wan/sdla.c	2005-02-14 04:24:03 -08:00
++++ b/drivers/net/wan/sdla.c	2005-02-14 04:24:03 -08:00
+@@ -1306,6 +1306,8 @@
+ 
+ 		case SDLA_WRITEMEM:
+ 		case SDLA_READMEM:
++			if(!capable(CAP_SYS_RAWIO))
++				return -EPERM;
+ 			return(sdla_xfer(dev, ifr->ifr_data, cmd == SDLA_READMEM));
+ 
+ 		case SDLA_START:

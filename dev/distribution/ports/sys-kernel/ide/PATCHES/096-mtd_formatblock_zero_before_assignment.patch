@@ -1,0 +1,100 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/27 22:59:41+00:00 dwmw2@shinybook.infradead.org 
+#   MTD: Fix oops on erase in NFTL/INFTL (again).
+#   
+#   Only this time, set the field we were dereferencing _after_ we zero it not before.
+#   
+#   Signed-off-by: Kalev Lember <kalev@colleduc.ee>
+#   Signed-off-by: David Woodhouse <dwmw2@infradead.org>
+# 
+# drivers/mtd/inftlmount.c
+#   2004/11/27 22:59:16+00:00 dwmw2@shinybook.infradead.org +3 -4
+#   revision 1.16
+#   date: 2004/11/22 13:50:53;  author: kalev;  state: Exp;  lines: +3 -4
+#   fix oops
+#   (the instr was zeroed _after_  setting instr->mtd)
+# 
+# drivers/mtd/nftlmount.c
+#   2004/11/27 22:59:16+00:00 dwmw2@shinybook.infradead.org +3 -4
+#   revision 1.40
+#   date: 2004/11/22 14:38:29;  author: kalev;  state: Exp;  lines: +3 -4
+#   fix oops
+# 
+diff -Nru a/drivers/mtd/inftlmount.c b/drivers/mtd/inftlmount.c
+--- a/drivers/mtd/inftlmount.c	2005-02-14 05:15:02 -08:00
++++ b/drivers/mtd/inftlmount.c	2005-02-14 05:15:02 -08:00
+@@ -8,7 +8,7 @@
+  * Author: Fabrice Bellard (fabrice.bellard@netgem.com) 
+  * Copyright (C) 2000 Netgem S.A.
+  *
+- * $Id: inftlmount.c,v 1.15 2004/11/05 21:55:55 kalev Exp $
++ * $Id: inftlmount.c,v 1.16 2004/11/22 13:50:53 kalev Exp $
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+@@ -41,7 +41,7 @@
+ #include <linux/mtd/inftl.h>
+ #include <linux/mtd/compatmac.h>
+ 
+-char inftlmountrev[]="$Revision: 1.15 $";
++char inftlmountrev[]="$Revision: 1.16 $";
+ 
+ /*
+  * find_boot_record: Find the INFTL Media Header and its Spare copy which
+@@ -389,8 +389,6 @@
+ 	struct erase_info *instr = &inftl->instr;
+ 	int physblock;
+ 
+-	instr->mtd = inftl->mbd.mtd;
+-
+ 	DEBUG(MTD_DEBUG_LEVEL3, "INFTL: INFTL_formatblock(inftl=%p,"
+ 		"block=%d)\n", inftl, block);
+ 
+@@ -400,6 +398,7 @@
+ 	   _first_? */
+ 
+ 	/* Use async erase interface, test return code */
++	instr->mtd = inftl->mbd.mtd;
+ 	instr->addr = block * inftl->EraseSize;
+ 	instr->len = inftl->mbd.mtd->erasesize;
+ 	/* Erase one physical eraseblock at a time, even though the NAND api
+diff -Nru a/drivers/mtd/nftlmount.c b/drivers/mtd/nftlmount.c
+--- a/drivers/mtd/nftlmount.c	2005-02-14 05:15:02 -08:00
++++ b/drivers/mtd/nftlmount.c	2005-02-14 05:15:02 -08:00
+@@ -4,7 +4,7 @@
+  * Author: Fabrice Bellard (fabrice.bellard@netgem.com) 
+  * Copyright (C) 2000 Netgem S.A.
+  *
+- * $Id: nftlmount.c,v 1.39 2004/11/05 22:51:41 kalev Exp $
++ * $Id: nftlmount.c,v 1.40 2004/11/22 14:38:29 kalev Exp $
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+@@ -31,7 +31,7 @@
+ 
+ #define SECTORSIZE 512
+ 
+-char nftlmountrev[]="$Revision: 1.39 $";
++char nftlmountrev[]="$Revision: 1.40 $";
+ 
+ /* find_boot_record: Find the NFTL Media Header and its Spare copy which contains the
+  *	various device information of the NFTL partition and Bad Unit Table. Update
+@@ -302,8 +302,6 @@
+ 	struct nftl_uci1 uci;
+ 	struct erase_info *instr = &nftl->instr;
+ 
+-	instr->mtd = nftl->mbd.mtd;
+-
+ 	/* Read the Unit Control Information #1 for Wear-Leveling */
+ 	if (MTD_READOOB(nftl->mbd.mtd, block * nftl->EraseSize + SECTORSIZE + 8,
+ 			8, &retlen, (char *)&uci) < 0)
+@@ -320,6 +318,7 @@
+ 	memset(instr, 0, sizeof(struct erase_info));
+ 
+ 	/* XXX: use async erase interface, XXX: test return code */
++	instr->mtd = nftl->mbd.mtd;
+ 	instr->addr = block * nftl->EraseSize;
+ 	instr->len = nftl->EraseSize;
+ 	MTD_ERASE(nftl->mbd.mtd, instr);

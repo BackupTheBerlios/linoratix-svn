@@ -1,0 +1,30 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/12 20:04:43-08:00 davej@redhat.com 
+#   [PATCH] matroxfb driver broken on non-x86.
+#   
+#   This broke since the recent MODULE_PARAM conversion on
+#   architectures that don't have CONFIG_MTRR
+#   
+#   Signed-off-by: Dave Jones <davej@redhat.com>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# drivers/video/matrox/matroxfb_base.c
+#   2005/01/12 13:48:54-08:00 davej@redhat.com +2 -0
+#   matroxfb driver broken on non-x86.
+# 
+diff -Nru a/drivers/video/matrox/matroxfb_base.c b/drivers/video/matrox/matroxfb_base.c
+--- a/drivers/video/matrox/matroxfb_base.c	2005-01-15 20:26:33 -08:00
++++ b/drivers/video/matrox/matroxfb_base.c	2005-01-15 20:26:33 -08:00
+@@ -2477,8 +2477,10 @@
+ MODULE_PARM_DESC(noinit, "Disables W/SG/SD-RAM and bus interface initialization (0 or 1=do not initialize) (default=0)");
+ MODULE_PARM(memtype, "i");
+ MODULE_PARM_DESC(memtype, "Memory type for G200/G400 (see Documentation/fb/matroxfb.txt for explanation) (default=3 for G200, 0 for G400)");
++#ifdef CONFIG_MTRR
+ MODULE_PARM(mtrr, "i");
+ MODULE_PARM_DESC(mtrr, "This speeds up video memory accesses (0=disabled or 1) (default=1)");
++#endif
+ MODULE_PARM(sgram, "i");
+ MODULE_PARM_DESC(sgram, "Indicates that G100/G200/G400 has SGRAM memory (0=SDRAM, 1=SGRAM) (default=0)");
+ MODULE_PARM(inv24, "i");

@@ -1,0 +1,36 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/14 16:05:45-05:00 davej@redhat.com 
+#   [CPUFREQ] p4-clockmod: Dothan is 13 not 0x13
+#   
+#   Dothan is stepping 13  == 0x0D instead of 0x13 == 19
+#   
+#   This bug crept bag in the shadows caused by the debug overhauling patch.
+#   
+#   Signed-off-by: Dominik Brodowski <linux@brodo.de>
+#   Signed-off-by: Dave Jones <davej@redhat.com>
+# 
+# arch/i386/kernel/cpu/cpufreq/p4-clockmod.c
+#   2005/01/14 16:05:36-05:00 davej@redhat.com +1 -1
+#   [CPUFREQ] p4-clockmod: Dothan is 13 not 0x13
+#   
+#   Dothan is stepping 13  == 0x0D instead of 0x13 == 19
+#   
+#   This bug crept bag in the shadows caused by the debug overhauling patch.
+#   
+#   Signed-off-by: Dominik Brodowski <linux@brodo.de>
+#   Signed-off-by: Dave Jones <davej@redhat.com>
+# 
+diff -Nru a/arch/i386/kernel/cpu/cpufreq/p4-clockmod.c b/arch/i386/kernel/cpu/cpufreq/p4-clockmod.c
+--- a/arch/i386/kernel/cpu/cpufreq/p4-clockmod.c	2005-01-15 17:22:12 -08:00
++++ b/arch/i386/kernel/cpu/cpufreq/p4-clockmod.c	2005-01-15 17:22:12 -08:00
+@@ -171,7 +171,7 @@
+ 		return speedstep_get_processor_frequency(SPEEDSTEP_PROCESSOR_PM);
+ 	}
+ 
+-	if ((c->x86 == 0x06) && (c->x86_model == 0x13)) {
++	if ((c->x86 == 0x06) && (c->x86_model == 0x0D)) {
+ 		/* Pentium M (Dothan) */
+ 		printk(KERN_WARNING PFX "Warning: Pentium M detected. "
+ 		       "The speedstep_centrino module offers voltage scaling"

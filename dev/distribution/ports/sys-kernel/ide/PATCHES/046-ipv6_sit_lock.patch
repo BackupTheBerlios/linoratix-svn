@@ -1,0 +1,32 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/13 20:34:08-08:00 yoshfuji@linux-ipv6.org 
+#   [IPV6]: Fix tunnel list locking in sit.c
+#   
+#   Signed-off-by: Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+# net/ipv6/sit.c
+#   2005/01/13 20:33:48-08:00 yoshfuji@linux-ipv6.org +2 -2
+#   [IPV6]: Fix tunnel list locking in sit.c
+#   
+#   Signed-off-by: Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+diff -Nru a/net/ipv6/sit.c b/net/ipv6/sit.c
+--- a/net/ipv6/sit.c	2005-01-15 19:58:24 -08:00
++++ b/net/ipv6/sit.c	2005-01-15 19:58:24 -08:00
+@@ -135,10 +135,10 @@
+ {
+ 	struct ip_tunnel **tp = ipip6_bucket(t);
+ 
+-	write_lock_bh(&ipip6_lock);
+ 	t->next = *tp;
+-	write_unlock_bh(&ipip6_lock);
++	write_lock_bh(&ipip6_lock);
+ 	*tp = t;
++	write_unlock_bh(&ipip6_lock);
+ }
+ 
+ static struct ip_tunnel * ipip6_tunnel_locate(struct ip_tunnel_parm *parms, int create)

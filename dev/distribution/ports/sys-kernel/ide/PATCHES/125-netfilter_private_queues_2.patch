@@ -1,0 +1,23 @@
+diff -Nru a/include/net/ip.h b/include/net/ip.h
+--- a/include/net/ip.h	2005-02-22 20:39:57.303721808 -0500
++++ b/include/net/ip.h	2005-02-22 20:40:09.034938392 -0500
+@@ -261,6 +261,7 @@
+ 	IP_DEFRAG_CONNTRACK_IN,
+ 	IP_DEFRAG_CONNTRACK_OUT,
+ 	IP_DEFRAG_NAT_OUT,
++	IP_DEFRAG_FW_COMPAT,
+ 	IP_DEFRAG_VS_IN,
+ 	IP_DEFRAG_VS_OUT,
+ 	IP_DEFRAG_VS_FWD
+diff -Nru a/net/ipv4/netfilter/ip_fw_compat.c b/net/ipv4/netfilter/ip_fw_compat.c
+--- a/net/ipv4/netfilter/ip_fw_compat.c	2005-02-22 20:45:29.032291400 -0500
++++ b/net/ipv4/netfilter/ip_fw_compat.c	2005-02-22 20:45:41.167446576 -0500
+@@ -80,7 +80,7 @@
+ 					  &redirpt, pskb);
+ 
+ 		if ((*pskb)->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
+-			*pskb = ip_ct_gather_frags(*pskb);
++			*pskb = ip_ct_gather_frags(*pskb, IP_DEFRAG_NAT_OUT);
+ 
+ 			if (!*pskb)
+ 				return NF_STOLEN;

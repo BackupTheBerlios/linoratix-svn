@@ -1,0 +1,34 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/06 15:48:50-05:00 tonyb@cybernetics.com 
+#   [PATCH] fix read capacity for large disks when CONFIG_LBD=n
+#   
+#   We shouldn't configure an device that requires LBD if the kernel
+#   doesn't suppoprt it (because we won't be able to see most of it), so
+#   set the capacity to zero in this case.
+#   
+#   Signed-off-by: James Bottomley <James.Bottomley@SteelEye.com>
+# 
+# drivers/scsi/sd.c
+#   2005/01/04 08:03:59-05:00 tonyb@cybernetics.com +5 -2
+#   fix read capacity for large disks when CONFIG_LBD=n
+# 
+diff -Nru a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+--- a/drivers/scsi/sd.c	2005-01-22 21:31:47 -08:00
++++ b/drivers/scsi/sd.c	2005-01-22 21:31:47 -08:00
+@@ -1082,9 +1082,12 @@
+ 				       " READ CAPACITY(16).\n", diskname);
+ 				longrc = 1;
+ 				goto repeat;
+-			} else {
+-				printk(KERN_ERR "%s: too big for kernel.  Assuming maximum 2Tb\n", diskname);
+ 			}
++			printk(KERN_ERR "%s: too big for this kernel.  Use a "
++			       "kernel compiled with support for large block "
++			       "devices.\n", diskname);
++			sdkp->capacity = 0;
++			goto got_data;
+ 		}
+ 		sdkp->capacity = 1 + (((sector_t)buffer[0] << 24) |
+ 			(buffer[1] << 16) |

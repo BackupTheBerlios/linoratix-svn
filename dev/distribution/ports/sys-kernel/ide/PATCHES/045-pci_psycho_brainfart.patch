@@ -1,0 +1,32 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/13 21:19:16-08:00 grundler@parisc-linux.org 
+#   [SPARC64]: Fix brainfart in pci_psycho.c
+#   
+#   Signed-off-by: Grant Grundler <grundler@parisc-linux.org>
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+# arch/sparc64/kernel/pci_psycho.c
+#   2005/01/13 21:18:51-08:00 grundler@parisc-linux.org +3 -3
+#   [SPARC64]: Fix brainfart in pci_psycho.c
+#   
+#   Signed-off-by: Grant Grundler <grundler@parisc-linux.org>
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+diff -Nru a/arch/sparc64/kernel/pci_psycho.c b/arch/sparc64/kernel/pci_psycho.c
+--- a/arch/sparc64/kernel/pci_psycho.c	2005-01-15 19:42:49 -08:00
++++ b/arch/sparc64/kernel/pci_psycho.c	2005-01-15 19:42:49 -08:00
+@@ -453,9 +453,9 @@
+ 		tag_base = regbase + PSYCHO_STC_TAG_A;
+ 		line_base = regbase + PSYCHO_STC_LINE_A;
+ 	} else {
+-		err_base = regbase + PSYCHO_STC_ERR_A;
+-		tag_base = regbase + PSYCHO_STC_TAG_A;
+-		line_base = regbase + PSYCHO_STC_LINE_A;
++		err_base = regbase + PSYCHO_STC_ERR_B;
++		tag_base = regbase + PSYCHO_STC_TAG_B;
++		line_base = regbase + PSYCHO_STC_LINE_B;
+ 	}
+ 
+ 	spin_lock(&stc_buf_lock);
