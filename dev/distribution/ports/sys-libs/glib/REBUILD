@@ -1,0 +1,33 @@
+#
+#rebuild file for glib
+#
+%author: ogu
+%package-group: sys-libs -
+%sub-group: glib -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: Common C routines used by Gtk+ and other libs
+%name: libglib
+%version: 1.2.10
+%build: $DATA
+%sourcefile: glib-1.2.10.tar.gz
+%source-url: ("ftp://ftp.gtk.org/pub/gtk/v1.2")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_patch -Np1 -i %patch_dir/glib-1.2.10-gcc34-1.patch
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib
+lip_make
+lip_install DESTDIR=%install_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__
+
