@@ -30,6 +30,10 @@ lip_sed -i "s:/usr/share/pci.ids:/usr/share/misc/pci.ids:" lspci.8
 lip_sed -i "s:/usr/share/pci.ids:/usr/share/misc/pci.ids:" update-pciids.8
 lip_install PREFIX=%install_dir/usr MANDIR=%man_dir
 lip_mkdir %install_dir/usr/share/misc -p
+lip_mkdir -p %install_dir/usr/lib
+lip_cp lib/libpci.a %install_dir/usr/lib
+lip_mkdir -p %install_dir/usr/include/pci
+lip_cp lib/*.h %install_dir/usr/include/pci
 lip_mv %install_dir/usr/share/pci.ids %install_dir/usr/share/misc
 # -- execution of post-install-scritps
 __DATA__
