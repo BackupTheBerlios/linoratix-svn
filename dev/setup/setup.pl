@@ -7,6 +7,7 @@ no strict "refs";
 use File::Temp qw( :POSIX );
 use Curses::UI;
 use Storable;
+use File::Copy;
 
 use Data::Dumper;
 
@@ -63,7 +64,7 @@ else
 $cui->setprogress(1, _("MSG_INIT_DISKS"));
 
 # Wizard index
-my $current_step = 11;
+my $current_step = 1;
 
 # partitionsinfos
 my $partinfo = {};
@@ -105,7 +106,9 @@ my %screens = (
 	'9' => _("SCR_BOOTMANAGER"),
 	'10'=> _("SCR_BOOTMANAGER"),
 	'11'=> _("SCR_HOSTNAME"),
-	'99'=> _("SCR_CONFIGURE_SYSTEM"),
+	'12'=> _("SCR_ROOT_PASSWORD"),
+	'13'=> _("SCR_CONFIGURE_SYSTEM"),
+	'14'=> _("SCR_FINISHED"),
 );
 
 # bring all screens to the right 
@@ -153,11 +156,33 @@ my $howto_partition_labels = {
 };
 
 
-
 $cui->setprogress(5, _("MSG_SEARCH_HARDWARE"));
 
 my $hardware = `/usr/sbin/kudzu -p`;
 
+sub scan_hardware()
+{
+	my @hardware = split(/-\n/, $hardware);
+	chomp(@hardware);
+
+	my $setup_config = {};
+
+	my %class;
+
+	foreach my $hw_section (@hardware)
+	{
+		my @lines = split(/\n/, $hw_section);
+		foreach my $line (@lines)
+		{
+			my($key, $val) = split(/: /, $line);
+			$class{$key} = $val;
+		}
+		if($class{"class"})
+		{
+			push(@{$setup_config->{"hardware"}->{$class{"class"}}}, $class{"driver"});
+		}
+	}
+}
 
 $cui->setprogress(6);
 scan_hardware();
@@ -197,29 +222,7 @@ $cui->noprogress;
 # Functions
 # ---------------------------------------------------------------------
 
-sub scan_hardware()
-{
-	my @hardware = split(/-\n/, $hardware);
-	chomp(@hardware);
 
-	my $setup_config = {};
-
-	my %class;
-
-	foreach my $hw_section (@hardware)
-	{
-		my @lines = split(/\n/, $hw_section);
-		foreach my $line (@lines)
-		{
-			my($key, $val) = split(/: /, $line);
-			$class{$key} = $val;
-		}
-		if($class{"class"})
-		{
-			push(@{$setup_config->{"hardware"}->{$class{"class"}}}, $class{"driver"});
-		}
-	}
-}
 
 sub goto_prev_step()
 {
@@ -651,7 +654,7 @@ $cui->set_binding( \&goto_prev_step, "\cP" );
 
 # load 1st window
 
-dialog_11();
+dialog_1();
 $w{$current_step}->focus();
 
 
@@ -1383,6 +1386,8 @@ sub dialog_10
 	$w{10}->getobj('mbr_progress')->pos($_p);
 	$w{10}->getobj('mbr_label')->text(_("MSG_INSTALL_GRUB"));
 	$w{10}->draw;
+	
+	goto_next_step();
 }
 
 sub dialog_11
@@ -1410,15 +1415,78 @@ sub dialog_11
 	);
 }
 
-sub dialog_99
+sub dialog_12
 {
-	$w{99}->add
+	$w{12}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_ROOT_PASSWORD_INFO")
+	);	
+	
+	$w{12}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_PASSWORD") . ":",
+    	-y => 6, # ==
+    	-x => 5,	
+	);	
+
+	$w{12}->add(
+    	"txt_password1", 'PasswordEntry',
+    	-sbborder => 1,
+    	-y => 6, # ==
+    	-x => 30,
+	    -width => 20,
+	);
+	
+	$w{12}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_PASSWORD_REPEAT") . ":",
+    	-y => 8, # ==
+    	-x => 5,	
+	);	
+
+	$w{12}->add(
+    	"txt_password2", 'PasswordEntry',
+    	-sbborder => 1,
+    	-y => 8, # ==
+    	-x => 30,
+	    -width => 20,
+		-onchange => sub() 
+			{ 
+				my $me = shift;
+				if($me->get eq $me->parent->getobj("txt_password1")->get)
+				{
+					$me->parent->getobj("txt_password_ok")->text(_("MSG_PASSWORD_MATCH"));
+					$setup_config->{"root"}->{"password"} = $me->get;
+				}
+				else
+				{
+					$me->parent->getobj("txt_password_ok")->text(_("MSG_PASSWORD_NOT_MATCH"));
+				}
+			}
+	);
+	
+	$w{12}->add
+	(
+		"txt_password_ok", 'Label',
+		-text => _("MSG_PASSWORD_NOT_MATCH"),
+    	-y => 11, # ==
+    	-x => 30,	
+	);		
+}
+
+
+sub dialog_13
+{
+	$w{13}->add
 	(
 		undef, 'Label',
 		-text => _("MSG_CONFIGURING_SYSTEM")
 	);
 	
-	$w{99}->add
+	$w{13}->add
 	(
 		'conf_label', 'Label',
 		-text => _("MSG_SETTING_TIMEZONE_TO") . $setup_config->{"timezone"},
@@ -1427,21 +1495,22 @@ sub dialog_99
 		-width => 70,
 	);
 		
-	$w{99}->add(
+	$w{13}->add(
 		'conf_progress', 'Progressbar',
 		-x => 2,
 		-y => 10, #==
-		-max => 4,
+		-max => 6,
 		-width => 70,
 	);
 	
-	$w{99}->getobj('conf_progress')->pos(1);
-	$w{99}->draw;
-	system("ln -sf /usr/share/zoneinfo/" . $setup_config->{"zoneinfo"} . " /mnt/root/etc/localtime");
+	$w{13}->getobj('conf_progress')->pos(1);
+	$w{13}->draw;
+	system("ln -sf /usr/share/zoneinfo/" . $setup_config->{"timezone"} . " /mnt/root/etc/localtime");
 	
-	$w{99}->getobj('conf_label')->text(_("MSG_SETTING_HOSTNAME") . $w{11}->getobj("txt_hostname"));
-	$w{99}->getobj('conf_progress')->pos(2);
-	my $hostname = $w{11}->getobj("txt_hostname");
+	$w{13}->getobj('conf_label')->text(_("MSG_SETTING_HOSTNAME") . $w{11}->getobj("txt_hostname"));
+	$w{13}->getobj('conf_progress')->pos(2);
+	$w{13}->draw;
+	my $hostname = $w{11}->getobj("txt_hostname")->get;
 	my @hostname_parts = split(/\.(.*)/, $hostname);
 	open(FH, ">/mnt/root/etc/HOSTNAME");
 		print FH $hostname_parts[0] . "\n";
@@ -1449,4 +1518,99 @@ sub dialog_99
 	open(FH, ">/mnt/root/etc/dnsdomainname");
 		print FH $hostname_parts[1] . "\n";
 	close(FH);
+	
+	$w{13}->getobj('conf_label')->text(_("MSG_SETTING_RCCONF"));
+	$w{13}->getobj('conf_progress')->pos(3);
+	$w{13}->draw;
+	open(FH, ">/mnt/root/etc/conf.d/rc.conf");
+		print FH "# /etc/conf.d/rc.conf\n\n";
+		print FH "UTC=0\n";
+		print FH "KEYMAP=\"de-latin1-nodeadkeys\"\n";
+		print FH "EDITOR=\"nano -w\"\n";
+		print FH "INPUTRC=\"/etc/inputrc\"\n";
+	close(FH);
+	
+	$w{13}->getobj('conf_label')->text(_("MSG_RUN_LDCONFIG"));
+	$w{13}->getobj('conf_progress')->pos(4);
+	$w{13}->draw;
+
+	system("mount -o bind /proc /mnt/root/proc");
+	system("chroot /mnt/root /sbin/ldconfig");
+	system("umount /mnt/root/proc");
+	
+	$w{13}->getobj('conf_label')->text(_("SCR_ROOT_PASSWORD"));
+	$w{13}->getobj('conf_progress')->pos(5);
+	$w{13}->draw;
+	
+	open(FH, ">/mnt/root/tmp/setpw");
+		print FH "#!/bin/bash\n\n";
+		print FH "echo root:".$setup_config->{"root"}->{"password"}." |/usr/sbin/chpasswd\n";
+	close(FH);
+	chmod(0755, "/mnt/root/tmp/setpw");
+	
+	copy("/etc/passwd", "/mnt/root/etc");
+	copy("/etc/shadow", "/mnt/root/etc");
+	
+	system("mount -o bind /proc /mnt/root/proc");
+	system("chroot /mnt/root /tmp/setpw");
+	system("umount /mnt/root/proc");	
+	
+	unlink("/mnt/root/tmp/setpw");
+
+	$w{13}->getobj('conf_label')->text(_("MSG_FSTAB"));
+	$w{13}->getobj('conf_progress')->pos(6);
+	$w{13}->draw;	
+	
+	open(FH, ">/mnt/root/etc/fstab");
+	foreach my $dev ( keys %{$setup_config->{"partitions"}})
+	{
+		unless($setup_config->{"partitions"}->{$dev}->{"mountpoint"} eq "swap")
+		{
+			$dev =~ m/^(.*?)(\d+)$/;
+			my $fs = `/usr/sbin/partinfo fstype $1 $2`;
+			chomp($fs);
+			print FH "$dev	" . $setup_config->{"partitions"}->{$dev}->{"mountpoint"} . "	$fs		defaults,errors=remount-ro		0	1\n";
+		}
+		else
+		{
+			print FH "$dev	none	swap	defaults	0	0\n";
+		}
+	}
+	close(FH);
+	
+	goto_next_step();
+}
+
+sub dialog_14
+{
+	$w{14}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_SETUP_FINISHED")
+	);
+	
+	$w{14}->add(
+		'end_progress', 'Progressbar',
+		-x => 2,
+		-y => 10, #==
+		-max => 10,
+		-width => 70,
+	);
+	my $i=0;
+	for($i = 0; $i<=10; $i++)
+	{
+		$w{14}->getobj('end_progress')->pos($i);
+		$w{14}->draw;
+		sleep 1;
+	}
+	
+	open(FH, ">/mnt/root/root/setup.dump");
+		print FH Dumper($setup_config);
+	close(FH);
+	
+	system("sync; sync");
+	system("umount /mnt/root/*");
+	system("umount /mnt/root");
+	system("clear");
+	system("/sbin/reboot & sleep 3; clear");
 }

@@ -79,7 +79,21 @@ sub _()
 										.  "\n\n"
 										.  "Beispiel: linux.home.net",
 		"MSG_HOSTNAME"						=> "Computername",
-		"MSG_SETTING_HOSTNAME"			=> "Setzte Computername auf: "
+		"MSG_SETTING_HOSTNAME"			=> "Setzte Computername auf: ",
+		"MSG_SETTING_RCCONF"			=> "Erstelle rc.conf",
+		"MSG_RUN_LDCONFIG"			=> "Linker cache aktualisieren",
+		"MSG_ROOT_PASSWORD_INFO"		=> "Setzten Sie hier das Root Passwort."
+										.  "\n"
+										.  "root ist der Benutzer der auf einem Linuxsystem alles darf.",
+		"MSG_PASSWORD"				=> "Passwort",
+		"MSG_PASSWORD_REPEAT"		=> "Passwort wiederholen",
+		"MSG_PASSWORD_NOT_MATCH"		=> "Passwörter sind nicht gleich!",
+		"MSG_PASSWORD_MATCH"		=> "Passwörter sind gleich!",
+		"MSG_SETUP_FINISHED"			=> "Linoratix ist nun auf Ihrem Computer installiert."
+										.  "\n"
+										.  "\n"
+										.  "Der Computer wird jetzt neu gestartet.",
+		"MSG_FSTAB"						=> "Erstelle Dateisystem Tabelle",
 		
 		"MNU_FILE"					=> "Datei",
 		
@@ -94,6 +108,8 @@ sub _()
 		"SCR_BOOTMANAGER"			=> "Bootmanager",
 		"SCR_CONFIGURE_SYSTEM"		=> "Konfiguriere System",
 		"SCR_HOSTNAME"				=> "Computername",
+		"SCR_ROOT_PASSWORD"			=> "Root Passwort setzten",
+		"SCR_FINISHED"			=> "Setup beenden",
 		
 		"HLP_TARGET_DISK"				=> "Wählen Sie hier die Festplatte aus auf der Linoratix GNU/Linux installiert"
 								.  "\n"
