@@ -2,7 +2,7 @@
 # example package build script
 #
 %author: ogu
-%package-group: x-base -
+%package-group: x11-base -
 %sub-group: xorg -
 %required: ("libglibc >=2.3.3","libpng >=1.2.5","libexpat >=1.95.6","libfreetype2 >=2.1.9","libfontconfig >=2.2.3")
 %build-required: ()
