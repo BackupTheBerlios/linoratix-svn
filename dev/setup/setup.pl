@@ -6,6 +6,7 @@ use strict;
 no strict "refs";
 use File::Temp qw( :POSIX );
 use Curses::UI;
+use Storable;
 
 use Data::Dumper;
 
@@ -99,7 +100,10 @@ my %screens = (
 	'4'	=> _("SCR_HOWTO_PARTITION"),
 	'5'	=> _("SCR_PARTITIONING"),
 	'6' => _("SCR_PREPARE_DISK"),
-	'7' => _("SCR_INSTALL_BASE_SYSTEM"),
+	'7' => _("SCR_CHOOSE_CATEGORIE"),
+	'8' => _("SCR_INSTALL_BASE_SYSTEM"),
+	'9' => _("SCR_BOOTMANAGER"),
+	'10'=> _("SCR_BOOTMANAGER"),
 );
 
 # bring all screens to the right 
@@ -272,6 +276,21 @@ sub really_part_callback($;)
 		goto_next_step();
 	}
 }
+
+sub really_install_mbr($;)
+{
+	my $buttons = shift;
+	if($buttons->get eq "cancel")
+	{
+		$current_step++;  # mbr step überspringen
+		goto_prev_step();
+	}
+	else
+	{
+		goto_next_step();
+	}
+}
+
 
 sub partitions_callback($;)
 {
@@ -551,6 +570,34 @@ sub part_button_box_callback($;)
 	
 }
 
+sub flavors_callback($;)
+{
+	my $listbox = shift;
+	@{$setup_config->{"categories"}} = $listbox->get;
+	print STDERR Dumper($setup_config);
+}
+
+sub convert_to_grub($;)
+{
+	my $dev = shift;
+	my $asc = "";
+	my $id = 0;
+
+	if($dev =~ m/^hd([a-z]+)(\d+)$/)
+	{
+		$asc = unpack("C", $1) - 97;
+		$id = $2 - 1;
+		return "(hd$asc,$id)";
+	}
+	elsif($dev =~ m/^hd([a-z]+)/)
+	{
+		$asc = unpack("C", $1) - 97;
+		return "(hd$asc)";
+	}
+
+}
+
+
 # ----------------------------------------------------------------------
 # Create a menu
 # ----------------------------------------------------------------------
@@ -823,6 +870,19 @@ sub dialog_6
 		@partitions = `/usr/sbin/createpart onedisk /dev/$setup_config->{target_disk}`;
 		chomp(@partitions);
 		
+		# alles in $setup_config speichern
+		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}1"}->{"format"} = 1;
+		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}1"}->{"mountpoint"} = "/boot";
+
+		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}2"}->{"format"} = 1;
+		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}2"}->{"mountpoint"} = "/";
+
+		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}3"}->{"format"} = 1;
+		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}3"}->{"mountpoint"} = "/home";
+		
+		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}4"}->{"format"} = 1;
+		$setup_config->{"partitions"}->{"/dev/$setup_config->{target_disk}4"}->{"mountpoint"} = "swap";
+
 		$w{6}->getobj('progress_partition')->pos(2);
 		$w{6}->getobj('progress_label')->text(_("MSG_PART_FORMAT_BOOT"));
 		$w{6}->draw;
@@ -847,11 +907,11 @@ sub dialog_6
 		$w{6}->getobj('progress_partition')->pos(5);
 		$w{6}->getobj('progress_label')->text(_("MSG_PART_MOUNT"));
 		$w{6}->draw;
-		system("/sbin/mount /dev/" . $setup_config->{"target_disk"} . "2 /mnt/root >/dev/null 2>&1");
+		system("/bin/mount /dev/" . $setup_config->{"target_disk"} . "2 /mnt/root");
 		mkdir("/mnt/root/boot");
 		mkdir("/mnt/root/home");
-		system("/sbin/mount /dev/" . $setup_config->{"target_disk"} . "1 /mnt/root/boot >/dev/null 2>&1");
-		system("/sbin/mount /dev/" . $setup_config->{"target_disk"} . "3 /mnt/root/home >/dev/null 2>&1");
+		system("/bin/mount /dev/" . $setup_config->{"target_disk"} . "1 /mnt/root/boot");
+		system("/bin/mount /dev/" . $setup_config->{"target_disk"} . "3 /mnt/root/home");
 		system("/sbin/swapon /dev/" . $setup_config->{"target_disk"} . "4");
 		
 		
@@ -859,12 +919,38 @@ sub dialog_6
 	}
 	elsif($setup_config->{"howto_partition"} eq "2") # freier speicher verwenden
 	{
+		$w{6}->add
+		(
+			undef, 'Label',
+			-text => _("MSG_TARGET_DISK") . ": /dev/" . $setup_config->{"target_disk"} . " - $target_disk_size ($target_disk_model)\n"
+				. _("MSG_PARTITION_MODI") . ": " . $part_mod . "\n\n" . _("MSG_THIS_MAY_TAKE_A_MINUTE"),
+		);
+		
+		$w{6}->add
+		(
+			'progress_label', 'Label',
+			-text => _("MSG_PART_DISK"),
+			-x => 2,
+			-y => 9, #==
+			-width => 70,
+		);
+		$w{6}->add(
+			'progress_partition', 'Progressbar',
+			-x => 2,
+			-y => 10, #==
+			-max => 4,
+			-width => 70,
+		);
+		
+		$w{6}->getobj('progress_partition')->pos(1);
+		$w{6}->draw;		
+		
 		if(-f "/tmp/.fifo_part")
 		{
 			unlink("/tmp/.fifo_part");
 		}
 		system("/usr/bin/mkfifo /tmp/.fifo_part");
-		system("sleep 1; /usr/sbin/createpart remaindisk /dev/$setup_config->{target_disk} > /tmp/.fifo_part 2> /dev/null &");
+		system("/usr/sbin/createpart remaindisk /dev/$setup_config->{target_disk} > /tmp/.fifo_part 2> /dev/null &");
 		open(PART, "< /tmp/.fifo_part");
 		while(<PART>)
 		{
@@ -876,12 +962,42 @@ sub dialog_6
 		foreach(@partitions)
 		{
 			my($key, $val) = split(/:/, $_);
+			$setup_config->{"partitions"}->{$val}->{"format"} = 1;
+			$setup_config->{"partitions"}->{$val}->{"mountpoint"} = $key;
+			
+			if($key eq "swap")
+			{
+				system("/sbin/mkswap $val > /dev/null 2>&1");
+				next;
+			}
+			
+			
+			if($key eq "/")
+			{
+				$w{6}->getobj('progress_partition')->pos(2);
+				$w{6}->getobj('progress_label')->text(_("MSG_PART_FORMAT_ROOT"));
+				$w{6}->draw;
+			}
+
+			if($key eq "/home")
+			{
+				$w{6}->getobj('progress_partition')->pos(3);
+				$w{6}->getobj('progress_label')->text(_("MSG_PART_FORMAT_ROOT"));
+				$w{6}->draw;
+			}
+			
 			if($key ne "/")
 			{
 				mkdir("/mnt/root$key");
 			}
-			system("/sbin/mount $val /mnt/root$key");
+			system("/sbin/mkfs.ext3 $val > /dev/null 2>&1");
+			system("/bin/mount $val /mnt/root$key > /dev/null 2>&1");
 		}
+		$w{6}->getobj('progress_partition')->pos(4);
+		$w{6}->getobj('progress_label')->text("");
+		$w{6}->draw;		
+		
+		goto_next_step();
 	}
 	elsif($setup_config->{"howto_partition"} eq "3") # selbschd ischd de mann
 	{
@@ -1011,11 +1127,211 @@ sub dialog_7
 	$w{7}->add
 	(
 		undef, 'Label',
+		-text => _("MSG_CHOOSE_CATEGORY")
+	);
+	
+	$w{7}->add
+	(
+		'w7_label', 'Label',
+		-text => "",
+	);
+	
+			
+	# basissystem entpacken
+	my @flavors;
+	my $flavors_values = [];
+	my $flavors_labels = {};
+	open(FH, "</install/flavors");
+	while(<FH>)
+	{
+		chomp;
+		last 
+			if /^$/;
+		my($file, $desc) = split(/\|/);
+		push(@$flavors_values, $file);
+		$flavors_labels->{$file} = $desc;
+	}
+	close(FH);
+	
+	$w{7}->add(
+		undef, 'Listbox',
+		-y => 4, #==
+		-padbottom => 1,
+		-x	=> 4,
+		-width => 65,
+		-border => 1,
+		-multi 	=> 1,
+		-title 	=> _("MSG_CATEGORY"),
+		-labels => $flavors_labels,
+		-values => $flavors_values,
+		-onchange => \&flavors_callback,
+	);
+	
+	# bootloader installieren
+}
+
+sub dialog_8
+{
+	$w{8}->add
+	(
+		undef, 'Label',
 		-text => _("MSG_INSTALL_BASE_SYSTEM")
 	);
 	
-	# basissystem entpacken
+	my $all_pkgs_count = 0;
+	my @all_pkgs = @{$setup_config->{"categories"}};
+	print STDERR Dumper(@{$setup_config->{"categories"}});
+	print STDERR "-"x80;
+	print STDERR Dumper(@all_pkgs);
+	print STDERR "-"x80;
+	foreach my $p (@all_pkgs)
+	{
+		open(FH, "</install/$p.pkgs");
+			while(<FH>)
+			{
+				$all_pkgs_count++;
+			}
+		close(FH);
+	}
 	
-	# bootloader installieren
+	$w{8}->add
+	(
+		'setup_label', 'Label',
+		-text => _("MSG_PART_DISK"),
+		-x => 2,
+		-y => 5, #==
+		-width => 70,
+	);
+	$w{8}->add(
+		'setup_progress', 'Progressbar',
+		-x => 2,
+		-y => 10, #==
+		-max => $all_pkgs_count,
+		-width => 70,
+	);
+
+	system("mkdir -p /mnt/root/etc/conf.d");
+	system("mkdir -p /mnt/root/var/cache/lip/ldb");
+	system("mkdir -p /mnt/root/root");
+	system("mkdir -p /mnt/root/sys");
+	system("mkdir -p /mnt/root/proc");
+	system("mkdir -p /mnt/root/tmp");
 	
+	system("linoratix-config --plugin LIPbase --add-server file:///mnt/cdrom/Linoratix --prefix /mnt/root > /dev/null 2>&1");
+	
+	my $akt_pos = 1;
+	my $pkg = {};
+	foreach my $p (@all_pkgs)
+	{
+		print STDERR "!! ".$p."\n";
+		open(FH, "</install/$p.pkgs");
+			while(<FH>)
+			{
+				chomp;
+				my $l = $_;
+				my $inhalt = "";
+				my $version = "";
+				my $VAR1 = {};
+					
+				$pkg = retrieve("/install/groups/$l");
+				
+				foreach my $k (keys %$pkg)
+				{
+					$version = $k;
+				}
+				$w{8}->getobj('setup_progress')->pos($akt_pos);
+				$w{8}->getobj('setup_label')->text(_("MSG_INSTALLING") . ": " . $pkg->{$version}->{"name"} . "\n" . _("MSG_VERSION") . ": $version\n\n" . $pkg->{$version}->{"description"});
+				$w{8}->draw;
+				system("linoratix-config --plugin LIP --install " . $pkg->{"$version"}->{"name"} . " --prefix /mnt/root > /dev/null 2>&1");
+				$akt_pos++;
+				$pkg = {};
+			}
+		close(FH);
+	}	
+	goto_next_step();
+}
+
+sub dialog_9
+{
+	$w{9}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_INSTALL_BOOTMANAGER")
+	);
+	
+	$w{9}->add
+	(
+		undef, 'Buttonbox',
+		-y => 14, # ==
+		-x => 45,
+		-buttons => [
+			{
+				-label => _("BTN_CANCEL"),
+				-value => "cancel",
+				-onpress => \&really_install_mbr,
+			},{
+				-label => _("BTN_NEXT"),
+				-value => "next",
+				-onpress => \&really_install_mbr,
+			},
+		],
+	);
+}
+
+sub dialog_10
+{
+	$w{10}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_PREPARE_BOOTMANAGER")
+	);
+	
+	$w{10}->add
+	(
+		'mbr_label', 'Label',
+		-text => _("MSG_PART_DISK"),
+		-x => 2,
+		-y => 5, #==
+		-width => 70,
+	);
+	$w{10}->add(
+		'mbr_progress', 'Progressbar',
+		-x => 2,
+		-y => 10, #==
+		-max => 5,
+		-width => 70,
+	);
+	
+	$w{10}->getobj('mbr_progress')->pos(1);
+	$w{10}->getobj('mbr_label')->text(_("MSG_SCANNING_PARTITIONS"));
+	$w{10}->draw;
+	my $partitions = `/usr/sbin/shwdev.sh -partion`;
+	my @partitions = split(/ /, $partitions);
+	
+	system("mkdir -p /mnt/root/boot/grub");
+	open(GRUB, ">/mnt/root/boot/grub/menu.lst");
+	print GRUB "timeout 10\ndefault 0\n\n";
+	
+	#print GRUB "title Linoratix 0.8\n";
+	#print GRUB "kernel " . convert_to_grub();
+	# hda2 in grub => hd wegnehmen ascii wert von a - (ascii a) = 0 , 2-1 = (hd0,1)
+	
+	foreach my $part (@partitions)
+	{
+		$part =~ m/^([a-z]+)(\d+)$/;
+		my $fp = $1;
+		my $id = $2;
+		my @fs = `/usr/sbin/partinfo fstype /dev/$fp $id`;
+		chomp(@fs);
+		if($fs[0] eq "ntfs" 
+			|| $fs[0] eq "vfat" 
+			|| $fs[0] eq "fat32" 
+			|| $fs[0] eq "fat"
+			|| $fs[0] eq "fat16"
+			|| $fs[0] eq "fat12")
+		{
+			# windows eintrag in mbr
+			
+		}
+	}
 }

@@ -57,6 +57,19 @@ sub _()
 		"MSG_SEKTOREN"			=> "Sektoren",
 		"MSG_PART_FORMAT"		=> "Formatieren",
 		"MSG_MOUNT_PART"		=> "Mounte",
+		"MSG_CATEGORY"			=> "Rubrik",
+		"MSG_CHOOSE_CATEGORY"		=> "Bitte wählen Sie hier die Software aus die installiert werden soll.",
+		"MSG_INSTALLING"			=> "Installiere",
+		"MSG_VERSION"			=> "Version",
+		"MSG_INSTALL_BOOTMANAGER"	=> "Soll ein Bootmanager installiert werden?."
+										. "\n"
+										. "\n"
+										. "Ein Bootmanager wird dazu verwendet um ein (oder mehrere)"
+										. "\n"
+										. "Betriebsysteme zu starten. Wenn Sie Linoratix verwenden möchten,"
+										. "\n"
+										. "müssen Sie einen Bootmanager installieren",
+		"MSG_SCANNING_PARTITIONS"		=> "Scanne Partitionen...",
 		
 		"MNU_FILE"					=> "Datei",
 		
@@ -67,6 +80,8 @@ sub _()
 		"SCR_TIMEZONE"					=> "Zeitzone",
 		"SCR_PREPARE_DISK"			=> "Bereite Festplatte vor.",
 		"SCR_INSTALL_BASE_SYSTEM"	=> "Basissystem installieren",
+		"SCR_CHOOSE_CATEGORIE"		=> "Kategorieen auswählen",
+		"SCR_BOOTMANAGER"			=> "Bootmanager",
 		
 		"HLP_TARGET_DISK"				=> "Wählen Sie hier die Festplatte aus auf der Linoratix GNU/Linux installiert"
 								.  "\n"
