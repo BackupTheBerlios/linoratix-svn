@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: dev-lang -
 %sub-group: python -
-%required: ("libglibc >=2.3.3","libreadline >=4.3","libopenssl >=0.9.7c","libncurses >=5.4","libgdbm >=1.8.3")
+%required: ("libglibc >=2.3.3","libreadline >=4.3","libopenssl >=0.9.7e","libncurses >=5.4","libgdbm >=1.8.3")
 %build-required: ()
 %description: The Python scripting language
 %name: python

@@ -1,11 +1,11 @@
 #
-#	Example File for subversion-1.1.0.tar.bz2
+# File for subversion-1.1.0.tar.bz2
 #
 %author: jfried
 %package-group: dev-utils -
 %sub-group: subversion -
-%required: ("inetutils >=1.4.2", "net-tools >=1.60", "openssh >=3.9_p1", "nano >=1.2.3", "libzlib >=1.2.1", "libdb4 >=4.2.52")
-%build-required: ()
+%required: ("inetutils >=1.4.2", "net-tools >=1.60", "openssh >=3.9_p1", "nano >=1.2.3", "libzlib >=1.2.1", "libdb4 >=4.2.52", "python >=2.4", "libgdbm >=1.8.3")
+%build-required: ("libtool >=1.5.10")
 %description: A version control system like CVS.
 %name: subversion
 %version: 1.1.0

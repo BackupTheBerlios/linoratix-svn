@@ -1,15 +1,17 @@
 #
-#	Example File for curl-7.12.1.tar.bz2
+# File for curl-7.12.1.tar.bz2
 #
 %author: jfried
 %package-group: net-libs -
 %sub-group: curl -
-%required: ("inetutils >=1.4.2", "libopenssl >=0.9.7c")
+%required: ("inetutils >=1.4.2", "libopenssl >=0.9.7e")
+%build-required: ()
 %description: The curl library
 %name: libcurl
-%version: 7.12.1
+%version: 7.13.0
 %build: $DATA
-%sourcefile: curl-7.12.1.tar.bz2
+%sourcefile: curl-7.13.0.tar.bz2
+%source-url: ("http://curl.kgt.org/download/")
 
 # build ...
 __DATA__

@@ -11,7 +11,7 @@
 %version: 1.5
 %build: $DATA
 %sourcefile: mktemp-1.5.tar.gz
-%source-url: ("http://downloads.linoratix.com/distfiles")
+%source-url: ("ftp://ftp.mktemp.org/pub/mktemp/")
 
 __DATA__
 lip_extract %sourcefile
