@@ -1,0 +1,35 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/07 08:46:29-08:00 david-b@pacbell.net 
+#   [PATCH] USB: usb makefile tweaks
+#   
+#   Two minor Makefile fixes, catching up to some driver removals.
+#   
+#   Signed-off-by: David Brownell <dbrownell@users.sourceforge.net>
+#   Signed-off-by: Greg Kroah-Hartman <greg@kroah.com>
+# 
+# drivers/usb/Makefile
+#   2005/01/05 12:21:54-08:00 david-b@pacbell.net +1 -2
+#   USB: usb makefile tweaks
+# 
+diff -Nru a/drivers/usb/Makefile b/drivers/usb/Makefile
+--- a/drivers/usb/Makefile	2005-01-22 21:15:50 -08:00
++++ b/drivers/usb/Makefile	2005-01-22 21:15:50 -08:00
+@@ -9,7 +9,7 @@
+ obj-$(CONFIG_USB_EHCI_HCD)	+= host/
+ obj-$(CONFIG_USB_OHCI_HCD)	+= host/
+ obj-$(CONFIG_USB_UHCI_HCD)	+= host/
+-obj-$(CONFIG_USB_SL811HS)	+= host/
++obj-$(CONFIG_USB_SL811_HCD)	+= host/
+ obj-$(CONFIG_ETRAX_USB_HOST)	+= host/
+ 
+ obj-$(CONFIG_USB_ACM)		+= class/
+@@ -49,7 +49,6 @@
+ obj-$(CONFIG_USB_RTL8150)	+= net/
+ obj-$(CONFIG_USB_USBNET)	+= net/
+ 
+-obj-$(CONFIG_USB_DC2XX)		+= image/
+ obj-$(CONFIG_USB_HPUSBSCSI)	+= image/
+ obj-$(CONFIG_USB_MDC800)	+= image/
+ obj-$(CONFIG_USB_MICROTEK)	+= image/

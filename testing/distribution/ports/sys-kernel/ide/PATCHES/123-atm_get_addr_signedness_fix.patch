@@ -1,0 +1,43 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/02/08 07:59:56-08:00 torvalds@ppc970.osdl.org 
+#   Fix ATM copy-to-user usage.
+#   
+#   More of the Guninski "copy_to_user() takes a size_t" series.
+# 
+# net/atm/addr.c
+#   2005/02/08 07:59:48-08:00 torvalds@ppc970.osdl.org +1 -1
+#   Fix ATM copy-to-user usage.
+#   
+#   More of the Guninski "copy_to_user() takes a size_t" series.
+# 
+# net/atm/addr.h
+#   2005/02/08 07:59:48-08:00 torvalds@ppc970.osdl.org +1 -1
+#   Fix ATM copy-to-user usage.
+#   
+#   More of the Guninski "copy_to_user() takes a size_t" series.
+# 
+diff -Nru a/net/atm/addr.c b/net/atm/addr.c
+--- a/net/atm/addr.c	2004-10-18 17:53:08.000000000 -0400
++++ b/net/atm/addr.c	2005-02-22 04:09:27.014499056 -0500
+@@ -114,7 +114,7 @@
+ }
+ 
+ 
+-int atm_get_addr(struct atm_dev *dev,struct sockaddr_atmsvc __user *buf,int size)
++int atm_get_addr(struct atm_dev *dev,struct sockaddr_atmsvc __user *buf,size_t size)
+ {
+ 	unsigned long flags;
+ 	struct atm_dev_addr *walk;
+diff -Nru a/net/atm/addr.h b/net/atm/addr.h
+--- a/net/atm/addr.h	2005-02-14 04:38:48 -08:00
++++ b/net/atm/addr.h	2005-02-14 04:38:48 -08:00
+@@ -13,6 +13,6 @@
+ void atm_reset_addr(struct atm_dev *dev);
+ int atm_add_addr(struct atm_dev *dev,struct sockaddr_atmsvc *addr);
+ int atm_del_addr(struct atm_dev *dev,struct sockaddr_atmsvc *addr);
+-int atm_get_addr(struct atm_dev *dev,struct sockaddr_atmsvc __user *buf,int size);
++int atm_get_addr(struct atm_dev *dev,struct sockaddr_atmsvc __user *buf,size_t size);
+ 
+ #endif

@@ -1,0 +1,30 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/20 10:37:42-08:00 greg@kroah.com 
+#   USB: change warning level in ftdi_sio driver of a debug message.
+#   
+#   This keeps users happy as it really isn't an error.
+#   
+#   Signed-off-by: Greg Kroah-Hartman <greg@kroah.com>
+# 
+# drivers/usb/serial/ftdi_sio.c
+#   2004/12/20 10:37:18-08:00 greg@kroah.com +1 -1
+#   USB: change warning level in ftdi_sio driver of a debug message.
+#   
+#   This keeps users happy as it really isn't an error.
+#   
+#   Signed-off-by: Greg Kroah-Hartman <greg@kroah.com>
+# 
+diff -Nru a/drivers/usb/serial/ftdi_sio.c b/drivers/usb/serial/ftdi_sio.c
+--- a/drivers/usb/serial/ftdi_sio.c	2005-01-15 15:16:48 -08:00
++++ b/drivers/usb/serial/ftdi_sio.c	2005-01-15 15:16:48 -08:00
+@@ -1651,7 +1651,7 @@
+ 	dbg("%s port %d, %d bytes", __FUNCTION__, port->number, count);
+ 
+ 	if (count == 0) {
+-		err("write request of 0 bytes");
++		dbg("write request of 0 bytes");
+ 		return 0;
+ 	}
+ 	

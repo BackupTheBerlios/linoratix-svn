@@ -1,0 +1,45 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/11 15:12:26+11:00 hch@sgi.com 
+#   [XFS] make sure to always reclaim inodes in xfs_finish_reclaim
+#   
+#   SGI-PV: 921072
+#   SGI-Modid: xfs-linux:xfs-kern:184505a
+#   Signed-off-by: Christoph Hellwig <hch@sgi.com>
+#   Signed-off-by: Nathan Scott <nathans@sgi.com>
+# 
+# fs/xfs/xfs_vnodeops.c
+#   2005/01/11 15:11:56+11:00 hch@sgi.com +3 -3
+#   [XFS] make sure to always reclaim inodes in xfs_finish_reclaim
+# 
+diff -Nru a/fs/xfs/xfs_vnodeops.c b/fs/xfs/xfs_vnodeops.c
+--- a/fs/xfs/xfs_vnodeops.c	2005-02-14 00:57:55 -08:00
++++ b/fs/xfs/xfs_vnodeops.c	2005-02-14 00:57:55 -08:00
+@@ -3900,7 +3900,7 @@
+ 	int		error;
+ 
+ 	if (vp && VN_BAD(vp))
+-		return 0;
++		goto reclaim;
+ 
+ 	/* The hash lock here protects a thread in xfs_iget_core from
+ 	 * racing with us on linking the inode back with a vnode.
+@@ -3948,8 +3948,7 @@
+ 			 */
+ 			if (error) {
+ 				xfs_iunlock(ip, XFS_ILOCK_EXCL);
+-				xfs_ireclaim(ip);
+-				return (0);
++				goto reclaim;
+ 			}
+ 			xfs_iflock(ip); /* synchronize with xfs_iflush_done */
+ 		}
+@@ -3968,6 +3967,7 @@
+ 		xfs_iunlock(ip, XFS_ILOCK_EXCL);
+ 	}
+ 
++ reclaim:
+ 	xfs_ireclaim(ip);
+ 	return 0;
+ }

@@ -1,0 +1,60 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/13 20:02:46-08:00 davem@nuts.davemloft.net 
+#   [TCP]: Fix sk_forward_alloc assertion failures with TSO.
+#   
+#   do_tcp_sendpages() needs to do skb->truesize et al.
+#   accounting just like tcp_sendmsg() does.
+#   
+#   tcp_sendmsg() works by gradually adjusting these
+#   accounting knobs as user data is copied into the
+#   packet.
+#   
+#   do_tcp_sendpages() works differently, when it allocates
+#   a new SKB it optimistically adds in tp->mss_cache to
+#   these values and then makes no adjustments at all as
+#   pages are tacked onto the packet.
+#   
+#   This does not work at all if tcp_sendmsg() queues a
+#   packet onto the send queue, and then do_tcp_sendpages()
+#   attaches pages onto the end of that SKB.  We are left
+#   with a very inaccurate skb->truesize in that case.
+#   
+#   Consequently, if we were building a TSO frame and it
+#   gets partially ACK'd, then since skb->truesize is too
+#   small tcp_trim_skb() will potentially underflow it's
+#   value and all the accounting becomes corrupted.
+#   
+#   This is usually seen as sk->sk_forward_alloc being
+#   negative at socket destroy time, which triggers an
+#   assertion check.
+#   
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+# net/ipv4/tcp.c
+#   2005/01/13 19:57:57-08:00 davem@nuts.davemloft.net +4 -1
+#   [TCP]: Fix sk_forward_alloc assertion failures with TSO.
+# 
+diff -Nru a/net/ipv4/tcp.c b/net/ipv4/tcp.c
+--- a/net/ipv4/tcp.c	2005-01-15 20:08:45 -08:00
++++ b/net/ipv4/tcp.c	2005-01-15 20:08:45 -08:00
+@@ -664,7 +664,7 @@
+ 			if (!sk_stream_memory_free(sk))
+ 				goto wait_for_sndbuf;
+ 
+-			skb = sk_stream_alloc_pskb(sk, 0, tp->mss_cache,
++			skb = sk_stream_alloc_pskb(sk, 0, 0,
+ 						   sk->sk_allocation);
+ 			if (!skb)
+ 				goto wait_for_memory;
+@@ -689,6 +689,9 @@
+ 
+ 		skb->len += copy;
+ 		skb->data_len += copy;
++		skb->truesize += copy;
++		sk->sk_wmem_queued += copy;
++		sk->sk_forward_alloc -= copy;
+ 		skb->ip_summed = CHECKSUM_HW;
+ 		tp->write_seq += copy;
+ 		TCP_SKB_CB(skb)->end_seq += copy;

@@ -1,0 +1,129 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/21 07:59:10-08:00 ak@suse.de 
+#   [PATCH] i386/x86-64: Fix SMP NMI watchdog race
+#   
+#   Fix SMP race in NMI watchdog on i386/x86-64
+#   
+#   Fix a long standing SMP Setup race in the NMI watchdog.  The watchdog would
+#   tick from very early and check if all CPUs increase their timer interrupts.
+#   For that it would check the cpu_online_map.  Now if a CPU took too long to
+#   boot the watchdog would trigger prematurely because the CPU didn't increase
+#   its timer count yet.
+#   
+#   Fix is to check cpu_callin_map instead of cpu_online_map because the first is
+#   only set when a CPU started its timer interrupt.
+#   
+#   I fixed it on i386 and x86-64.
+#   
+#   Description of the problem from Manpreet Singh. Thanks.
+#   
+#   Cc: <manpreet@fabric7.com>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# arch/i386/kernel/nmi.c
+#   2005/01/20 21:29:13-08:00 ak@suse.de +5 -1
+#   i386/x86-64: Fix SMP NMI watchdog race
+# 
+# arch/i386/kernel/smpboot.c
+#   2005/01/20 20:58:11-08:00 ak@suse.de +1 -1
+#   i386/x86-64: Fix SMP NMI watchdog race
+# 
+# arch/x86_64/kernel/nmi.c
+#   2005/01/20 21:29:11-08:00 ak@suse.de +5 -1
+#   i386/x86-64: Fix SMP NMI watchdog race
+# 
+# arch/x86_64/kernel/smpboot.c
+#   2005/01/20 20:58:11-08:00 ak@suse.de +1 -1
+#   i386/x86-64: Fix SMP NMI watchdog race
+# 
+# include/asm-i386/smp.h
+#   2005/01/20 20:58:11-08:00 ak@suse.de +1 -0
+#   i386/x86-64: Fix SMP NMI watchdog race
+# 
+# include/asm-x86_64/smp.h
+#   2005/01/20 20:58:11-08:00 ak@suse.de +1 -0
+#   i386/x86-64: Fix SMP NMI watchdog race
+# 
+diff -Nru a/arch/i386/kernel/nmi.c b/arch/i386/kernel/nmi.c
+--- a/arch/i386/kernel/nmi.c	2005-01-22 21:36:57 -08:00
++++ b/arch/i386/kernel/nmi.c	2005-01-22 21:36:57 -08:00
+@@ -117,8 +117,12 @@
+ 	/* FIXME: Only boot CPU is online at this stage.  Check CPUs
+            as they come up. */
+ 	for (cpu = 0; cpu < NR_CPUS; cpu++) {
+-		if (!cpu_online(cpu))
++#ifdef CONFIG_SMP
++		/* Check cpu_callin_map here because that is set
++		   after the timer is started. */
++		if (!cpu_isset(cpu, cpu_callin_map))
+ 			continue;
++#endif
+ 		if (nmi_count(cpu) - prev_nmi_count[cpu] <= 5) {
+ 			printk("CPU#%d: NMI appears to be stuck!\n", cpu);
+ 			nmi_active = 0;
+diff -Nru a/arch/i386/kernel/smpboot.c b/arch/i386/kernel/smpboot.c
+--- a/arch/i386/kernel/smpboot.c	2005-01-22 21:36:57 -08:00
++++ b/arch/i386/kernel/smpboot.c	2005-01-22 21:36:57 -08:00
+@@ -66,7 +66,7 @@
+ /* bitmap of online cpus */
+ cpumask_t cpu_online_map;
+ 
+-static cpumask_t cpu_callin_map;
++cpumask_t cpu_callin_map;
+ cpumask_t cpu_callout_map;
+ static cpumask_t smp_commenced_mask;
+ 
+diff -Nru a/arch/x86_64/kernel/nmi.c b/arch/x86_64/kernel/nmi.c
+--- a/arch/x86_64/kernel/nmi.c	2005-01-22 21:36:57 -08:00
++++ b/arch/x86_64/kernel/nmi.c	2005-01-22 21:36:57 -08:00
+@@ -130,8 +130,12 @@
+ 	mdelay((10*1000)/nmi_hz); // wait 10 ticks
+ 
+ 	for (cpu = 0; cpu < NR_CPUS; cpu++) {
+-		if (!cpu_online(cpu))
++#ifdef CONFIG_SMP
++		/* Check cpu_callin_map here because that is set
++		   after the timer is started. */
++		if (!cpu_isset(cpu, cpu_callin_map))
+ 			continue;
++#endif
+ 		if (cpu_pda[cpu].__nmi_count - counts[cpu] <= 5) {
+ 			printk("CPU#%d: NMI appears to be stuck (%d)!\n", 
+ 			       cpu,
+diff -Nru a/arch/x86_64/kernel/smpboot.c b/arch/x86_64/kernel/smpboot.c
+--- a/arch/x86_64/kernel/smpboot.c	2005-01-22 21:36:57 -08:00
++++ b/arch/x86_64/kernel/smpboot.c	2005-01-22 21:36:57 -08:00
+@@ -63,7 +63,7 @@
+ /* Bitmask of currently online CPUs */
+ cpumask_t cpu_online_map;
+ 
+-static cpumask_t cpu_callin_map;
++cpumask_t cpu_callin_map;
+ cpumask_t cpu_callout_map;
+ static cpumask_t smp_commenced_mask;
+ 
+diff -Nru a/include/asm-i386/smp.h b/include/asm-i386/smp.h
+--- a/include/asm-i386/smp.h	2005-01-22 21:36:57 -08:00
++++ b/include/asm-i386/smp.h	2005-01-22 21:36:57 -08:00
+@@ -53,6 +53,7 @@
+ #define __smp_processor_id() (current_thread_info()->cpu)
+ 
+ extern cpumask_t cpu_callout_map;
++extern cpumask_t cpu_callin_map;
+ #define cpu_possible_map cpu_callout_map
+ 
+ /* We don't mark CPUs online until __cpu_up(), so we need another measure */
+diff -Nru a/include/asm-x86_64/smp.h b/include/asm-x86_64/smp.h
+--- a/include/asm-x86_64/smp.h	2005-01-22 21:36:57 -08:00
++++ b/include/asm-x86_64/smp.h	2005-01-22 21:36:57 -08:00
+@@ -59,6 +59,7 @@
+  */
+ 
+ extern cpumask_t cpu_callout_map;
++extern cpumask_t cpu_callin_map;
+ #define cpu_possible_map cpu_callout_map
+ 
+ static inline int num_booting_cpus(void)

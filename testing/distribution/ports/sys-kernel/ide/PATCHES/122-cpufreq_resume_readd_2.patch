@@ -1,0 +1,39 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/02/03 17:01:33-08:00 dilinger@voxel.net 
+#   [PATCH] cpufreq_resume() fix
+#   
+#   Since acpi_cpufreq_resume and speedstep_resume appear to return 0 upon
+#   success, it seems like the attached patch is what the desired behavior
+#   would be.  Otherwise, cpufreq_resume() always prints an error and exits
+#   early if using a cpufreq_driver that supports resume.
+#   
+#   Signed-off-by: Dominik Brodowski <linux@brodo.de>
+#   Signed-off-by: Dave Jones <davej@redhat.com>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# drivers/cpufreq/cpufreq.c
+#   2005/02/03 06:42:40-08:00 dilinger@voxel.net +6 -3
+#   cpufreq_resume() fix
+# 
+diff -Nru a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
+--- a/drivers/cpufreq/cpufreq.c	2005-02-14 04:55:45 -08:00
++++ b/drivers/cpufreq/cpufreq.c	2005-02-14 04:55:45 -08:00
+@@ -900,9 +900,12 @@
+ 
+ 	if (cpufreq_driver->resume) {
+ 		ret = cpufreq_driver->resume(cpu_policy);
+-		printk(KERN_ERR "cpufreq: resume failed in ->resume step on CPU %u\n", cpu_policy->cpu);
+-		cpufreq_cpu_put(cpu_policy);
+-		return (ret);
++		if (ret) {
++			printk(KERN_ERR "cpufreq: resume failed in ->resume "
++					"step on CPU %u\n", cpu_policy->cpu);
++			cpufreq_cpu_put(cpu_policy);
++			return ret;
++		}
+ 	}
+ 
+ 	if (!(cpufreq_driver->flags & CPUFREQ_CONST_LOOPS)) {

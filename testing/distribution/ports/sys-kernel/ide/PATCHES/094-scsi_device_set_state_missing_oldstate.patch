@@ -1,0 +1,25 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/16 16:05:58-06:00 jejb@mulgrave.(none) 
+#   SCSI: Add missing state transition BLOCK->OFFLINE
+#   
+#   From: 	James.Smart@Emulex.Com
+#   
+#   Signed-off-by: James Bottomley <James.Bottomley@SteelEye.com>
+# 
+# drivers/scsi/scsi_lib.c
+#   2004/11/16 16:05:38-06:00 jejb@mulgrave.(none) +1 -0
+#   SCSI: Add missing state transition BLOCK->OFFLINE
+# 
+diff -Nru a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+--- a/drivers/scsi/scsi_lib.c	2005-02-14 06:20:03 -08:00
++++ b/drivers/scsi/scsi_lib.c	2005-02-14 06:20:03 -08:00
+@@ -1672,6 +1672,7 @@
+ 		case SDEV_CREATED:
+ 		case SDEV_RUNNING:
+ 		case SDEV_QUIESCE:
++		case SDEV_BLOCK:
+ 			break;
+ 		default:
+ 			goto illegal;

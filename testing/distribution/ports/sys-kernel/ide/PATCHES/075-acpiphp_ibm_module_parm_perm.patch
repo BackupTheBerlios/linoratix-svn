@@ -1,0 +1,28 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/07 10:32:39-08:00 domen@coderock.org 
+#   [PATCH] hotplug/acpiphp_ibm: module_param fix
+#   
+#   File permissins should be octal number.
+#   
+#   
+#   Signed-off-by: Domen Puncer <domen@coderock.org>
+#   Signed-off-by: Greg Kroah-Hartman <greg@kroah.com>
+# 
+# drivers/pci/hotplug/acpiphp_ibm.c
+#   2004/12/29 01:48:10-08:00 domen@coderock.org +1 -1
+#   hotplug/acpiphp_ibm: module_param fix
+# 
+diff -Nru a/drivers/pci/hotplug/acpiphp_ibm.c b/drivers/pci/hotplug/acpiphp_ibm.c
+--- a/drivers/pci/hotplug/acpiphp_ibm.c	2005-01-22 22:58:50 -08:00
++++ b/drivers/pci/hotplug/acpiphp_ibm.c	2005-01-22 22:58:50 -08:00
+@@ -47,7 +47,7 @@
+ MODULE_DESCRIPTION(DRIVER_DESC);
+ MODULE_LICENSE("GPL");
+ MODULE_VERSION(DRIVER_VERSION);
+-module_param(debug, bool, 644);
++module_param(debug, bool, 0644);
+ MODULE_PARM_DESC(debug, " Debugging mode enabled or not");
+ #define MY_NAME "acpiphp_ibm"
+ 

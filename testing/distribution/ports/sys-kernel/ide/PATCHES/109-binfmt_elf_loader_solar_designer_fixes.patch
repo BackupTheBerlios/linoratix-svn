@@ -1,0 +1,90 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/11 19:18:34-08:00 marcelo.tosatti@cyclades.com 
+#   [PATCH] binfmt_elf fix return error codes and early corrupt binary detection
+#   
+#   With Solar Designer <solar@openwall.com>
+#   
+#   The following patch changes the following on ELF parsing/loading code
+#   (fs/binfmt_elf):
+#   
+#   - Stronger validity checks on ELF files:
+#           treat e_phnum (program header count) < 1 as invalid
+#           treat p_filesz (file size) < 2 invalid on program header interp. case
+#    - Saner return error codes
+#    - Make sure SIGKILL is delivered on error handling
+#   
+#   
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# fs/binfmt_elf.c
+#   2005/01/11 16:42:58-08:00 marcelo.tosatti@cyclades.com +13 -8
+#   binfmt_elf fix return error codes and early corrupt binary detection
+# 
+diff -Nru a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+--- a/fs/binfmt_elf.c	2005-02-14 04:59:06 -08:00
++++ b/fs/binfmt_elf.c	2005-02-14 04:59:06 -08:00
+@@ -322,7 +322,8 @@
+ 	 */
+ 	if (interp_elf_ex->e_phentsize != sizeof(struct elf_phdr))
+ 		goto out;
+-	if (interp_elf_ex->e_phnum > 65536U / sizeof(struct elf_phdr))
++	if (interp_elf_ex->e_phnum < 1 ||
++		interp_elf_ex->e_phnum > 65536U / sizeof(struct elf_phdr))
+ 		goto out;
+ 
+ 	/* Now read in all of the header information */
+@@ -524,12 +525,13 @@
+ 
+ 	/* Now read in all of the header information */
+ 
+-	retval = -ENOMEM;
+ 	if (loc->elf_ex.e_phentsize != sizeof(struct elf_phdr))
+ 		goto out;
+-	if (loc->elf_ex.e_phnum > 65536U / sizeof(struct elf_phdr))
++	if (loc->elf_ex.e_phnum < 1 ||
++	 	loc->elf_ex.e_phnum > 65536U / sizeof(struct elf_phdr))
+ 		goto out;
+ 	size = loc->elf_ex.e_phnum * sizeof(struct elf_phdr);
++	retval = -ENOMEM;
+ 	elf_phdata = (struct elf_phdr *) kmalloc(size, GFP_KERNEL);
+ 	if (!elf_phdata)
+ 		goto out;
+@@ -575,10 +577,12 @@
+ 			 * is an a.out format binary
+ 			 */
+ 
+-			retval = -ENOMEM;
++			retval = -ENOEXEC;
+ 			if (elf_ppnt->p_filesz > PATH_MAX || 
+-			    elf_ppnt->p_filesz == 0)
++			    elf_ppnt->p_filesz < 2)
+ 				goto out_free_file;
++
++			retval = -ENOMEM;
+ 			elf_interpreter = (char *) kmalloc(elf_ppnt->p_filesz,
+ 							   GFP_KERNEL);
+ 			if (!elf_interpreter)
+@@ -593,7 +597,7 @@
+ 				goto out_free_interp;
+ 			}
+ 			/* make sure path is NULL terminated */
+-			retval = -EINVAL;
++			retval = -ENOEXEC;
+ 			if (elf_interpreter[elf_ppnt->p_filesz - 1] != '\0')
+ 				goto out_free_interp;
+ 
+@@ -868,8 +872,9 @@
+ 						    interpreter,
+ 						    &interp_load_addr);
+ 		if (BAD_ADDR(elf_entry)) {
+-			printk(KERN_ERR "Unable to load interpreter\n");
+-			send_sig(SIGSEGV, current, 0);
++			printk(KERN_ERR "Unable to load interpreter %.128s\n",
++				elf_interpreter);
++			force_sig(SIGSEGV, current);
+ 			retval = -ENOEXEC; /* Nobody gets to see this, but.. */
+ 			goto out_free_dentry;
+ 		}

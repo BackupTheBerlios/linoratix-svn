@@ -1,0 +1,57 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/11 19:17:55-08:00 peterm@redhat.com 
+#   [PATCH] audit return code and log format fix
+#   
+#   A couple of one liners to resolve two issues that have come up regarding
+#   audit.
+#   
+#   Roger reported a problem with audit.c:audit_receive_skb which improperly
+#   negates the errno argument when netlink_ack is called.
+#   
+#   The second issue was reported by Steve on the linux-audit list,
+#   auditsc.s:audit_log_exit using %u instead of %d in the audit_log_format
+#   call.
+#   
+#   Please note, there is a mailing list available for audit discussion at
+#   https://www.redhat.com/archives/linux-audit/
+#   
+#   Signed-off-by: Peter Martuccelli <peterm@redhat.com>
+#   Signed-off-by: Steve Grubb <sgrubb@redhat.com>
+#   Signed-off-by: Roger Luethi <rl@hellgate.ch>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# kernel/audit.c
+#   2005/01/11 16:42:57-08:00 peterm@redhat.com +1 -1
+#   audit return code and log format fix
+# 
+# kernel/auditsc.c
+#   2005/01/11 16:42:57-08:00 peterm@redhat.com +1 -1
+#   audit return code and log format fix
+# 
+diff -Nru a/kernel/audit.c b/kernel/audit.c
+--- a/kernel/audit.c	2005-02-14 04:57:25 -08:00
++++ b/kernel/audit.c	2005-02-14 04:57:25 -08:00
+@@ -419,7 +419,7 @@
+ 		if (rlen > skb->len)
+ 			rlen = skb->len;
+ 		if ((err = audit_receive_msg(skb, nlh))) {
+-			netlink_ack(skb, nlh, -err);
++			netlink_ack(skb, nlh, err);
+ 		} else if (nlh->nlmsg_flags & NLM_F_ACK)
+ 			netlink_ack(skb, nlh, 0);
+ 		skb_pull(skb, rlen);
+diff -Nru a/kernel/auditsc.c b/kernel/auditsc.c
+--- a/kernel/auditsc.c	2005-02-14 04:57:25 -08:00
++++ b/kernel/auditsc.c	2005-02-14 04:57:25 -08:00
+@@ -591,7 +591,7 @@
+ 	if (context->personality != PER_LINUX)
+ 		audit_log_format(ab, " per=%lx", context->personality);
+ 	if (context->return_valid)
+-		audit_log_format(ab, " exit=%u", context->return_code);
++		audit_log_format(ab, " exit=%d", context->return_code);
+ 	audit_log_format(ab,
+ 		  " a0=%lx a1=%lx a2=%lx a3=%lx items=%d"
+ 		  " pid=%d loginuid=%d uid=%d gid=%d"

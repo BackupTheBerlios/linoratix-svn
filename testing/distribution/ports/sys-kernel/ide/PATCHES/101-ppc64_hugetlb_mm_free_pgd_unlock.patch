@@ -1,0 +1,38 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/10 07:46:04-08:00 david@gibson.dropbear.id.au 
+#   [PATCH] ppc64: hugepage bugfix
+#   
+#   Fix a stupid unbalanced lock bug in the ppc64 hugepage code.  Lead
+#   rapidly to a crash if both CONFIG_HUGETLB_PAGE and CONFIG_PREEMPT were
+#   enabled (even without actually using hugepages at all).
+#   
+#   Signed-off-by: David Gibson <dwg@au1.ibm.com>
+#   Acked-by: William Irwin <wli@holomorphy.com>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# arch/ppc64/mm/hugetlbpage.c
+#   2005/01/09 20:16:25-08:00 david@gibson.dropbear.id.au +2 -1
+#   ppc64: hugepage bugfix
+# 
+diff -Nru a/arch/ppc64/mm/hugetlbpage.c b/arch/ppc64/mm/hugetlbpage.c
+--- a/arch/ppc64/mm/hugetlbpage.c	2005-02-14 04:17:07 -08:00
++++ b/arch/ppc64/mm/hugetlbpage.c	2005-02-14 04:17:07 -08:00
+@@ -745,7 +745,7 @@
+ 
+ 	pgdir = mm->context.huge_pgdir;
+ 	if (! pgdir)
+-		return;
++		goto out;
+ 
+ 	mm->context.huge_pgdir = NULL;
+ 
+@@ -768,6 +768,7 @@
+ 	BUG_ON(memcmp(pgdir, empty_zero_page, PAGE_SIZE));
+ 	kmem_cache_free(zero_cache, pgdir);
+ 
++ out:
+ 	spin_unlock(&mm->page_table_lock);
+ }
+ 

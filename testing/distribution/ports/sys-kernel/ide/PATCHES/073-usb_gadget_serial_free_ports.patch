@@ -1,0 +1,32 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/06 17:27:58-08:00 david-b@pacbell.net 
+#   [PATCH] USB: fix serial gadget oops during enumeration
+#   
+#   This prevents the serial gadget driver from oopsing during enumeration
+#   when spinlocks are configured, and slab poisoning is active...
+#   
+#   Signed-off-by: David Brownell <dbrownell@users.sourceforge.net>
+#   Signed-off-by: Greg Kroah-Hartman <greg@kroah.com>
+# 
+# drivers/usb/gadget/serial.c
+#   2005/01/06 12:29:34-08:00 david-b@pacbell.net +1 -1
+#   USB: fix serial gadget oops during enumeration
+# 
+diff -Nru a/drivers/usb/gadget/serial.c b/drivers/usb/gadget/serial.c
+--- a/drivers/usb/gadget/serial.c	2005-01-22 21:43:13 -08:00
++++ b/drivers/usb/gadget/serial.c	2005-01-22 21:43:13 -08:00
+@@ -2322,11 +2322,11 @@
+ 					wake_up_interruptible(&port->port_tty->read_wait);
+ 					wake_up_interruptible(&port->port_tty->write_wait);
+ 				}
++				spin_unlock_irqrestore(&port->port_lock, flags);
+ 			} else {
+ 				kfree(port);
+ 			}
+ 
+-			spin_unlock_irqrestore(&port->port_lock, flags);
+ 		}
+ 	}
+ }

@@ -1,0 +1,48 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/04 21:27:49-08:00 sct@redhat.com 
+#   [PATCH] ext3: handle attempted double-delete of metadata.
+#   
+#   This patch improves ext3's ability to deal with corruption on-disk.  If we
+#   try to delete a metadata block twice, we confuse ext3's internal revoke
+#   error-checking, resulting in a BUG().  But this can occur in practice due
+#   to a corrupt indirect block, so we should attempt to fail gracefully.
+#   
+#   Downgrade the assert failure to a JH_EXPECT_BH failure, and return EIO when
+#   it occurs.
+#   
+#   This is easily reproduced with a sample ext3 fs image containing an inode
+#   which references the same indirect block more than once.  Deleting that
+#   inode will BUG() an unfixed kernel with:
+#   
+#   Assertion failure in journal_revoke() at fs/jbd/revoke.c:379:
+#   "!buffer_revoked(bh)"
+#   
+#   With the fix, ext3 recovers gracefully.
+#   
+#   Signed-off-by: Stephen Tweedie <sct@redhat.com>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# fs/jbd/revoke.c
+#   2005/01/04 18:48:12-08:00 sct@redhat.com +6 -1
+#   ext3: handle attempted double-delete of metadata.
+# 
+diff -Nru a/fs/jbd/revoke.c b/fs/jbd/revoke.c
+--- a/fs/jbd/revoke.c	2005-01-22 22:56:39 -08:00
++++ b/fs/jbd/revoke.c	2005-01-22 22:56:39 -08:00
+@@ -376,7 +376,12 @@
+            first having the revoke cancelled: it's illegal to free a
+            block twice without allocating it in between! */
+ 	if (bh) {
+-		J_ASSERT_BH(bh, !buffer_revoked(bh));
++		if (!J_EXPECT_BH(bh, !buffer_revoked(bh),
++				 "inconsistent data on disk")) {
++			if (!bh_in)
++				brelse(bh);
++			return -EIO;
++		}
+ 		set_buffer_revoked(bh);
+ 		set_buffer_revokevalid(bh);
+ 		if (bh_in) {

@@ -1,0 +1,30 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/07 08:29:15-08:00 jgarzik@pobox.com 
+#   [PATCH] x86-64: kernel/sys.c build fix
+#   
+#   On x86-64, the attached patch is required to fix
+#   
+#   > kernel/sys.c: In function `sys_setsid':
+#   > kernel/sys.c:1078: error: `tty_sem' undeclared (first use in this function)
+#   > kernel/sys.c:1078: error: (Each undeclared identifier is reported only once
+#   > kernel/sys.c:1078: error: for each function it appears in.)
+#   
+#   kernel/sys.c needs the tty_sem declaration from linux/tty.h.
+# 
+# kernel/sys.c
+#   2005/01/06 23:25:46-08:00 jgarzik@pobox.com +1 -0
+#   x86-64: kernel/sys.c build fix
+# 
+diff -Nru a/kernel/sys.c b/kernel/sys.c
+--- a/kernel/sys.c	2005-02-14 05:07:47 -08:00
++++ b/kernel/sys.c	2005-02-14 05:07:47 -08:00
+@@ -23,6 +23,7 @@
+ #include <linux/security.h>
+ #include <linux/dcookies.h>
+ #include <linux/suspend.h>
++#include <linux/tty.h>
+ 
+ #include <linux/compat.h>
+ #include <linux/syscalls.h>

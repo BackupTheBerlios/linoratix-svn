@@ -1,0 +1,28 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/28 13:15:44-08:00 tony.luck@intel.com 
+#   [IA64] irq_ia64.c typo s/_IA64_REG_AR_SP/_IA64_REG_SP/
+#   
+#   Patch supplied by Sourav Sen from HP:
+#     If I turn on IRQ_DEBUG in arch/ia64/kernel/irq_ia64.c in 2.6.8.1,
+#     the compilation does not go thru as there isn't any _IA64_REG_AR_SP
+#   
+#   Signed-off-by: Tony Luck <tony.luck@intel.com>
+# 
+# arch/ia64/kernel/irq_ia64.c
+#   2004/12/28 13:12:43-08:00 tony.luck@intel.com +1 -1
+#   typo s/_IA64_REG_AR_SP/_IA64_REG_SP/
+# 
+diff -Nru a/arch/ia64/kernel/irq_ia64.c b/arch/ia64/kernel/irq_ia64.c
+--- a/arch/ia64/kernel/irq_ia64.c	2005-01-22 21:48:10 -08:00
++++ b/arch/ia64/kernel/irq_ia64.c	2005-01-22 21:48:10 -08:00
+@@ -115,7 +115,7 @@
+ 		 * switched atomically.
+ 		 */
+ 		bsp = ia64_getreg(_IA64_REG_AR_BSP);
+-		sp = ia64_getreg(_IA64_REG_AR_SP);
++		sp = ia64_getreg(_IA64_REG_SP);
+ 
+ 		if ((sp - bsp) < 1024) {
+ 			static unsigned char count;

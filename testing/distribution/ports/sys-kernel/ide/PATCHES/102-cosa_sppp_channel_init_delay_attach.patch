@@ -1,0 +1,32 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/06 16:35:24-08:00 kas@fi.muni.cz 
+#   [PATCH] cosa.c intialization crash
+#   
+#   This fixes crash on insmod of the cosa.ko module - the sppp_attach() was
+#   called too early when dev->priv has not been set up yet. 
+#   
+#   Signed-off-by: Jan "Yenya" Kasprzak <kas@fi.muni.cz>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# drivers/net/wan/cosa.c
+#   2004/11/14 17:26:39-08:00 kas@fi.muni.cz +1 -1
+#   cosa.c intialization crash
+# 
+diff -Nru a/drivers/net/wan/cosa.c b/drivers/net/wan/cosa.c
+--- a/drivers/net/wan/cosa.c	2005-02-14 00:38:42 -08:00
++++ b/drivers/net/wan/cosa.c	2005-02-14 00:38:42 -08:00
+@@ -642,11 +642,11 @@
+ 		return;
+ 	}
+ 	chan->pppdev.dev = d;
+-	sppp_attach(&chan->pppdev);
+ 	d->base_addr = chan->cosa->datareg;
+ 	d->irq = chan->cosa->irq;
+ 	d->dma = chan->cosa->dma;
+ 	d->priv = chan;
++	sppp_attach(&chan->pppdev);
+ 	if (register_netdev(d)) {
+ 		printk(KERN_WARNING "%s: register_netdev failed.\n", d->name);
+ 		sppp_detach(d);

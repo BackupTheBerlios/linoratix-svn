@@ -1,0 +1,30 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/11 19:18:21-08:00 rusty@rustcorp.com.au 
+#   [PATCH] Catch module parameter parsing failures
+#   
+#   Radheka Godse <radheka.godse@intel.com> pointed out that parameter parsing
+#   failures allow a module still to be loaded.  Trivial fix.
+#   
+#   Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# kernel/module.c
+#   2005/01/11 16:42:57-08:00 rusty@rustcorp.com.au +3 -0
+#   Catch module parameter parsing failures
+# 
+diff -Nru a/kernel/module.c b/kernel/module.c
+--- a/kernel/module.c	2005-02-14 04:58:26 -08:00
++++ b/kernel/module.c	2005-02-14 04:58:26 -08:00
+@@ -1691,6 +1691,9 @@
+ 				 / sizeof(struct kernel_param),
+ 				 NULL);
+ 	}
++	if (err < 0)
++		goto arch_cleanup;
++
+ 	err = mod_sysfs_setup(mod, 
+ 			      (struct kernel_param *)
+ 			      sechdrs[setupindex].sh_addr,

@@ -1,0 +1,35 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/22 12:59:23-08:00 kaos@sgi.com 
+#   [IA64] Sanity check unw_unwind_to_user
+#   
+#   Signed-off-by: Keith Owens <kaos@sgi.com>
+#   Signed-off-by: Tony Luck <tony.luck@intel.com>
+# 
+# arch/ia64/kernel/unwind.c
+#   2005/01/22 12:57:36-08:00 kaos@sgi.com +4 -1
+#   Sanity check unw_unwind_to_user
+# 
+diff -Nru a/arch/ia64/kernel/unwind.c b/arch/ia64/kernel/unwind.c
+--- a/arch/ia64/kernel/unwind.c	2005-01-22 23:36:12 -08:00
++++ b/arch/ia64/kernel/unwind.c	2005-01-22 23:36:12 -08:00
+@@ -1945,7 +1945,7 @@
+ int
+ unw_unwind_to_user (struct unw_frame_info *info)
+ {
+-	unsigned long ip;
++	unsigned long ip, sp;
+ 
+ 	while (unw_unwind(info) >= 0) {
+ 		if (unw_get_rp(info, &ip) < 0) {
+@@ -1954,6 +1954,9 @@
+ 				   __FUNCTION__, ip);
+ 			return -1;
+ 		}
++		unw_get_sp(info, &sp);
++		if (sp >= (unsigned long)info->task + IA64_STK_OFFSET)
++			break;
+ 		if (ip < FIXADDR_USER_END)
+ 			return 0;
+ 	}

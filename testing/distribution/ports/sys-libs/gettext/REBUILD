@@ -8,9 +8,9 @@
 %build-required: ()
 %description: The GNU internationalization library.
 %name: libgettext
-%version: 0.14.1
+%version: 0.14.2
 %build: $DATA
-%sourcefile: gettext-0.14.1.tar.gz
+%sourcefile: gettext-0.14.2.tar.gz
 %source-url: ("http://ftp.gnu.org/gnu/gettext")
 
 __DATA__

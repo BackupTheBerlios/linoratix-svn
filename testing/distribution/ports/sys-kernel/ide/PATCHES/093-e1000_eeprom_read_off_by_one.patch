@@ -1,0 +1,36 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/06 21:30:30-05:00 ganesh.venkatesan@intel.com 
+#   [PATCH] e1000: Applied eeprom fix where it was possible to read/write
+#   one more word than what should have been possible.
+#   
+#   Signed-off-by: Ganesh Venkatesan <ganesh.venkatesan@intel.com>
+#   Signed-off-by: Jeff Garzik <jgarzik@pobox.com>
+# 
+# drivers/net/e1000/e1000_hw.c
+#   2004/12/03 10:24:38-05:00 ganesh.venkatesan@intel.com +2 -2
+#   e1000: Applied eeprom fix where it was possible to read/write one more
+#   word than what should have been possible.
+# 
+diff -Nru a/drivers/net/e1000/e1000_hw.c b/drivers/net/e1000/e1000_hw.c
+--- a/drivers/net/e1000/e1000_hw.c	2005-02-14 01:05:26 -08:00
++++ b/drivers/net/e1000/e1000_hw.c	2005-02-14 01:05:26 -08:00
+@@ -3504,7 +3504,7 @@
+     /* A check for invalid values:  offset too large, too many words, and not
+      * enough words.
+      */
+-    if((offset > eeprom->word_size) || (words > eeprom->word_size - offset) ||
++    if((offset >= eeprom->word_size) || (words > eeprom->word_size - offset) ||
+        (words == 0)) {
+         DEBUGOUT("\"words\" parameter out of bounds\n");
+         return -E1000_ERR_EEPROM;
+@@ -3652,7 +3652,7 @@
+     /* A check for invalid values:  offset too large, too many words, and not
+      * enough words.
+      */
+-    if((offset > eeprom->word_size) || (words > eeprom->word_size - offset) ||
++    if((offset >= eeprom->word_size) || (words > eeprom->word_size - offset) ||
+        (words == 0)) {
+         DEBUGOUT("\"words\" parameter out of bounds\n");
+         return -E1000_ERR_EEPROM;

@@ -4,11 +4,11 @@
 %author: jfried
 %package-group: dev-perl -
 %sub-group: uri-perl -
-%required: ("libglibc >=2.3.3", "perl >=5.8.3")
+%required: ("libglibc >=2.3.4", "perl >=5.8.6")
 %build-required: ()
 %description: Uniform Resource Identifiers
 %name: uri-perl
-%version: 1.35
+%version: 1.35-r1
 %build: $DATA
 %sourcefile: URI-1.35.tar.gz
 %source-url: ("http://search.cpan.org/CPAN/authors/id/G/GA/GAAS/")

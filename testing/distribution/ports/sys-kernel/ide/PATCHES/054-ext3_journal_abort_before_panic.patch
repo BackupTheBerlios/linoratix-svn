@@ -1,0 +1,44 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/21 08:07:09-08:00 eric@lammerts.org 
+#   [PATCH] ext3: commit superblock before panicking
+#   
+#   I have a problem with errors=panic on ext3.  When a panic occurs, the error
+#   event is not recorded anywhere.  So after the reboot, e2fsck doesn't kick
+#   in, the file system gets mounted again and the box panics again...
+#   
+#   Patch below moves the ERRORS_PANIC test down a bit so the journal is
+#   aborted before panic() is called.
+#   
+#   Signed-off-by: Eric Lammerts <eric@lammerts.org>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# fs/ext3/super.c
+#   2005/01/20 21:00:50-08:00 eric@lammerts.org +3 -3
+#   ext3: commit superblock before panicking
+# 
+diff -Nru a/fs/ext3/super.c b/fs/ext3/super.c
+--- a/fs/ext3/super.c	2005-01-22 01:32:54 -08:00
++++ b/fs/ext3/super.c	2005-01-22 01:32:54 -08:00
+@@ -155,9 +155,6 @@
+ 	if (sb->s_flags & MS_RDONLY)
+ 		return;
+ 
+-	if (test_opt (sb, ERRORS_PANIC))
+-		panic ("EXT3-fs (device %s): panic forced after error\n",
+-		       sb->s_id);
+ 	if (test_opt (sb, ERRORS_RO)) {
+ 		printk (KERN_CRIT "Remounting filesystem read-only\n");
+ 		sb->s_flags |= MS_RDONLY;
+@@ -168,6 +165,9 @@
+ 		if (journal)
+ 			journal_abort(journal, -EIO);
+ 	}
++	if (test_opt(sb, ERRORS_PANIC))
++		panic("EXT3-fs (device %s): panic forced after error\n",
++			sb->s_id);
+ 	ext3_commit_super(sb, es, 1);
+ }
+ 

@@ -1,0 +1,44 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/15 11:42:19+00:00 rmk@flint.arm.linux.org.uk 
+#   [SERIAL] Fix serial console resume
+#   
+#   Don't use uart_change_speed() when trying to restore the serial
+#   console settings - the port may not have a tty associated with
+#   it.
+#   
+#   Signed-off-by: Russell King <rmk@arm.linux.org.uk>
+# 
+# drivers/serial/serial_core.c
+#   2005/01/15 11:37:07+00:00 rmk@flint.arm.linux.org.uk +15 -1
+#   Don't use uart_change_speed() when trying to restore the serial
+#   console settings - the port may not have a tty associated with
+#   it.
+# 
+diff -Nru a/drivers/serial/serial_core.c b/drivers/serial/serial_core.c
+--- a/drivers/serial/serial_core.c	2005-01-15 15:47:37 -08:00
++++ b/drivers/serial/serial_core.c	2005-01-15 15:47:37 -08:00
+@@ -1877,7 +1877,21 @@
+ 	 * Re-enable the console device after suspending.
+ 	 */
+ 	if (uart_console(port)) {
+-		uart_change_speed(state, NULL);
++		struct termios termios;
++
++		/*
++		 * First try to use the console cflag setting.
++		 */
++		memset(&termios, 0, sizeof(struct termios));
++		termios.c_cflag = port->cons->cflag;
++
++		/*
++		 * If that's unset, use the tty termios setting.
++		 */
++		if (state->info && state->info->tty && termios.c_cflag == 0)
++			termios = *state->info->tty->termios;
++
++		port->ops->set_termios(port, &termios, NULL);
+ 		console_start(port->cons);
+ 	}
+ 

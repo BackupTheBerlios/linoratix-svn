@@ -1,0 +1,41 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/29 09:05:55+01:00 perex@suse.cz 
+#   [ALSA] fix MIDI GS chorus/reverb mode
+#   
+#   ALSA sequencer
+#   Fixed the parsing of MIDI GS chorus/reverb mode SYSEX messages.
+#   They were swapped.
+#   
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+# sound/core/seq/seq_midi_emul.c
+#   2004/11/16 08:41:03+01:00 perex@suse.cz +2 -2
+#   [ALSA] fix MIDI GS chorus/reverb mode
+#   
+#   D:2004/11/16 15:41:03
+#   C:ALSA sequencer
+#   F:core/seq/seq_midi_emul.c:1.11->1.12 
+#   L:Fixed the parsing of MIDI GS chorus/reverb mode SYSEX messages.
+#   L:They were swapped.
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+diff -Nru a/sound/core/seq/seq_midi_emul.c b/sound/core/seq/seq_midi_emul.c
+--- a/sound/core/seq/seq_midi_emul.c	2005-02-14 03:21:19 -08:00
++++ b/sound/core/seq/seq_midi_emul.c	2005-02-14 03:21:19 -08:00
+@@ -549,12 +549,12 @@
+ 
+ 		} else if (buf[5] == 0x01 && buf[6] == 0x30) {
+ 			/* reverb mode */
+-			parsed = SNDRV_MIDI_SYSEX_GS_CHORUS_MODE;
++			parsed = SNDRV_MIDI_SYSEX_GS_REVERB_MODE;
+ 			chset->gs_reverb_mode = buf[7];
+ 
+ 		} else if (buf[5] == 0x01 && buf[6] == 0x38) {
+ 			/* chorus mode */
+-			parsed = SNDRV_MIDI_SYSEX_GS_REVERB_MODE;
++			parsed = SNDRV_MIDI_SYSEX_GS_CHORUS_MODE;
+ 			chset->gs_chorus_mode = buf[7];
+ 
+ 		} else if (buf[5] == 0x00 && buf[6] == 0x04) {

@@ -4,11 +4,11 @@
 %author: jfried
 %package-group: dev-perl -
 %sub-group: term-readkey -
-%required: ("libglibc >=2.3.3", "perl >=5.8.3")
+%required: ("libglibc >=2.3.4-r1", "perl >=5.8.6")
 %build-required: ()
 %description: A perl module for simple terminal control.
 %name: term-readkey
-%version: 2.30
+%version: 2.30-r1
 %build: $DATA
 %sourcefile: TermReadKey-2.30.tar.gz
 %source-url: ("http://search.cpan.org/CPAN/authors/id/J/JS/JSTOWE/")

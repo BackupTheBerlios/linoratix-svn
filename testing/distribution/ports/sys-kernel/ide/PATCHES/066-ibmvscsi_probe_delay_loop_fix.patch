@@ -1,0 +1,28 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/31 13:29:49-06:00 sleddog@us.ibm.com 
+#   [PATCH] ibmvscsi: fix loop exit condition
+#   
+#   Fix a bug where we could fall out of our delay loop and then forget to
+#   scan for drives.
+#   
+#   Signed-off-by: Dave Boutcher <boutcher@us.ibm.com>
+#   Signed-off-by: James Bottomley <James.Bottomley@SteelEye.com>
+# 
+# drivers/scsi/ibmvscsi/ibmvscsi.c
+#   2004/12/31 09:59:39-06:00 sleddog@us.ibm.com +2 -2
+#   ibmvscsi: fix loop exit condition
+# 
+diff -Nru a/drivers/scsi/ibmvscsi/ibmvscsi.c b/drivers/scsi/ibmvscsi/ibmvscsi.c
+--- a/drivers/scsi/ibmvscsi/ibmvscsi.c	2005-01-22 21:53:57 -08:00
++++ b/drivers/scsi/ibmvscsi/ibmvscsi.c	2005-01-22 21:53:57 -08:00
+@@ -1332,6 +1332,6 @@
+ 		 */
+ 		for (wait_switch = jiffies + (init_timeout * HZ);
+ 		     time_before(jiffies, wait_switch) &&
+-		     atomic_read(&hostdata->request_limit) < 0;) {
++		     atomic_read(&hostdata->request_limit) < 2;) {
+ 
+ 			set_current_state(TASK_UNINTERRUPTIBLE);
+			schedule_timeout(HZ / 100);

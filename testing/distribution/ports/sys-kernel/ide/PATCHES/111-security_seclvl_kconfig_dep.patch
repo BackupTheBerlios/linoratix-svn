@@ -1,0 +1,30 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/11 19:17:41-08:00 amgta@yacht.ocn.ne.jp 
+#   [PATCH] seclvl: add missing dependency
+#   
+#   *** Warning: "crypto_free_tfm" [security/seclvl.ko] undefined!
+#   *** Warning: "crypto_alloc_tfm" [security/seclvl.ko] undefined!
+#   *** Warning: "crypto_unregister_alg" [crypto/sha1.ko] undefined!
+#   *** Warning: "crypto_register_alg" [crypto/sha1.ko] undefined!
+#   
+#   Signed-off-by: Akinobu Mita <amgta@yacht.ocn.ne.jp>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# security/Kconfig
+#   2005/01/11 16:42:57-08:00 amgta@yacht.ocn.ne.jp +1 -0
+#   seclvl: add missing dependency
+# 
+diff -Nru a/security/Kconfig b/security/Kconfig
+--- a/security/Kconfig	2005-02-14 04:57:09 -08:00
++++ b/security/Kconfig	2005-02-14 04:57:09 -08:00
+@@ -76,6 +76,7 @@
+ config SECURITY_SECLVL
+ 	tristate "BSD Secure Levels"
+ 	depends on SECURITY
++	select CRYPTO
+ 	select CRYPTO_SHA1
+ 	help
+ 	  Implements BSD Secure Levels as an LSM.  See

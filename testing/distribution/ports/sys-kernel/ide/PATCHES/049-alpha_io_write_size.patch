@@ -1,0 +1,37 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/12 08:48:35-08:00 ink@jurassic.park.msu.ru 
+#   [PATCH] Alpha: typos in io_trivial.h
+#   
+#   This apparently explains some weird IO failures reported in last two months.
+#   Only non-bwx (including generic) kernels were affected.
+#   
+#   Acked-by: Richard Henderson <rth@twiddle.net>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# include/asm-alpha/io_trivial.h
+#   2005/01/11 17:47:26-08:00 ink@jurassic.park.msu.ru +2 -2
+#   Alpha: typos in io_trivial.h
+# 
+diff -Nru a/include/asm-alpha/io_trivial.h b/include/asm-alpha/io_trivial.h
+--- a/include/asm-alpha/io_trivial.h	2005-01-15 20:36:08 -08:00
++++ b/include/asm-alpha/io_trivial.h	2005-01-15 20:36:08 -08:00
+@@ -26,7 +26,7 @@
+ __EXTERN_INLINE void
+ IO_CONCAT(__IO_PREFIX,iowrite16)(u16 b, void __iomem *a)
+ {
+-	__kernel_stb(b, *(volatile u16 __force *)a);
++	__kernel_stw(b, *(volatile u16 __force *)a);
+ }
+ #endif
+ 
+@@ -66,7 +66,7 @@
+ __EXTERN_INLINE void
+ IO_CONCAT(__IO_PREFIX,writew)(u16 b, volatile void __iomem *a)
+ {
+-	__kernel_stb(b, *(volatile u16 __force *)a);
++	__kernel_stw(b, *(volatile u16 __force *)a);
+ }
+ #elif IO_CONCAT(__IO_PREFIX,trivial_rw_bw) == 2
+ __EXTERN_INLINE u8

@@ -1,0 +1,24 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/08 00:40:23-05:00 len.brown@intel.com 
+#   [ACPI] fix polarity of CONFIG_X86_SPEEDSTEP_CENTRINO_ACPI message
+#   
+#   Signed-off-by: Len Brown <len.brown@intel.com>
+# 
+# arch/i386/kernel/cpu/cpufreq/speedstep-centrino.c
+#   2004/12/08 00:36:27-05:00 len.brown@intel.com +1 -1
+#   complain about CONFIG_X86_SPEEDSTEP_CENTRINO_ACPI missing only when it is missing
+# 
+diff -Nru a/arch/i386/kernel/cpu/cpufreq/speedstep-centrino.c b/arch/i386/kernel/cpu/cpufreq/speedstep-centrino.c
+--- a/arch/i386/kernel/cpu/cpufreq/speedstep-centrino.c	2005-02-14 00:35:39 -08:00
++++ b/arch/i386/kernel/cpu/cpufreq/speedstep-centrino.c	2005-02-14 00:35:39 -08:00
+@@ -249,7 +249,7 @@
+ 		/* Matched a non-match */
+ 		printk(KERN_INFO PFX "no table support for CPU model \"%s\": \n",
+ 		       cpu->x86_model_id);
+-#ifdef CONFIG_X86_SPEEDSTEP_CENTRINO_ACPI
++#ifndef CONFIG_X86_SPEEDSTEP_CENTRINO_ACPI
+ 		printk(KERN_INFO PFX "try compiling with CONFIG_X86_SPEEDSTEP_CENTRINO_ACPI enabled\n");
+ #endif
+ 		return -ENOENT;

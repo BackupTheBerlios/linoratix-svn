@@ -1,0 +1,53 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/14 20:38:32-08:00 davem@nuts.davemloft.net 
+#   [TCP]: Do not underflow sk_forward_alloc in sendpage().
+#   
+#   We need to do the proper checks before we try to
+#   pull space out of it, just like sendmsg() does.
+#   
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+# net/ipv4/tcp.c
+#   2005/01/14 20:37:59-08:00 davem@nuts.davemloft.net +12 -6
+#   [TCP]: Do not underflow sk_forward_alloc in sendpage().
+# 
+diff -Nru a/net/ipv4/tcp.c b/net/ipv4/tcp.c
+--- a/net/ipv4/tcp.c	2005-01-15 16:09:47 -08:00
++++ b/net/ipv4/tcp.c	2005-01-15 16:09:47 -08:00
+@@ -655,7 +655,7 @@
+ 	while (psize > 0) {
+ 		struct sk_buff *skb = sk->sk_write_queue.prev;
+ 		struct page *page = pages[poffset / PAGE_SIZE];
+-		int copy, i;
++		int copy, i, can_coalesce;
+ 		int offset = poffset % PAGE_SIZE;
+ 		int size = min_t(size_t, psize, PAGE_SIZE - offset);
+ 
+@@ -677,14 +677,20 @@
+ 			copy = size;
+ 
+ 		i = skb_shinfo(skb)->nr_frags;
+-		if (skb_can_coalesce(skb, i, page, offset)) {
++		can_coalesce = skb_can_coalesce(skb, i, page, offset);
++		if (!can_coalesce && i >= MAX_SKB_FRAGS) {
++			tcp_mark_push(tp, skb);
++			goto new_segment;
++		}
++		if (sk->sk_forward_alloc < copy &&
++		    !sk_stream_mem_schedule(sk, copy, 0))
++			goto wait_for_memory;
++		
++		if (can_coalesce) {
+ 			skb_shinfo(skb)->frags[i - 1].size += copy;
+-		} else if (i < MAX_SKB_FRAGS) {
++		} else {
+ 			get_page(page);
+ 			skb_fill_page_desc(skb, i, page, offset, copy);
+-		} else {
+-			tcp_mark_push(tp, skb);
+-			goto new_segment;
+ 		}
+ 
+ 		skb->len += copy;

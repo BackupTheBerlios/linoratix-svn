@@ -1,0 +1,40 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/21 07:58:54-08:00 ak@suse.de 
+#   [PATCH] x86_64: fix flush race on context switch
+#   
+#   Fix a long standing race in x86-64 SMP TLB handling.  When a mm is freed and
+#   another thread exits to a lazy TLB thread (like idle) the freed user page
+#   tables would be still kept loaded in the idle thread.  When an interrupt does
+#   a prefetch on NULL the CPU would try to follow it and read random data. 
+#   
+#   This could lead to machine checks on Opterons in some cases.
+#   
+#   Credit goes to some unnamed debugging wizards at AMD who described the
+#   problem.  All blame to me.  I did the fix based on their description.
+#   
+#   Signed-off-by: Andi Kleen <ak@suse.de>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# include/asm-x86_64/mmu_context.h
+#   2005/01/20 20:58:11-08:00 ak@suse.de +3 -2
+#   x86_64: fix flush race on context switch
+# 
+diff -Nru a/include/asm-x86_64/mmu_context.h b/include/asm-x86_64/mmu_context.h
+--- a/include/asm-x86_64/mmu_context.h	2005-01-22 21:36:29 -08:00
++++ b/include/asm-x86_64/mmu_context.h	2005-01-22 21:36:29 -08:00
+@@ -51,9 +51,10 @@
+ 			out_of_line_bug();
+ 		if(!test_and_set_bit(cpu, &next->cpu_vm_mask)) {
+ 			/* We were in lazy tlb mode and leave_mm disabled 
+-			 * tlb flush IPI delivery. We must flush our tlb.
++			 * tlb flush IPI delivery. We must reload CR3
++			 * to make sure to use no freed page tables.
+ 			 */
+-			local_flush_tlb();
++			asm volatile("movq %0,%%cr3" :: "r" (__pa(next->pgd)) : "memory");
+ 			load_LDT_nolock(&next->context, cpu);
+ 		}
+ 	}

@@ -1,0 +1,35 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/28 17:04:30-08:00 sri@us.ibm.com 
+#   [SCTP] Fix bug in setting ephemeral port in the bind address.
+#   
+#   Signed-off-by: Sridhar Samudrala <sri@us.ibm.com>
+# 
+# net/sctp/socket.c
+#   2004/12/28 17:04:18-08:00 sri@us.ibm.com +2 -4
+#   [SCTP] Fix bug in setting ephemeral port in the bind address.
+# 
+diff -Nru a/net/sctp/socket.c b/net/sctp/socket.c
+--- a/net/sctp/socket.c	2005-01-22 23:21:40 -08:00
++++ b/net/sctp/socket.c	2005-01-22 23:21:40 -08:00
+@@ -343,8 +343,8 @@
+ 	}
+ 
+ 	/* Refresh ephemeral port.  */
+-	if (!snum)
+-		snum = inet_sk(sk)->num;
++	if (!bp->port)
++		bp->port = inet_sk(sk)->num;
+ 
+ 	/* Add the address to the bind address list.  */
+ 	sctp_local_bh_disable();
+@@ -354,8 +354,6 @@
+ 	addr->v4.sin_port = ntohs(addr->v4.sin_port);
+ 	ret = sctp_add_bind_addr(bp, addr, GFP_ATOMIC);
+ 	addr->v4.sin_port = htons(addr->v4.sin_port);
+-	if (!ret && !bp->port)
+-		bp->port = snum;
+ 	sctp_write_unlock(&ep->base.addr_lock);
+ 	sctp_local_bh_enable();
+ 

@@ -1,0 +1,37 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/29 09:06:58+01:00 perex@suse.cz 
+#   [ALSA] fix chorus/reverb FX loader
+#   
+#   EMU8000 driver
+#   Fixed the chorus/reverb FX loader callback.
+#   The header bytes must be eliminated.
+#   
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+# sound/isa/sb/emu8000_callback.c
+#   2004/11/16 08:43:28+01:00 perex@suse.cz +4 -0
+#   [ALSA] fix chorus/reverb FX loader
+#   
+#   D:2004/11/16 15:43:28
+#   C:EMU8000 driver
+#   F:isa/sb/emu8000_callback.c:1.10->1.11 
+#   L:Fixed the chorus/reverb FX loader callback.
+#   L:The header bytes must be eliminated.
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+diff -Nru a/sound/isa/sb/emu8000_callback.c b/sound/isa/sb/emu8000_callback.c
+--- a/sound/isa/sb/emu8000_callback.c	2005-02-14 03:21:39 -08:00
++++ b/sound/isa/sb/emu8000_callback.c	2005-02-14 03:21:39 -08:00
+@@ -528,6 +528,10 @@
+ 	emu8000_t *hw;
+ 	hw = emu->hw;
+ 
++	/* skip header */
++	buf += 16;
++	len -= 16;
++
+ 	switch (type) {
+ 	case SNDRV_EMU8000_LOAD_CHORUS_FX:
+ 		return snd_emu8000_load_chorus_fx(hw, mode, buf, len);

@@ -1,0 +1,198 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/06 16:40:16-08:00 alan@lxorguk.ukuu.org.uk 
+#   [PATCH] First cut at setsid/tty locking
+#   
+#   Use the existing "tty_sem" to protect against the process tty changes
+#   too.
+# 
+# drivers/char/tty_io.c
+#   2005/01/04 11:42:29-08:00 alan@lxorguk.ukuu.org.uk +29 -10
+#   First cut at setsid/tty locking
+# 
+# kernel/exit.c
+#   2005/01/04 10:45:27-08:00 alan@lxorguk.ukuu.org.uk +2 -0
+#   First cut at setsid/tty locking
+# 
+# kernel/sys.c
+#   2005/01/04 10:47:32-08:00 alan@lxorguk.ukuu.org.uk +2 -0
+#   First cut at setsid/tty locking
+# 
+diff -Nru a/drivers/char/tty_io.c b/drivers/char/tty_io.c
+--- a/drivers/char/tty_io.c	2005-02-14 00:39:22 -08:00
++++ b/drivers/char/tty_io.c	2005-02-14 00:39:22 -08:00
+@@ -918,9 +918,11 @@
+ 
+ 	lock_kernel();
+ 
++	down(&tty_sem);
+ 	tty = current->signal->tty;
+ 	if (tty) {
+ 		tty_pgrp = tty->pgrp;
++		up(&tty_sem);
+ 		if (on_exit && tty->driver->type != TTY_DRIVER_TYPE_PTY)
+ 			tty_vhangup(tty);
+ 	} else {
+@@ -928,6 +930,7 @@
+ 			kill_pg(current->signal->tty_old_pgrp, SIGHUP, on_exit);
+ 			kill_pg(current->signal->tty_old_pgrp, SIGCONT, on_exit);
+ 		}
++		up(&tty_sem);
+ 		unlock_kernel();	
+ 		return;
+ 	}
+@@ -937,15 +940,19 @@
+ 			kill_pg(tty_pgrp, SIGCONT, on_exit);
+ 	}
+ 
++	/* Must lock changes to tty_old_pgrp */
++	down(&tty_sem);
+ 	current->signal->tty_old_pgrp = 0;
+ 	tty->session = 0;
+ 	tty->pgrp = -1;
+ 
++	/* Now clear signal->tty under the lock */
+ 	read_lock(&tasklist_lock);
+ 	do_each_task_pid(current->signal->session, PIDTYPE_SID, p) {
+ 		p->signal->tty = NULL;
+ 	} while_each_task_pid(current->signal->session, PIDTYPE_SID, p);
+ 	read_unlock(&tasklist_lock);
++	up(&tty_sem);
+ 	unlock_kernel();
+ }
+ 
+@@ -1172,12 +1179,6 @@
+ 	struct termios *ltp, **ltp_loc, *o_ltp, **o_ltp_loc;
+ 	int retval=0;
+ 
+-	/* 
+-	 * Check whether we need to acquire the tty semaphore to avoid
+-	 * race conditions.  For now, play it safe.
+-	 */
+-	down(&tty_sem);
+-
+ 	/* check whether we're reopening an existing tty */
+ 	if (driver->flags & TTY_DRIVER_DEVPTS_MEM) {
+ 		tty = devpts_get_tty(idx);
+@@ -1366,7 +1367,6 @@
+ 	
+ 	/* All paths come through here to release the semaphore */
+ end_init:
+-	up(&tty_sem);
+ 	return retval;
+ 
+ 	/* Release locally allocated memory ... nothing placed in slots */
+@@ -1562,9 +1562,14 @@
+ 	 * each iteration we avoid any problems.
+ 	 */
+ 	while (1) {
++		/* Guard against races with tty->count changes elsewhere and
++		   opens on /dev/tty */
++		   
++		down(&tty_sem);
+ 		tty_closing = tty->count <= 1;
+ 		o_tty_closing = o_tty &&
+ 			(o_tty->count <= (pty_master ? 1 : 0));
++		up(&tty_sem);
+ 		do_sleep = 0;
+ 
+ 		if (tty_closing) {
+@@ -1600,6 +1605,8 @@
+ 	 * both sides, and we've completed the last operation that could 
+ 	 * block, so it's safe to proceed with closing.
+ 	 */
++	 
++	down(&tty_sem);
+ 	if (pty_master) {
+ 		if (--o_tty->count < 0) {
+ 			printk(KERN_WARNING "release_dev: bad pty slave count "
+@@ -1613,7 +1620,8 @@
+ 		       tty->count, tty_name(tty, buf));
+ 		tty->count = 0;
+ 	}
+-
++	up(&tty_sem);
++	
+ 	/*
+ 	 * We've decremented tty->count, so we need to remove this file
+ 	 * descriptor off the tty->tty_files list; this serves two
+@@ -1760,10 +1768,14 @@
+ 	noctty = filp->f_flags & O_NOCTTY;
+ 	index  = -1;
+ 	retval = 0;
++	
++	down(&tty_sem);
+ 
+ 	if (device == MKDEV(TTYAUX_MAJOR,0)) {
+-		if (!current->signal->tty)
++		if (!current->signal->tty) {
++			up(&tty_sem);
+ 			return -ENXIO;
++		}
+ 		driver = current->signal->tty->driver;
+ 		index = current->signal->tty->index;
+ 		filp->f_flags |= O_NONBLOCK; /* Don't let /dev/tty block */
+@@ -1788,14 +1800,18 @@
+ 			noctty = 1;
+ 			goto got_driver;
+ 		}
++		up(&tty_sem);
+ 		return -ENODEV;
+ 	}
+ 
+ 	driver = get_tty_driver(device, &index);
+-	if (!driver)
++	if (!driver) {
++		up(&tty_sem);
+ 		return -ENODEV;
++	}
+ got_driver:
+ 	retval = init_dev(driver, index, &tty);
++	up(&tty_sem);
+ 	if (retval)
+ 		return retval;
+ 
+@@ -1881,7 +1897,10 @@
+ 	}
+ 	up(&allocated_ptys_lock);
+ 
++	down(&tty_sem);
+ 	retval = init_dev(ptm_driver, index, &tty);
++	up(&tty_sem);
++	
+ 	if (retval)
+ 		goto out;
+ 
+diff -Nru a/kernel/exit.c b/kernel/exit.c
+--- a/kernel/exit.c	2005-02-14 00:39:22 -08:00
++++ b/kernel/exit.c	2005-02-14 00:39:22 -08:00
+@@ -332,7 +332,9 @@
+ 	exit_mm(current);
+ 
+ 	set_special_pids(1, 1);
++	down(&tty_sem);
+ 	current->signal->tty = NULL;
++	up(&tty_sem);
+ 
+ 	/* Block and flush all signals */
+ 	sigfillset(&blocked);
+diff -Nru a/kernel/sys.c b/kernel/sys.c
+--- a/kernel/sys.c	2005-02-14 00:39:22 -08:00
++++ b/kernel/sys.c	2005-02-14 00:39:22 -08:00
+@@ -1075,6 +1075,7 @@
+ 	if (!thread_group_leader(current))
+ 		return -EINVAL;
+ 
++	down(&tty_sem);
+ 	write_lock_irq(&tasklist_lock);
+ 
+ 	pid = find_pid(PIDTYPE_PGID, current->pid);
+@@ -1088,6 +1089,7 @@
+ 	err = process_group(current);
+ out:
+ 	write_unlock_irq(&tasklist_lock);
++	up(&tty_sem);
+ 	return err;
+ }
+ 
