@@ -1,0 +1,13 @@
+libpartedpp 0.1 (2003-03-27)
+----------------------------
+
+* API should be stable
+* timer class is not complete yet
+* private ctors in filesystem aren't finished (hence timer)
+* started documentation (buggy, incomplete)
+
+libpartedpp is considered as beta. It certainly contains some bugs but should
+mostly work. The testcases in test/ are properly working and are nice examples
+how to code with the library.
+
+Christian Meyer  <chrisime@gnome.org>
