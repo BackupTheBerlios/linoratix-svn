@@ -69,9 +69,22 @@ sub help
 sub read_spec_file
 {
 	my $self         = shift;
-	my $spec_file    = $self->param("spec");
+	my $spec_file = "";
+	my $rebuild_file = "";
+
+	if($_[0]) {
+		$rebuild_file = $_[0];
+	} else {
+		$rebuild_file    = $self->param("rebuild");
+	}
+	
+	if($_[1]) {
+		$spec_file = $_[1];
+	} else {
+		$spec_file    = $self->param("spec");
+	}
 	$spec_file = "-$spec_file" if($spec_file);
-	my $exec_string  = "/bin/tar --get REBUILD$spec_file -O -v -z -f " . $self->param("rebuild");
+	my $exec_string  = "/bin/tar --get REBUILD$spec_file -O -v -z -f " . $rebuild_file;
 	my @dummy;
 	my $build_script;
 	my %build_script;
@@ -79,6 +92,7 @@ sub read_spec_file
 	my $this_dir     = getcwd();
 	my $dummy;
 	my @required;
+	my @build_required;
 
 	
 	$self->warning(">>> see tty8 for output and tty9 for errors\n\n");
@@ -102,7 +116,7 @@ sub read_spec_file
 
 
 
-	$self->message(">>> Building " . basename($self->param("rebuild")) . "\n");
+	$self->message(">>> Building " . basename($rebuild_file) . "\n");
 
 	chomp(my $build_script = `$exec_string 2> /dev/tty9`);
 
@@ -139,6 +153,27 @@ sub read_spec_file
 		close(FH);
 	}
 
+	# REQUIRED for building
+	if($build_script{"build-required"} ne "undef") {
+		eval("\@build_required = ".$build_script{"build-required"});
+	}
+	# abhaengikeiten ueberpruefen die fuer den 
+	# build prozess gebraucht werden
+	foreach my $d(@build_required) {
+		chomp($d);
+		my($n,$v) = split(/ /, $d);
+		# kucken ob packet installiert + richtige version
+		my $p = $base->_find_in_i_package_dep_by_name($n, $v);
+		unless($p) {	# packet nicht installiert oder ein
+				# falsche version
+			my $package_path = $base->find_package_by_name($n);
+			$self->warning("$n, $v not installed. going to do this now!\n");
+			$self->read_spec_file($ENV{"PORTS_PATH"}."/$package_path/$n-$v.src.lip");
+		} else {
+			$self->message("$n, $v already installed. skipping...\n");
+		}
+	}
+
 	# GROUP
 	open(FH, ">/var/cache/lip/mklip/GROUP") or exit 302;
 	print FH $build_script{"package-group"} . "/";
@@ -163,7 +198,7 @@ sub read_spec_file
 	mkdir("/var/cache/lip/build") unless(-d "/var/cache/lip/build");
 	chdir("/var/cache/lip/build");
 	system("tar --get " . $build_script{"sourcefile"} . " -v -z -f " . $self->param("rebuild") . " ");
-	system("tar --get PATCHES -v -z -f " . $self->param("rebuild") . " ");
+	system("tar --get PATCHES -v -z -f " . $rebuild_file . " ");
 	
 	$self->execute_build_script(%build_script);
 

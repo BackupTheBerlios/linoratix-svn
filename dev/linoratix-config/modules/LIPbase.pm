@@ -365,7 +365,6 @@ sub find_package_dep_by_name
 }
 
 # returns the package-hash
-# hier muss noch die versions nummern abfrage rein
 sub _find_package_dep_by_name
 {
 	my $self = shift;
@@ -452,6 +451,9 @@ sub check_if_package_is_required_by_installed_package
 }
 
 # suchen in installierten packeten
+# hier wird gekuckt ob das packet + version installiert ist
+# und ob es die verlangte version hat!
+# @return packet hash
 sub _find_in_i_package_dep_by_name
 {
 	my $self = shift;
@@ -474,6 +476,9 @@ sub _find_in_i_package_dep_by_name
 	return 0;
 }
 
+# uebergabe wenn ich das richtig sehe
+# version die das zu installierende packet verlangt und dann das 
+# installierte packet
 sub _check_version
 {
 	my $self = shift;
@@ -598,6 +603,8 @@ sub _find_in_i_package_by_name
 	return 0;
 }
 
+# returns all available versions of a package
+# hier wird der pfad uebergeben!
 sub get_versions_from_pkg
 {
 	my $self = shift;;
