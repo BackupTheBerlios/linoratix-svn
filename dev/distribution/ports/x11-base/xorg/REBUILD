@@ -6,7 +6,7 @@
 %sub-group: xorg -
 %required: ("libglibc >=2.3.3","libpng >=1.2.5","libexpat >=1.95.6","libfreetype2 >=2.1.9","libfontconfig >=2.2.3")
 %build-required: ()
-%description: A fork of the XFree86 Project with a GPL-compatible license 
+%description: A fork of the XFree86 Project with a GPL-compatible license
 %name: xorg
 %version: 6.8.2
 %build: $DATA
@@ -21,10 +21,28 @@ lip_extract %sourcefile
 
 # -- execution of pre-install-scripts
 lip_cd %compile_dir
+
+lip_sed -i '/^SUBDIRS =/s/ etc$//' programs/Xserver/Xprint/Imakefile
+
 lip_add_file %compile_dir/config/cf/host.def %host_def
+
+#lip_cd %compile_dir/config/util
+
+#lip_make -f Makefile.ini lndir
+#lip_cd %compile_dir
+#lip_mkdir %compile_dir/xcbuild
+#lip_cd %compile_dir/xcbuild
+#lip_other %compile_dir/config/util/lndir %compile_dir/xcbuild
+
+#lip_other FAST=1 make World WORLDOPTS=""
+
+lip_sed -i -e "s@^#include <linux/config.h>@/* & */@" `grep -lr linux/config.h *`
+
 lip_make World
+
 lip_install DESTDIR=%install_dir
 lip_make install.man DESTDIR=%install_dir
+
 lip_mkdir -p %install_dir/usr/{bin,lib}
 lip_ln -sf /usr/X11R6/bin %install_dir/usr/bin/X11
 lip_ln -sf /usr/X11R6/lib/X11 %install_dir/usr/lib/X11
@@ -83,7 +101,8 @@ __HOST__
 
 /* Disable everything Xprint related until we get it figured out. */
 
-#define BuildXprint             NO
+#define XprtServer              NO
+#define BuildXprintClients      NO
 
 /* End Xorg host.def file */
 
