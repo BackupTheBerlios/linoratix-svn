@@ -1186,7 +1186,6 @@ sub check_needs
 	
 	my @versions_ok = ();
 	
-	# todo: muss noch sortiert werden die deinstall_packag... 1,2,3,4
 	foreach my $version (@deinstall_package_versions)
 	{
 		print "   checke: $p_ver => $version\n";
@@ -1198,6 +1197,62 @@ sub check_needs
 		@s_v = sort versions @versions_ok;
 	}
 	return $s_v[-1];
+}
+
+# kuckt in welchem packet die dateien noch drin sind.
+sub check_files_in_i_packages
+{
+	my $self = shift;
+	my $package = shift;
+
+	my $files = $package->{"files"};
+
+	my $ip = $installed_packages;
+	my @all_files; # ohne ruecksicht asuf den arbeitsspeicher ;-)
+	my %req_p;
+	my @r_file;
+	my @i_file;
+
+	foreach my $group (keys %{$ip}) {
+		next if($group eq "__global-information");
+		foreach my $subgroup (keys %{$ip->{$group}}) {
+			foreach my $pkg ( keys %{$ip->{$group}->{$subgroup}}) {
+				print ">> ".$pkg."\n";
+				foreach my $ver ( keys %{$ip->{$group}->{$subgroup}->{$pkg}} )
+				{ 
+					next if ($pkg eq $package->{"name"} && $ver eq $package->{"version"});
+					push @all_files, @{$ip->{$group}->{$subgroup}->{$pkg}->{$ver}->{"files"}};
+				}
+			}
+		}
+	}
+
+	my @f_p2;
+	my @x;
+	my %f_p2;
+	foreach my $x (@all_files)
+	{
+		@x = split(/\s/, $x);
+		$f_p2{$x[0]} = 1;
+	}
+
+	my @if_p2;
+	my @y;
+	foreach my $y (@{$files})
+	{
+		@y = split(/\s/, $y);
+		push @if_p2, $y[0];
+	}
+	
+	foreach my $if ( @if_p2 )
+	{
+		if ( $f_p2{$if} )
+		{
+			$req_p{$if} = 1;
+		}
+	}
+
+	return %req_p;
 }
 
 1;

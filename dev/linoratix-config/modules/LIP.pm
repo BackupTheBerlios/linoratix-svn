@@ -53,6 +53,7 @@ sub new
 	$self->search_file() if($self->param("search-file"));
 	$self->prepend_install($self->param("install")) if($self->option("prepend") && $self->param("install"));
 	$self->prepend_remove() if($self->option("prepend") && $self->param("remove"));
+	$self->upgrade() if($self->option("upgrade"));
 
 	return $self;
 }
@@ -247,6 +248,15 @@ sub _install
 	return 1;
 }
 
+# komplettes system update
+sub upgrade
+{
+	my $self = shift;
+	$self->message("Downloading update-script.\n");
+	system("/usr/bin/wget http://download.linoratix.com/");
+}
+
+# update einer einzelnen software
 sub update
 {
 	my $self = shift;
@@ -603,29 +613,35 @@ sub remove
 		}
 	}
 
+
 	unless(@aonly3) {
 		print "\n";
 		$self->warning("ok seems i am not hurting anything...\n");
 		my $count = 0;
 		print "\n";
-		for($count = 0; $count < 5; $count++) {
-			$self->error("");
+		for($count = 5; $count > 0; $count--) {
+			$self->error("$count ", 1);
 			sleep 1;
 		}
+		print $self->error("go ", 1);
 		print "\n\n";
 		$self->warning("hmm, ok you asked for it, i am going to remove $package NOW!\n");
 		my $_path = $base->_find_in_i_package_by_name($pkg);
 		my $_pkg = $base->get_in_package_by_path_and_version($_path, $ver);
+		my %not_remove = $base->check_files_in_i_packages($_pkg);
 		print "\n";
 		foreach my $_all (@{$_pkg->{"files"}}) {
 			my @_all = split(/\s+/, $_all);
 			$_all[0] =~ s/\/FILES//;
-			if(-f $_all[0]) {
+			if(-f $_all[0] && !$not_remove{"/FILES".$_all[0]}) 
+			{
 # hier muss noch die abfrage rein, ob die datei nicht von einem anderen programm
 # auch installiert worden ist.
-				print ":: NOTUNLINKING!! $_all[0] ::\n";
-				# $self->warning("   remove: $_all[0]\n");
-				# unlink($_all[0]);
+				$self->message("   remove: $_all[0]\n");
+				unlink($_all[0]);
+			} else
+			{
+				$self->warning("  Not removing $_all[0] due to side by side installation.\n");
 			}
 		}
 		$base->remove_installed_package_from_db($pkg, $ver);

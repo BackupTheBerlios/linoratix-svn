@@ -55,35 +55,41 @@ sub message
 {
 	my $self = shift;
 	my $m    = shift;
+	my $w    = shift;
 
 	$m = $self unless($m);
 
 	print color "bold green";
-	print " >> ";
-	print color "reset";
+	print " >> " unless $w;
+	print color "reset" unless $w;
 	print $m;
+	print color "reset" if $w;
 }
 
 sub warning
 {
 	my $self = shift;
 	my $m    = shift;
+	my $w    = shift;
 
 	print color "bold yellow";
-	print " >> ";
-	print color "reset";
+	print " >> " unless $w;
+	print color "reset" unless $w;
 	print $m;
+	print color "reset" if $w;
 }
 
 sub error
 {
 	my $self = shift;
 	my $m    = shift;
+	my $w    = shift;
 
 	print color "bold red";
-	print " !! ";
-	print color "reset";
+	print " !! " unless $w;
+	print color "reset" unless $w;
 	print "$m";
+	print color "reset" if $w;
 }
 
 sub msg_package
