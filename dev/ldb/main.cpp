@@ -7,7 +7,7 @@ using namespace std;
 
 int main()
 {
-	map <string, string> my_con;
+	map <string, string> my_con, my_insert, my_set;
 	map <string, string> my_query;
 	
 	my_con["server"] = "localhost";
@@ -35,6 +35,12 @@ int main()
 			cout << datenbank->Record["direction"] << endl;
 		}
 	}
+	
+	my_insert["table"] = "blocks";
+	my_set["direction"] = "t'op";
+	my_set["text"] = "joah mann";
+	
+	datenbank->Insert(my_insert, my_set);
 
 	return 0;
 }

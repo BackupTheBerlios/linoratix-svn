@@ -141,3 +141,29 @@ extern "C" int l_next_record(map<string,string>& record)
 	return -1;
 }
 
+extern "C" bool l_insert(map<string,string>& query, map<string,string>& _set, string& sql_query)
+{
+	typedef map<string,string>::const_iterator CI;
+	int durchlauf=0;
+	string set_query_1, set_query_2;
+	
+	sql_query = "INSERT INTO `" + query["table"] + "` SET ";
+	
+	for(CI p = _set.begin(); p != _set.end(); ++p)
+	{
+		set_query_2 = p->second;
+		if(set_query_2.find("'") <= set_query_2.length())
+		{
+			set_query_2.replace(set_query_2.find("'"), 1, "\\'");
+		}
+		if(durchlauf)
+		{
+			sql_query += ", ";
+		}
+		durchlauf=1;
+		sql_query += "`" + p->first + "`='" + set_query_2 + "'";
+	}
+	
+	return true;	
+}
+

@@ -19,6 +19,7 @@ db::db(char* driver)
 	
 	this->_connect = (connect_t) dlsym(handle, "l_connect");	
 	this->_select = (select_t) dlsym(handle, "l_select");
+	this->_insert = (insert_t) dlsym(handle, "l_insert");
 	this->_is_driver = (is_driver_t) dlsym(handle, "l_is_driver");
 	this->_query = (query_t) dlsym(handle, "l_query");
 	this->_num_rows = (num_rows_t) dlsym(handle, "l_num_rows");
@@ -69,5 +70,14 @@ bool db::NextRecord()
 	{
 		return false;
 	}
+}
+
+int db::Insert(map<string,string>& query, map<string,string>& set)
+{
+	string sql_query;
+	
+	this->_insert(query, set, sql_query);
+	
+	this->query(sql_query);
 }
 

@@ -15,6 +15,7 @@ class db
 		bool Connect(map<string,string>);
 		
 		int Select(map<string,string>&);
+		int Insert(map<string,string>&, map<string,string>&);
 
 		bool NextRecord();
 		int NumRows();
@@ -36,6 +37,9 @@ class db
 		typedef bool (*select_t)(map<string,string>, string&);
 		select_t _select;
 
+		typedef bool (*insert_t)(map<string,string>, map<string,string>, string&);
+		insert_t _insert;
+		
 		typedef int (*query_t)(string, string);
 		query_t _query;
 
