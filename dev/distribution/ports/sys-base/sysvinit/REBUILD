@@ -29,6 +29,8 @@ lip_mkdir %install_dir/usr/share/man/man5 -p
 lip_mkdir %install_dir/usr/share/man/man1 -p
 lip_mkdir %install_dir/usr/include
 lip_install -C src ROOT=%install_dir
+lip_mkdir %install_dir/bin -p
+lip_ln -sf killall %install_dir/bin/pidof
 lip_cd %install_dir
 #lip_get_file %bootscripts %compile_dir/%bootscripts
 #lip_other tar xvzf %compile_dir/%bootscripts
