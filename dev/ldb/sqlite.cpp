@@ -283,12 +283,19 @@ extern "C" int l_column_names(map<string, string>& out) {
    for(int x = 0; x < count; x++) {
       out[toString(x)] = sqlite3_column_name(stmt, x);
    }
-
    #ifdef _DO_DEBUG
       for(int x = 0; x < count; x++) {
          cerr << "Spalte: " << x << " Wert: " << out[toString(x)] << endl;
       }
    #endif
-
    return count;
 }
+
+
+extern "C" int l_insert(string& table, map<string, string>& insert, string& sql_query) {
+      
+   
+   return true;
+}
+
+

@@ -17,7 +17,7 @@ class db
 		
 		int Select(map<string,string>&);
       int Create(map<string, string>&);
-		int Insert(map<string,string>&, map<string,string>&);
+		int Insert(string&, map<string,string>&);
       int Execute();
       
 		bool NextRecord();
@@ -50,7 +50,7 @@ class db
       typedef bool (*create_t)(map<string, string>, string&);
       create_t _create;
 
-		typedef bool (*insert_t)(map<string,string>, map<string,string>, string&);
+		typedef bool (*insert_t)(string& , map<string,string>, string&);
 		insert_t _insert;
 
       typedef int (*execute_t)();

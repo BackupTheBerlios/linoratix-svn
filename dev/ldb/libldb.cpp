@@ -87,13 +87,14 @@ bool db::NextRecord()
 	return this->_next_record(this->Record);
 }
 
-int db::Insert(map<string,string>& query, map<string,string>& set)
+int db::Insert(string& table, map<string,string>& set)
 {
 	string sql_query;
 	
-	this->_insert(query, set, sql_query);
-	
-	return this->query(sql_query);
+	if(this->_insert(table, set, sql_query))
+      return this->query(sql_query);
+   else
+      return -1;  // failure
 }
 
 int db::Execute()

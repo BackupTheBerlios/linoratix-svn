@@ -69,17 +69,15 @@ int main(int argc, char **argv)
          }
       } // ich bin König der Treppen :P
 
+      string table = "test";
+      my_set["zahl"] = "123";
+      my_set["text"] = "blah^asd'das";
 
-/*
-   	my_insert["table"] = "blocks";
-   	my_set["direction"] = "t'op";
-   	my_set["text"] = "joah mann";
-	
-   	datenbank->Insert(my_insert, my_set);
-*/
+      datenbank->Insert(table, my_set);
 
-   delete datenbank; // der speicher den das Objekt benutzt muss allerdings auch wieder frei gegeben werden
-                     // sonst ist irgendwann der speicher voll mit objekten die nichtmehr benutzt werden --> das ist schlecht
+
+      delete datenbank; // der speicher den das Objekt benutzt muss allerdings auch wieder frei gegeben werden
+                        // sonst ist irgendwann der speicher voll mit objekten die nichtmehr benutzt werden --> das ist schlecht
 
    } catch (std::exception& e) {
       cout << "Exception: " << e.what() << endl;
