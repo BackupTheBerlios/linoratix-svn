@@ -44,19 +44,19 @@ LTINSTALL = $(LIBTOOL) --mode=install $(INSTALL)
 
 # Compiler options needed for programs that use the TCL library.
 #
-TCL_FLAGS = -DNO_TCL=1
+TCL_FLAGS = 
 
 # The library that programs using TCL must link against.
 #
-LIBTCL =  -ldl -lm
+LIBTCL = -ltcl8.4  -ldl -lm
 
 # Compiler options needed for programs that use the readline() library.
 #
-READLINE_FLAGS = -DHAVE_READLINE=0 
+READLINE_FLAGS = -DHAVE_READLINE=1 -I/usr/include/readline
 
 # The library that programs using readline() must link against.
 #
-LIBREADLINE = -lncurses 
+LIBREADLINE = -lreadline -lncurses 
 
 # Should the database engine be compiled threadsafe
 #

@@ -5,8 +5,9 @@ sqlite-lib:
 		cd sqlite3 && ./configure && make && cd ..
 		ar rc sqlite3/libsqlite-linoratix.a sqlite3/*.o
 
-sqlite: sqlite-lib
-	g++ -shared libpm.cpp -o sqlite-backend.so -Lsqlite3 -lsqlite-linoratix
+sqlite: #sqlite-lib
+	g++ -shared sqlite.cpp -o sqlite-backend.so -Lsqlite3 -lsqlite-linoratix -D_DO_DEBUG_
+#	g++ -shared sqlite.cpp -o sqlite-backend.so -Lsqlite3 -lsqlite-linoratix
 
 mysql:
 	g++ -shared mysql.cpp -o mysql-backend.so -lmysqlclient
