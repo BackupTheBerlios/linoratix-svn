@@ -1,0 +1,26 @@
+#
+# build script for libwww-perl
+#
+%author: jfried
+%package-group: dev-perl -
+%sub-group: libwww-perl -
+%required: ("libglibc >=2.3.3", "perl >=5.8.3", "uri-perl >=1.35")
+%build-required: ()
+%description: www library for perl
+%name: libwww-perl
+%version: 5.803
+%build: $DATA
+%sourcefile: libwww-perl-5.803.tar.gz
+%source-url: ("http://search.cpan.org/CPAN/authors/id/G/GA/GAAS")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_other yes| perl Makefile.PL
+lip_make
+lip_install DESTDIR=%install_dir
+# prefix=%install_dir/usr libdir=%install_dir/usr/lib infodir=%install_dir/usr/share/info mandir=%install_dir/usr/share/man includedir=%install_dir/usr/include
+# -- execution of post-install-scritps
+__DATA__
+
