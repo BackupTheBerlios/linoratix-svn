@@ -1,0 +1,27 @@
+#
+# package build script for grub
+#
+%author: jfried
+%package-group: sys-boot -
+%sub-group: grub -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: The Grand Unified Bootloader
+%name: grub
+%version: 0.95
+%build: $DATA
+%sourcefile: grub-0.95.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make
+lip_install DESTDIR=%install_dir
+lip_mkdir -p %install_dir/boot/grub
+lip_cp -R %install_dir/usr/share/grub/i386-pc/* %install_dir/boot/grub
+# -- execution of post-install-scritps
+__DATA__
+

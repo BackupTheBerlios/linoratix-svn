@@ -18,6 +18,6 @@
 __DATA__
 lip_extract %sourcefile
 lip_cd %compile_dir
-
+lip_other ./install.sh %install_dir
 
 __DATA__

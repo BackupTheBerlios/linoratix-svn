@@ -1,0 +1,22 @@
+#
+# package build script for dev
+#
+%author: jfried
+%package-group: sys-base -
+%sub-group: dev -
+%required: ()
+%build-required: ()
+%description: some dev entries
+%name: dev
+%version: 0.8
+%build: $DATA
+%sourcefile: dev-0.8.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir 
+lip_other ./install.sh %install_dir
+__DATA__
+
