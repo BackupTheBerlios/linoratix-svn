@@ -44,11 +44,11 @@ LTINSTALL = $(LIBTOOL) --mode=install $(INSTALL)
 
 # Compiler options needed for programs that use the TCL library.
 #
-TCL_FLAGS = 
+TCL_FLAGS = -DNO_TCL=1
 
 # The library that programs using TCL must link against.
 #
-LIBTCL = -ltcl8.4  -ldl -lm
+LIBTCL =  -ldl -lm
 
 # Compiler options needed for programs that use the readline() library.
 #

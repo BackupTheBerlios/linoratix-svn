@@ -467,7 +467,7 @@ s,@build@,i686-pc-linux-gnu,;t t
 s,@build_cpu@,i686,;t t
 s,@build_vendor@,pc,;t t
 s,@build_os@,linux-gnu,;t t
-s,@host@,localhost,;t t
+s,@host@,mango,;t t
 s,@host_cpu@,i686,;t t
 s,@host_vendor@,pc,;t t
 s,@host_os@,linux-gnu,;t t
@@ -519,8 +519,8 @@ s,@OS_UNIX@,1,;t t
 s,@OS_WIN@,0,;t t
 s,@TARGET_EXEEXT@,,;t t
 s,@TARGET_LIBS@,,;t t
-s,@TARGET_TCL_LIBS@,-ltcl8.4  -ldl -lm,;t t
-s,@TARGET_TCL_INC@,,;t t
+s,@TARGET_TCL_LIBS@, -ldl -lm,;t t
+s,@TARGET_TCL_INC@,-DNO_TCL=1,;t t
 s,@TARGET_READLINE_LIBS@,-lncurses ,;t t
 s,@TARGET_READLINE_INC@,,;t t
 s,@TARGET_HAVE_READLINE@,0,;t t
