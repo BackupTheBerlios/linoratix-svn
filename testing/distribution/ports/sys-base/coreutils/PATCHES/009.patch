@@ -1,0 +1,10 @@
+--- fileutils-4.1/src/cp.c.pix	Sat Feb  3 17:48:34 2001
++++ fileutils-4.1/src/cp.c	Sat Sep 15 18:52:10 2001
+@@ -760,6 +760,7 @@
+ 	  break;
+ 
+ 	case 'f':
++	  x.interactive = 0;
+ 	  x.unlink_dest_after_failed_open = 1;
+ 	  break;
+ 

@@ -1,0 +1,85 @@
+If the specified module isn't found, and includes $ISA in its name, substitute
+the default $ISA string (.) and try again.  This matches behavior described in
+http://www.opengroup.org/pubs/corrigenda/u039f.htm, for lack of alternatives or
+better ideas.
+
+--- Linux-PAM-0.75/libpam/pam_handlers.c	2001-02-05 01:50:41.000000000 -0500
++++ Linux-PAM-0.75/libpam/pam_handlers.c	2002-10-22 19:16:52.000000000 -0400
+@@ -38,6 +38,9 @@
+ #define BUF_SIZE                  1024
+ #define MODULE_CHUNK              4
+ #define UNKNOWN_MODULE_PATH       "<*unknown module path*>"
++#ifndef _PAM_ISA
++#define _PAM_ISA "."
++#endif
+ 
+ static int _pam_assemble_line(FILE *f, char *buf, int buf_len);
+ 
+@@ -493,7 +496,7 @@
+ #ifdef PAM_SHL
+     const char *_sym, *_sym2;
+ #endif
+-    char *mod_full_path=NULL;
++    char *mod_full_path=NULL, *mod_full_isa_path=NULL, *isa=NULL;
+     servicefn func, func2;
+     int success;
+ 
+@@ -558,6 +561,30 @@
+ # endif /* PAM_SHL */
+ 	D(("_pam_add_handler: dlopen'ed"));
+ 	if (mod->dl_handle == NULL) {
++	    if (strstr(mod_path, "$ISA")) {
++		mod_full_isa_path = malloc(strlen(mod_path) + strlen(_PAM_ISA) + 1);
++		if (mod_full_isa_path == NULL) {
++		    D(("_pam_handler: couldn't get memory for mod_path"));
++		    _pam_system_log(LOG_ERR, "no memory for module path", mod_path);
++		    success = PAM_ABORT;
++		} else {
++		    strcpy(mod_full_isa_path, mod_path);
++                    isa = strstr(mod_full_isa_path, "$ISA");
++		    if (isa) {
++		        memmove(isa + strlen(_PAM_ISA), isa + 4, strlen(isa + 4) + 1);
++		        memmove(isa, _PAM_ISA, strlen(_PAM_ISA));
++		    }
++		    mod->dl_handle =
++# ifdef PAM_SHL
++		        shl_load(mod_full_isa_path, BIND_IMMEDIATE, 0L);
++# else /* PAM_SHL */
++		        dlopen(mod_full_isa_path, RTLD_NOW);
++# endif /* PAM_SHL */
++		    _pam_drop(mod_full_isa_path);
++		}
++	    }
++	}
++	if (mod->dl_handle == NULL) {
+ 	    D(("_pam_add_handler: dlopen(%s) failed", mod_path));
+ 	    _pam_system_log(LOG_ERR, "unable to dlopen(%s)", mod_path);
+ # ifndef PAM_SHL
+--- Linux-PAM-0.75/configure.in	2002-10-22 19:14:49.000000000 -0400
++++ Linux-PAM-0.75/configure.in	2002-10-22 19:15:30.000000000 -0400
+@@ -83,6 +83,14 @@
+ 	SECUREDIR=$enableval, SECUREDIR=$libdir/security)
+ AC_SUBST(SECUREDIR)
+ 
++AC_ARG_ENABLE(isadir,
++[  --enable-isadir=<path to arch-specific module files> [default ../../\`basename \$libdir\`/security]],
++ISA=$enableval,
++ISA=../../`basename $libdir`/security)
++unset mylibdirbase
++AC_DEFINE_UNQUOTED(_PAM_ISA,"$ISA",[Define to the path, relative to SECUREDIR, where PAMs specific to this architecture can be found.])
++AC_MSG_RESULT([Defining \$ISA to \"$ISA\".])
++
+ AC_ARG_ENABLE(sconfigdir,
+ [  --enable-sconfigdir=<path to module conf files> [default \$sysconfdir/security]],
+ 	SCONFIGDIR=$enableval, SCONFIGDIR=$sysconfdir/security)
+--- Linux-PAM-0.75/_pam_aconf.h.in.isa	2002-10-22 19:15:46.000000000 -0400
++++ Linux-PAM-0.75/_pam_aconf.h.in	2002-10-22 19:16:18.000000000 -0400
+@@ -56,4 +56,8 @@
+ /* location of the mail spool directory */
+ #undef PAM_PATH_MAILDIR
+ 
++/* the path, relative to SECUREDIR, where PAMs specific to this architecture
++ * can be found */
++#undef _PAM_ISA
++
+ #endif /* PAM_ACONF_H */

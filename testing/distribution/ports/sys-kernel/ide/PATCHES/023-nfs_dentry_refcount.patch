@@ -1,0 +1,38 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/04 19:43:24+01:00 trond.myklebust@fys.uio.no 
+#    NFS: Fix dentry refcount accounting error which causes unnecessary
+#    sillyrenames when renaming to an existing file.
+#   
+#    Signed-off-by: Greg Banks <gnb@melbourne.sgi.com>
+#    Signed-off-by: Trond Myklebust <trond.myklebust@fys.uio.no>
+# 
+# fs/nfs/dir.c
+#   2005/01/04 01:00:00+01:00 trond.myklebust@fys.uio.no +2 -4
+#    NFS: Fix dentry refcount accounting error which causes unnecessary
+# 
+diff -Nru a/fs/nfs/dir.c b/fs/nfs/dir.c
+--- a/fs/nfs/dir.c	2005-01-04 19:56:57 -08:00
++++ b/fs/nfs/dir.c	2005-01-04 19:56:57 -08:00
+@@ -1382,7 +1382,7 @@
+ 		goto go_ahead;
+ 	if (S_ISDIR(new_inode->i_mode))
+ 		goto out;
+-	else if (atomic_read(&new_dentry->d_count) > 1) {
++	else if (atomic_read(&new_dentry->d_count) > 2) {
+ 		int err;
+ 		/* copy the target dentry's name */
+ 		dentry = d_alloc(new_dentry->d_parent,
+@@ -1397,10 +1397,8 @@
+ 			new_inode = NULL;
+ 			/* instantiate the replacement target */
+ 			d_instantiate(new_dentry, NULL);
+-		}
+-
++		} else if (atomic_read(&new_dentry->d_count) > 1) {
+ 		/* dentry still busy? */
+-		if (atomic_read(&new_dentry->d_count) > 1) {
+ #ifdef NFS_PARANOIA
+ 			printk("nfs_rename: target %s/%s busy, d_count=%d\n",
+ 			       new_dentry->d_parent->d_name.name,

@@ -1,0 +1,33 @@
+#
+# package build script for zlib
+#
+%author: jfried
+%package-group: sys-libs -
+%sub-group: zlib -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: A System V Release 4.0 curses emulation library.
+%name: libzlib
+%version: 1.2.1
+%build: $DATA
+%sourcefile: zlib-1.2.1.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --shared 
+lip_make
+lip_install prefix=%install_dir/usr mandir=%man_dir infodir=%info_dir
+lip_make clean
+lip_configure --prefix=/usr 
+lip_make
+lip_install prefix=%install_dir/usr mandir=%man_dir infodir=%info_dir
+lip_chmod 644 %install_dir/usr/lib/libz.a
+lip_mkdir -p %install_dir/lib
+lip_mv %install_dir/usr/lib/libz.so.* %install_dir/lib
+lip_ln -sf ../../lib/libz.so.1 %install_dir/usr/lib/libz.so
+# -- execution of post-install-scritps
+__DATA__
+

@@ -1,0 +1,39 @@
+#
+# package build script for bzip2
+#
+%author: jfried
+%package-group: app-arch -
+%sub-group: bzip2 -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: A very high quality data compression program.
+%name: bzip2
+%version: 1.0.2
+%build: $DATA
+%sourcefile: bzip2-1.0.2.tar.gz
+%source-url: ("http://download.linoratix.vom/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_sed -i -e "s:/man/:/share/man/:g" Makefile
+lip_sed -i -e "s:/info/:/share/info/:g" Makefile
+lip_make -f Makefile-libbz2_so
+lip_make clean
+lip_make
+lip_install PREFIX=%install_dir/usr 
+lip_mkdir %install_dir/bin
+lip_mkdir %install_dir/lib
+lip_mkdir %install_dir/usr/lib -p
+lip_cp %compile_dir/bzip2-shared %install_dir/bin/bzip2
+lip_cp -a %compile_dir/libbz2.so* %install_dir/lib
+lip_ln -s ../../lib/libbz2.so.1.0 %install_dir/usr/lib/libbz2.so
+lip_rm %install_dir/usr/bin/{bunzip2,bzcat,bzip2}
+lip_mv %install_dir/usr/bin/{bzip2recover,bzless,bzmore} %install_dir/bin
+lip_ln -s bzip2 %install_dir/bin/bunzip2
+lip_ln -s bzip2 %install_dir/bin/bzcat
+# -- execution of post-install-scritps
+__DATA__
+
+

@@ -1,0 +1,11 @@
+--- Linux-PAM-0.75/configure.in.orig	2002-09-10 13:33:22.000000000 -0400
++++ Linux-PAM-0.75/configure.in	2002-09-10 13:33:37.000000000 -0400
+@@ -339,7 +339,7 @@
+   if sgml2latex -h | grep -e --paper | grep  ' -p ' > /dev/null ; then
+     PSER="sgml2latex -o ps"
+   else
+-    PSER="sgml2latex -p"
++    PSER="sgml2latex -p letter"
+   fi
+ else
+   AC_CHECK_PROG(HAVE_SGML2PS, sgml2ps, yes, no)

@@ -1,0 +1,26 @@
+#
+#	Example File for curl-7.12.1.tar.bz2
+#
+%author: jfried
+%package-group: net-libs -
+%sub-group: curl -
+%required: ("inetutils >=1.4.2", "libopenssl >=0.9.7c")
+%description: The curl library
+%name: libcurl
+%version: 7.12.1
+%build: $DATA
+%sourcefile: curl-7.12.1.tar.bz2
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make
+lip_install DESTDIR=%install_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__

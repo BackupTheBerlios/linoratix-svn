@@ -1,0 +1,898 @@
+o Call re-entrant functions from modutil wherever possible.  Pass the libpam
+  handle around as necessary to accomplish this.
+
+--- Linux-PAM-0.77/modules/pam_access/pam_access.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_access/pam_access.c	2003-07-01 15:03:49.000000000 -0400
+@@ -47,6 +47,10 @@
+ # include <sys/socket.h>
+ #endif
+ 
++#ifdef NIS
++#include <rpcsvc/ypclnt.h>
++#endif
++
+ /*
+  * here, we make definitions for the externally accessible functions
+  * in this file (these definitions are required for static modules
+@@ -58,6 +62,7 @@
+ 
+ #include <security/_pam_macros.h>
+ #include <security/pam_modules.h>
++#include <security/_pam_modutil.h>
+ 
+ int strcasecmp(const char *s1, const char *s2);
+ 
+@@ -149,17 +154,17 @@
+     return 1;  /* OK */
+ }
+ 
+-typedef int match_func (char *, struct login_info *); 
++typedef int match_func (pam_handle_t *, char *, struct login_info *); 
+ 
+-static int list_match (char *, struct login_info *,
++static int list_match (pam_handle_t *, char *, struct login_info *,
+ 		             match_func *);
+-static int user_match (char *, struct login_info *);
+-static int from_match (char *, struct login_info *);
++static int user_match (pam_handle_t *, char *, struct login_info *);
++static int from_match (pam_handle_t *, char *, struct login_info *);
+ static int string_match (char *, char *);
+ 
+ /* login_access - match username/group and host/tty with access control file */
+ 
+-static int login_access(struct login_info *item)
++static int login_access(pam_handle_t *pamh, struct login_info *item)
+ {
+     FILE   *fp;
+     char    line[BUFSIZ];
+@@ -206,8 +211,8 @@
+ 			 item->config_file, lineno);
+ 		continue;
+ 	    }
+-	    match = (list_match(froms, item, from_match)
+-		     && list_match(users, item, user_match));
++	    match = (list_match(pamh, froms, item, from_match)
++		     && list_match(pamh, users, item, user_match));
+ 	}
+ 	(void) fclose(fp);
+     } else if (errno != ENOENT) {
+@@ -218,7 +223,8 @@
+ 
+ /* list_match - match an item against a list of tokens with exceptions */
+ 
+-static int list_match(char *list, struct login_info *item, match_func *match_fn)
++static int list_match(pam_handle_t *pamh,
++		      char *list, struct login_info *item, match_func *match_fn)
+ {
+     char   *tok;
+     int     match = NO;
+@@ -233,7 +239,7 @@
+     for (tok = strtok(list, sep); tok != 0; tok = strtok((char *) 0, sep)) {
+ 	if (strcasecmp(tok, "EXCEPT") == 0)	/* EXCEPT: give up */
+ 	    break;
+-	if ((match = (*match_fn) (tok, item)))	/* YES */
++	if ((match = (*match_fn) (pamh, tok, item)))	/* YES */
+ 	    break;
+     }
+     /* Process exceptions to matches. */
+@@ -241,7 +247,7 @@
+     if (match != NO) {
+ 	while ((tok = strtok((char *) 0, sep)) && strcasecmp(tok, "EXCEPT"))
+ 	     /* VOID */ ;
+-	if (tok == 0 || list_match((char *) 0, item, match_fn) == NO)
++	if (tok == 0 || list_match(pamh, (char *) 0, item, match_fn) == NO)
+ 	    return (match);
+     }
+     return (NO);
+@@ -276,12 +282,10 @@
+ 
+ /* user_match - match a username against one token */
+ 
+-static int user_match(char *tok, struct login_info *item)
++static int user_match(pam_handle_t *pamh, char *tok, struct login_info *item)
+ {
+     char   *string = item->user->pw_name;
+     struct login_info fake_item;
+-    struct group *group;
+-    int     i;
+     char   *at;
+ 
+     /*
+@@ -294,24 +298,20 @@
+     if ((at = strchr(tok + 1, '@')) != 0) {	/* split user@host pattern */
+ 	*at = 0;
+ 	fake_item.from = myhostname();
+-	return (user_match(tok, item) && from_match(at + 1, &fake_item));
++	return (user_match(pamh, tok, item) && from_match(pamh, at + 1, &fake_item));
+     } else if (tok[0] == '@') {			/* netgroup */
+ 	return (netgroup_match(tok + 1, (char *) 0, string));
+     } else if (string_match(tok, string)) {	/* ALL or exact match */
+ 	return (YES);
+-    } else if ((group = getgrnam(tok))) {	/* try group membership */
+-	if (item->user->pw_gid == group->gr_gid)
+-	    return (YES);
+-	for (i = 0; group->gr_mem[i]; i++)
+-	    if (strcasecmp(string, group->gr_mem[i]) == 0)
+-		return (YES);
++    } else if (_pammodutil_user_in_group_nam_nam(pamh, item->user->pw_name, tok)) { /* try group membership */
++	return (YES);
+     }
+     return (NO);
+ }
+ 
+ /* from_match - match a host or tty against a list of tokens */
+ 
+-static int from_match(char *tok, struct login_info *item)
++static int from_match(pam_handle_t *pamh, char *tok, struct login_info *item)
+ {
+     char   *string = item->from;
+     int     tok_len;
+@@ -453,7 +453,7 @@
+ 
+     }
+ 
+-    if ((user_pw=getpwnam(user))==NULL) return (PAM_USER_UNKNOWN);
++    if ((user_pw=_pammodutil_getpwnam(pamh, user))==NULL) return (PAM_USER_UNKNOWN);
+ 
+     /*
+      * Bundle up the arguments to avoid unnecessary clumsiness later on.
+@@ -470,7 +470,7 @@
+ 	return PAM_ABORT;
+     }
+ 
+-    if (login_access(&loginfo)) {
++    if (login_access(pamh, &loginfo)) {
+ 	return (PAM_SUCCESS);
+     } else {
+ 	_log_err("access denied for user `%s' from `%s'",user,from);
+--- Linux-PAM-0.77/modules/pam_group/pam_group.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_group/pam_group.c	2003-07-01 15:05:33.000000000 -0400
+@@ -57,6 +57,7 @@
+ 
+ #include <security/pam_modules.h>
+ #include <security/_pam_macros.h>
++#include <security/_pam_modutil.h>
+ 
+ /* --- static functions for checking whether the user should be let in --- */
+ 
+@@ -520,7 +521,7 @@
+ #define GROUP_BLK 10
+ #define blk_size(len) (((len-1 + GROUP_BLK)/GROUP_BLK)*GROUP_BLK)
+ 
+-static int mkgrplist(char *buf, gid_t **list, int len)
++static int mkgrplist(pam_handle_t *pamh, char *buf, gid_t **list, int len)
+ {
+      int l,at=0;
+      int blks;
+@@ -583,7 +584,7 @@
+ 	  {
+ 	      const struct group *grp;
+ 
+-	      grp = getgrnam(buf+at);
++	      grp = _pammodutil_getgrnam(pamh, buf+at);
+ 	      if (grp == NULL) {
+ 		  _log_err("bad group: %s", buf+at);
+ 	      } else {
+@@ -602,8 +603,8 @@
+ }
+ 
+ 
+-static int check_account(const char *service, const char *tty
+-     , const char *user)
++static int check_account(pam_handle_t *pamh, const char *service,
++			 const char *tty, const char *user)
+ {
+     int from=0,to=0,fd=-1;
+     char *buffer=NULL;
+@@ -702,7 +703,7 @@
+ 
+ 	if (good) {
+ 	    D(("adding %s to gid list", buffer));
+-	    good = mkgrplist(buffer, &grps, no_grps);
++	    good = mkgrplist(pamh, buffer, &grps, no_grps);
+ 	    if (good < 0) {
+ 		no_grps = 0;
+ 	    } else {
+@@ -825,7 +826,7 @@
+     /* We initialize the pwdb library and check the account */
+     retval = pwdb_start();                             /* initialize */
+     if (retval == PWDB_SUCCESS) {
+-	retval = check_account(service,tty,user);      /* get groups */
++	retval = check_account(pamh, service,tty,user);      /* get groups */
+ 	(void) pwdb_end();                                /* tidy up */
+     } else {
+ 	D(("failed to initialize pwdb; %s", pwdb_strerror(retval)));
+@@ -834,7 +835,7 @@
+     }
+ 
+ #else /* WANT_PWDB */
+-    retval = check_account(service,tty,user);          /* get groups */
++    retval = check_account(pamh,service,tty,user);          /* get groups */
+ #endif /* WANT_PWDB */
+ 
+     return retval;
+--- Linux-PAM-0.77/modules/pam_lastlog/pam_lastlog.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_lastlog/pam_lastlog.c	2003-07-01 15:06:03.000000000 -0400
+@@ -79,6 +79,7 @@
+ 
+ #include <security/pam_modules.h>
+ #include <security/_pam_macros.h>
++#include <security/_pam_modutil.h>
+ 
+ /* some syslogging */
+ 
+@@ -422,7 +423,7 @@
+ 
+     /* what uid? */
+ 
+-    pwd = getpwnam(user);
++    pwd = _pammodutil_getpwnam(pamh, user);
+     if (pwd == NULL) {
+ 	D(("couldn't identify user %s", user));
+ 	return PAM_CRED_INSUFFICIENT;
+--- Linux-PAM-0.77/modules/pam_limits/pam_limits.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_limits/pam_limits.c	2003-07-01 15:11:52.000000000 -0400
+@@ -88,6 +88,7 @@
+ 
+ #include <security/pam_modules.h>
+ #include <security/_pam_macros.h>
++#include <security/_pam_modutil.h>
+ 
+ /* logging */
+ static void _pam_log(int err, const char *format, ...)
+@@ -145,61 +146,9 @@
+ #define LIMIT_ERR  1 /* error setting a limit */
+ #define LOGIN_ERR  2 /* too many logins err */
+ 
+-/* checks if a user is on a list of members of the GID 0 group */
+-static int is_on_list(char * const *list, const char *member)
+-{
+-    while (*list) {
+-        if (strcmp(*list, member) == 0)
+-            return 1;
+-        list++;
+-    }
+-    return 0;
+-}
+-
+-/*
+- * Checks if a user is a member of a group - return non-zero if
+- * the user is in the group.
+- */
+-static int is_in_group(const char *user_name, const char *group_name)
+-{
+-    struct passwd *pwd;
+-    struct group *grp, *pgrp;
+-    char uname[LINE_LENGTH], gname[LINE_LENGTH];
+-    
+-    if (!user_name || !strlen(user_name))
+-        return 0;
+-    if (!group_name || !strlen(group_name))
+-        return 0;
+-    memset(uname, 0, sizeof(uname));
+-    strncpy(uname, user_name, sizeof(uname)-1);
+-    memset(gname, 0, sizeof(gname));
+-    strncpy(gname, group_name, sizeof(gname)-1);
+-        
+-    pwd = getpwnam(uname);
+-    if (!pwd)
+-        return 0;
+-
+-    /* the info about this group */
+-    grp = getgrnam(gname);
+-    if (!grp)
+-        return 0;
+-    
+-    /* first check: is a member of the group_name group ? */
+-    if (is_on_list(grp->gr_mem, uname))
+-        return 1;
+-
+-    /* next check: user primary group is group_name ? */
+-    pgrp = getgrgid(pwd->pw_gid);
+-    if (!pgrp)
+-        return 0;
+-    if (!strcmp(pgrp->gr_name, gname))
+-        return 1;
+-        
+-    return 0;
+-}
+-    
+ /* Counts the number of user logins and check against the limit*/
+-static int check_logins(const char *name, int limit, int ctrl,
++static int check_logins(pam_handle_t *pamh,
++			const char *name, int limit, int ctrl,
+ 			struct pam_limit_s *pl)
+ {
+     struct utmp *ut;
+@@ -252,7 +201,7 @@
+                 continue;
+ 	    }
+ 	    if ((pl->login_limit_def == LIMITS_DEF_ALLGROUP)
+-		&& !is_in_group(ut->UT_USER, name)) {
++		&& !_pammodutil_user_in_group_nam_nam(pamh, ut->UT_USER, name)) {
+                 continue;
+ 	    }
+ 	}
+@@ -446,7 +395,7 @@
+     return;
+ }
+ 
+-static int parse_config_file(const char *uname, int ctrl,
++static int parse_config_file(pam_handle_t *pamh, const char *uname, int ctrl,
+ 			     struct pam_limit_s *pl)
+ {
+     FILE *fil;
+@@ -521,7 +470,7 @@
+ 			_pam_log(LOG_DEBUG, "checking if %s is in group %s",
+ 			 	uname, domain + 1);
+ 		    }
+-                if (is_in_group(uname, domain+1))
++                if (_pammodutil_user_in_group_nam_nam(pamh, uname, domain+1))
+                     process_limit(LIMITS_DEF_GROUP, ltype, item, value, ctrl,
+ 				  pl);
+             } else if (domain[0]=='%') {
+@@ -532,7 +481,7 @@
+ 		if (strcmp(domain,"%") == 0)
+ 		    process_limit(LIMITS_DEF_ALL, ltype, item, value, ctrl,
+ 				  pl);
+-		else if (is_in_group(uname, domain+1))
++		else if (_pammodutil_user_in_group_nam_nam(pamh, uname, domain+1))
+                     process_limit(LIMITS_DEF_ALLGROUP, ltype, item, value, ctrl,
+ 				  pl);
+             } else if (strcmp(domain, "*") == 0)
+@@ -545,7 +494,7 @@
+ 		}
+ 		fclose(fil);
+ 		return PAM_IGNORE;
+-	    } else if (domain[0] == '@' && is_in_group(uname, domain+1)) {
++	    } else if (domain[0] == '@' && _pammodutil_user_in_group_nam_nam(pamh, uname, domain+1)) {
+ 		if (ctrl & PAM_DEBUG_ARG) {
+ 		    _pam_log(LOG_DEBUG, "no limits for '%s' in group '%s'",
+ 			     uname, domain+1);
+@@ -561,7 +510,8 @@
+     return PAM_SUCCESS;    
+ }
+ 
+-static int setup_limits(const char * uname, uid_t uid, int ctrl,
++static int setup_limits(pam_handle_t *pamh,
++			const char *uname, uid_t uid, int ctrl,
+ 			struct pam_limit_s *pl)
+ {
+     int i;
+@@ -601,7 +551,7 @@
+     if (uid == 0) {
+ 	D(("skip login limit check for uid=0"));
+     } else if (pl->login_limit > 0) {
+-        if (check_logins(uname, pl->login_limit, ctrl, pl) == LOGIN_ERR) {
++        if (check_logins(pamh, uname, pl->login_limit, ctrl, pl) == LOGIN_ERR) {
+             retval |= LOGIN_ERR;
+ 	}
+     } else if (pl->login_limit == 0) {
+@@ -646,7 +596,7 @@
+         return PAM_IGNORE;
+     }
+ 
+-    retval = parse_config_file(pwd->pw_name, ctrl, &pl);
++    retval = parse_config_file(pamh, pwd->pw_name, ctrl, &pl);
+     if (retval == PAM_IGNORE) {
+ 	D(("the configuration file has an applicable '<domain> -' entry"));
+ 	return PAM_SUCCESS;
+@@ -659,7 +609,7 @@
+     if (ctrl & PAM_DO_SETREUID) {
+ 	setreuid(pwd->pw_uid, -1);
+     }
+-    retval = setup_limits(pwd->pw_name, pwd->pw_uid, ctrl, &pl);
++    retval = setup_limits(pamh, pwd->pw_name, pwd->pw_uid, ctrl, &pl);
+     if (retval != LIMITED_OK) {
+         return PAM_PERM_DENIED;
+     }
+--- Linux-PAM-0.77/modules/pam_listfile/pam_listfile.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_listfile/pam_listfile.c	2003-07-01 15:51:19.000000000 -0400
+@@ -39,6 +39,7 @@
+ 
+ #include <security/pam_modules.h>
+ #include <security/_pam_macros.h>
++#include <security/_pam_modutil.h>
+ 
+ /* some syslogging */
+ 
+@@ -64,45 +65,6 @@
+     return 0;
+ }
+ 
+-/* Checks if a user is a member of a group */
+-static int is_on_group(const char *user_name, const char *group_name)
+-{
+-    struct passwd *pwd;
+-    struct group *grp, *pgrp;
+-    char uname[BUFSIZ], gname[BUFSIZ];
+-    
+-    if (!strlen(user_name))
+-        return 0;
+-    if (!strlen(group_name))
+-        return 0;
+-    bzero(uname, sizeof(uname));
+-    strncpy(uname, user_name, sizeof(uname)-1);
+-    bzero(gname, sizeof(gname));
+-    strncpy(gname, group_name, sizeof(gname)-1);
+-        
+-    pwd = getpwnam(uname);
+-    if (!pwd)
+-        return 0;
+-
+-    /* the info about this group */
+-    grp = getgrnam(gname);
+-    if (!grp)
+-        return 0;
+-    
+-    /* first check: is a member of the group_name group ? */
+-    if (is_on_list(grp->gr_mem, uname))
+-        return 1;
+-
+-    /* next check: user primary group is group_name ? */
+-    pgrp = getgrgid(pwd->pw_gid);
+-    if (!pgrp)
+-        return 0;
+-    if (!strcmp(pgrp->gr_name, gname))
+-        return 1;
+-        
+-    return 0;
+-}
+-
+ /* --- authentication management functions (only) --- */
+ 
+ /* Extended Items that are not directly available via pam_get_item() */
+@@ -257,7 +219,7 @@
+ 		    return PAM_IGNORE;
+ 		}
+ 	    } else if(apply_type==APPLY_TYPE_GROUP) {
+-		if(!is_on_group(user_name,apply_val)) {
++		if(!_pammodutil_user_in_group_nam_nam(pamh,user_name,apply_val)) {
+ 		    /* Not a member of apply= group */
+ #ifdef DEBUG
+ 		    _pam_log(LOG_DEBUG,
+@@ -295,13 +257,13 @@
+     if(extitem) {
+ 	switch(extitem) {
+ 	    case EI_GROUP:
+-		userinfo = getpwnam(citemp);
++		userinfo = _pammodutil_getpwnam(pamh, citemp);
+ 		if (userinfo == NULL) {
+ 		    _pam_log(LOG_ERR,LOCAL_LOG_PREFIX "getpwnam(%s) failed",
+ 			     citemp);
+ 		    return onerr;
+ 		}
+-		grpinfo = getgrgid(userinfo->pw_gid);
++		grpinfo = _pammodutil_getgrgid(pamh, userinfo->pw_gid);
+ 		if (grpinfo == NULL) {
+ 		    _pam_log(LOG_ERR,LOCAL_LOG_PREFIX "getgrgid(%d) failed",
+ 			     (int)userinfo->pw_gid);
+@@ -322,7 +284,7 @@
+ 		/* Assume that we have already gotten PAM_USER in
+ 		   pam_get_item() - a valid assumption since citem
+ 		   gets set to PAM_USER in the extitem switch */
+-		userinfo = getpwnam(citemp);
++		userinfo = _pammodutil_getpwnam(pamh, citemp);
+ 		if (userinfo == NULL) {
+ 		    _pam_log(LOG_ERR,LOCAL_LOG_PREFIX "getpwnam(%s) failed",
+ 			     citemp);
+--- Linux-PAM-0.77/modules/pam_mail/pam_mail.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_mail/pam_mail.c	2003-07-01 15:51:57.000000000 -0400
+@@ -46,6 +46,7 @@
+ 
+ #include <security/pam_modules.h>
+ #include <security/_pam_macros.h>
++#include <security/_pam_modutil.h>
+ 
+ /* some syslogging */
+ 
+@@ -182,7 +183,7 @@
+     if (ctrl & PAM_NEW_MAIL_DIR) {
+ 	path = *path_mail;
+ 	if (*path == '~') {       /* support for $HOME delivery */
+-	    pwd = getpwnam(user);
++	    pwd = _pammodutil_getpwnam(pamh, user);
+ 	    if (pwd == NULL) {
+ 		_log_err(LOG_ERR, "user [%s] unknown", user);
+ 		_pam_overwrite(*path_mail);
+--- Linux-PAM-0.77/modules/pam_mkhomedir/pam_mkhomedir.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_mkhomedir/pam_mkhomedir.c	2003-07-01 15:53:06.000000000 -0400
+@@ -51,6 +51,7 @@
+ 
+ #include <security/pam_modules.h>
+ #include <security/_pam_macros.h>
++#include <security/_pam_modutil.h>
+ 
+ /* argument parsing */
+ #define MKHOMEDIR_DEBUG      020	/* keep quiet about things */
+@@ -337,7 +338,7 @@
+    }
+ 
+    /* Get the password entry */
+-   pwd = getpwnam(user);
++   pwd = _pammodutil_getpwnam(pamh, user);
+    if (pwd == NULL)
+    {
+       D(("couldn't identify user %s", user));
+--- Linux-PAM-0.77/modules/pam_rhosts/pam_rhosts_auth.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_rhosts/pam_rhosts_auth.c	2003-07-01 15:53:39.000000000 -0400
+@@ -555,7 +555,7 @@
+ 
+ 	/* private group caveat */
+ 	if (opts->opt_private_group) {
+-	    struct group *grp = getgrgid(sbuf.st_gid);
++	    struct group *grp = _pammodutil_getgrgid(pamh, sbuf.st_gid);
+ 
+ 	    if (NULL == grp || NULL == grp->gr_name
+ 		|| strcmp(luser,grp->gr_name)) {
+--- Linux-PAM-0.77/modules/pam_securetty/pam_securetty.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_securetty/pam_securetty.c	2003-07-01 15:54:08.000000000 -0400
+@@ -34,6 +34,7 @@
+ #define PAM_SM_ACCOUNT
+ 
+ #include <security/pam_modules.h>
++#include <security/_pam_modutil.h>
+ 
+ /* some syslogging */
+ 
+@@ -102,7 +103,7 @@
+ 	uttyname += sizeof(TTY_PREFIX)-1;
+     }
+ 
+-    user_pwd = getpwnam(username);
++    user_pwd = _pammodutil_getpwnam(pamh, username);
+     if (user_pwd == NULL) {
+ 	return PAM_IGNORE;
+     } else if (user_pwd->pw_uid != 0) { /* If the user is not root,
+--- Linux-PAM-0.77/modules/pam_shells/pam_shells.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_shells/pam_shells.c	2003-07-01 15:54:48.000000000 -0400
+@@ -14,6 +14,7 @@
+ #include <stdarg.h>
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <string.h>
+ #include <sys/stat.h>
+ #include <syslog.h>
+ #include <unistd.h>
+@@ -29,6 +30,7 @@
+ #define PAM_SM_ACCOUNT
+ 
+ #include <security/pam_modules.h>
++#include <security/_pam_modutil.h>
+ 
+ /* some syslogging */
+ 
+@@ -65,7 +67,7 @@
+ 	    return PAM_SERVICE_ERR;
+     }
+ 
+-    pw = getpwnam(userName);
++    pw = _pammodutil_getpwnam(pamh, userName);
+     if (!pw) {
+ 	return PAM_AUTH_ERR;		/* user doesn't exist */
+     }
+--- Linux-PAM-0.77/modules/pam_tally/pam_tally.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_tally/pam_tally.c	2003-07-01 16:00:37.000000000 -0400
+@@ -49,6 +49,7 @@
+ /* #define PAM_SM_PASSWORD */
+ 
+ #include <security/pam_modules.h>
++#include <security/_pam_modutil.h>
+ 
+ /*---------------------------------------------------------------------*/
+ 
+@@ -123,7 +124,7 @@
+       return PAM_AUTH_ERR;
+     }
+ 
+-    if ( ! ( pw = getpwnam( user ) ) ) {
++    if ( ! ( pw = _pammodutil_getpwnam( pamh, user ) ) ) {
+       _pam_log(LOG_ERR,MODULE_NAME ": pam_get_uid; no such user %s",user);
+       return PAM_USER_UNKNOWN;
+     }
+--- Linux-PAM-0.77/modules/pam_tally/Makefile	2003-07-01 15:55:51.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_tally/Makefile	2003-07-01 15:59:46.000000000 -0400
+@@ -44,6 +44,12 @@
+ APPLICATION = $(TITLE)
+ APPMODE = 755
+ 
++LINK_PAMMODUTILS = -L../pammodutil -lpammodutil -L../../libpam -lpam
++INCLUDE_PAMMODUTILS = -I../pammodutil/include
++
++LDFLAGS += $(LINK_PAMMODUTILS)
++CFLAGS += $(INCLUDE_PAMMODUTILS)
++
+ ####################### don't edit below #######################
+ 
+ all: dirs $(LIBSHARED) $(LIBSTATIC) register $(APPLICATION)
+@@ -65,10 +71,10 @@
+ $(LIBOBJD): $(LIBSRC)
+ 
+ $(LIBSHARED):   $(LIBOBJD)
+-	$(LD_D) -o $@ $(LIBOBJD)
++	$(LD_D) -o $@ $(LIBOBJD) $(LDFLAGS)
+ 
+ $(APPLICATION): $(APPOBJD) $(TITLE).c
+-	$(CC) $(CFLAGS) -o $@ $(APPOBJD) $(LOADLIBES)
++	$(CC) $(CFLAGS) -o $@ $(APPOBJD) $(LDFLAGS) $(LOADLIBES)
+     
+ endif
+ 
+--- Linux-PAM-0.77/modules/pam_unix/pam_unix_acct.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/pam_unix_acct.c	2003-07-01 16:02:27.000000000 -0400
+@@ -53,6 +53,7 @@
+ #define PAM_SM_ACCOUNT
+ 
+ #include <security/pam_modules.h>
++#include <security/_pam_modutil.h>
+ 
+ #ifndef LINUX_PAM
+ #include <security/pam_appl.h>
+@@ -89,7 +90,7 @@
+ 		return PAM_USER_UNKNOWN;
+ 	}
+ 
+-	pwent = getpwnam(uname);
++	pwent = _pammodutil_getpwnam(pamh, uname);
+ 	if (!pwent) {
+ 		_log_err(LOG_ALERT, pamh
+ 			 ,"could not identify user (from getpwnam(%s))"
+@@ -113,7 +114,7 @@
+ 					return PAM_CRED_INSUFFICIENT;
+ 			}
+ 		}
+-		spent = getspnam( uname );
++		spent = _pammodutil_getspnam( pamh, uname );
+ 		if (save_uid == pwent->pw_uid)
+ 			setreuid( save_uid, save_euid );
+ 		else {
+@@ -123,7 +124,7 @@
+ 		}
+ 
+ 	} else if (_unix_shadowed( pwent )) {
+-		spent = getspnam(uname);
++		spent = _pammodutil_getspnam(pamh, uname);
+ 	} else {
+ 		return PAM_SUCCESS;
+ 	}
+--- Linux-PAM-0.77/modules/pam_unix/pam_unix_passwd.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/pam_unix_passwd.c	2003-07-01 16:07:38.000000000 -0400
+@@ -73,6 +73,8 @@
+ #include <security/pam_appl.h>
+ #endif				/* LINUX_PAM */
+ 
++#include <security/_pam_modutil.h>
++
+ #include "yppasswd.h"
+ #include "md5.h"
+ #include "support.h"
+@@ -244,7 +246,8 @@
+ 	return retval;
+ }
+ 
+-static int save_old_password(const char *forwho, const char *oldpass,
++static int save_old_password(pam_handle_t *pamh,
++			     const char *forwho, const char *oldpass,
+ 			     int howmany)
+ {
+     static char buf[16384];
+@@ -331,7 +334,7 @@
+     fclose(opwfile);
+ 
+     if (!found) {
+-	pwd = getpwnam(forwho);
++	pwd = _pammodutil_getpwnam(pamh, forwho);
+ 	if (pwd == NULL) {
+ 	    err = 1;
+ 	} else {
+@@ -590,7 +593,7 @@
+ 		return retval;
+ 	}
+ 	/* first, save old password */
+-	if (save_old_password(forwho, fromwhat, remember)) {
++	if (save_old_password(pamh, forwho, fromwhat, remember)) {
+ 		return PAM_AUTHTOK_ERR;
+ 	}
+ 	if (_unix_comesfromsource(pamh, forwho, 1, 0)) {
+@@ -837,7 +840,7 @@
+ 
+ 		D(("prelim check"));
+ 
+-		if (_unix_blankpasswd(ctrl, user)) {
++		if (_unix_blankpasswd(pamh, ctrl, user)) {
+ #ifdef USE_LCKPWDF
+ 			ulckpwdf();
+ #endif
+--- Linux-PAM-0.77/modules/pam_unix/support.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/support.c	2003-07-01 16:14:56.000000000 -0400
+@@ -23,6 +23,7 @@
+ 
+ #include <security/_pam_macros.h>
+ #include <security/pam_modules.h>
++#include <security/_pam_modutil.h>
+ 
+ #include "md5.h"
+ #include "support.h"
+@@ -477,19 +478,12 @@
+  * - to avoid prompting for one in such cases (CG)
+  */
+ 
+-int _unix_blankpasswd(unsigned int ctrl, const char *name)
++int _unix_blankpasswd(pam_handle_t *pamh, unsigned int ctrl, const char *name)
+ {
+ 	struct passwd *pwd = NULL;
+ 	struct spwd *spwdent = NULL;
+ 	char *salt = NULL;
+ 	int retval;
+-#if HAVE_GETPWNAM_R
+-	char *buf = NULL;
+-	int bufsize = 0;
+-	struct passwd pwd_buf;
+-
+-	pwd = &pwd_buf;
+-#endif
+ 
+ 	D(("called"));
+ 
+@@ -505,23 +499,7 @@
+ 	/* UNIX passwords area */
+ 
+ 	/* Get password file entry... */
+-#if HAVE_GETPWNAM_R
+-	bufsize = 1024;
+-	buf = malloc(bufsize);
+-
+-	if ((retval = getpwnam_r(name, pwd, buf, bufsize, &pwd))) {
+-		pwd = NULL;
+-	}
+-	while (retval == ERANGE) {
+-		bufsize += 1024;
+-		buf = realloc(buf, bufsize);
+-		if ((retval = getpwnam_r(name, pwd, buf, bufsize, &pwd))) {
+-			pwd = NULL;
+-		}
+-	}
+-#else
+-	pwd = getpwnam(name);
+-#endif
++	pwd = _pammodutil_getpwnam(pamh, name);
+ 
+ 	if (pwd != NULL) {
+ 		if (strcmp( pwd->pw_passwd, "*NP*" ) == 0)
+@@ -547,7 +525,7 @@
+ 				}
+ 			}
+ 	
+-			spwdent = getspnam( name );
++			spwdent = _pammodutil_getspnam( pamh, name );
+ 			if (save_uid == pwd->pw_uid)
+ 				setreuid( save_uid, save_euid );
+ 			else {
+@@ -560,7 +538,7 @@
+ 			 * ...and shadow password file entry for this user,
+ 			 * if shadowing is enabled
+ 			 */
+-			spwdent = getspnam(name);
++			spwdent = _pammodutil_getspnam(pamh, name);
+ 		}
+ 		if (spwdent)
+ 			salt = x_strdup(spwdent->sp_pwdp);
+@@ -713,7 +691,7 @@
+ 	D(("locating user's record"));
+ 
+ 	/* UNIX passwords area */
+-	pwd = getpwnam(name);	/* Get password file entry... */
++	pwd = _pammodutil_getpwnam(pamh, name);	/* Get password file entry... */
+ 
+ 	if (pwd != NULL) {
+ 		if (strcmp( pwd->pw_passwd, "*NP*" ) == 0)
+@@ -734,7 +712,7 @@
+ 				}
+ 			}
+ 	
+-			spwdent = getspnam( name );
++			spwdent = _pammodutil_getspnam( pamh, name );
+ 			if (save_uid == pwd->pw_uid)
+ 				setreuid( save_uid, save_euid );
+ 			else {
+@@ -747,7 +725,7 @@
+ 			 * ...and shadow password file entry for this user,
+ 			 * if shadowing is enabled
+ 			 */
+-			spwdent = getspnam(name);
++			spwdent = _pammodutil_getspnam(pamh, name);
+ 		}
+ 		if (spwdent)
+ 			salt = x_strdup(spwdent->sp_pwdp);
+--- Linux-PAM-0.77/modules/pam_unix/Makefile	2003-07-01 16:01:32.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/Makefile	2003-07-01 16:02:12.000000000 -0400
+@@ -48,10 +48,13 @@
+ 
+ EXTRAS += -DCHKPWD_HELPER=\"$(SUPLEMENTED)/$(CHKPWD)\"
+ 
++LINK_PAMMODUTILS = -L../pammodutil -lpammodutil
++INCLUDE_PAMMODUTILS = -I../pammodutil/include
++
+ ########################################################################
+ 
+-CFLAGS += $(USE_CRACKLIB) $(USE_LCKPWDF) $(NEED_LCKPWDF) $(EXTRAS)
+-LDLIBS = $(EXTRALS)
++CFLAGS += $(USE_CRACKLIB) $(USE_LCKPWDF) $(NEED_LCKPWDF) $(EXTRAS) $(INCLUDE_PAMMODUTILS)
++LDLIBS = $(EXTRALS) $(LINK_PAMMODUTILS)
+ 
+ ifdef USE_CRACKLIB
+ CRACKLIB = -lcrack
+--- Linux-PAM-0.77/modules/pam_unix/support.h	2003-07-01 16:04:42.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/support.h	2003-07-01 16:04:56.000000000 -0400
+@@ -140,7 +140,7 @@
+ 			  struct passwd **ret);
+ extern int _unix_comesfromsource(pam_handle_t *pamh,
+ 				 const char *name, int files, int nis);
+-extern int _unix_blankpasswd(unsigned int ctrl, const char *name);
++extern int _unix_blankpasswd(pam_handle_t *pamh, unsigned int ctrl, const char *name);
+ extern int _unix_verify_password(pam_handle_t * pamh, const char *name
+ 			  ,const char *p, unsigned int ctrl);
+ extern int _unix_read_password(pam_handle_t * pamh
+--- Linux-PAM-0.77/modules/pam_unix/pam_unix_auth.c	2003-07-01 16:06:24.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/pam_unix_auth.c	2003-07-01 16:06:35.000000000 -0400
+@@ -148,7 +148,7 @@
+ 
+ 	/* if this user does not have a password... */
+ 
+-	if (_unix_blankpasswd(ctrl, name)) {
++	if (_unix_blankpasswd(pamh, ctrl, name)) {
+ 		D(("user '%s' has blank passwd", name));
+ 		name = NULL;
+ 		retval = PAM_SUCCESS;
+--- Linux-PAM-0.77/modules/pam_wheel/pam_wheel.c	2003-07-01 14:57:05.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_wheel/pam_wheel.c	2003-07-01 16:16:07.000000000 -0400
+@@ -45,6 +45,7 @@
+ #define PAM_SM_ACCOUNT
+ 
+ #include <security/pam_modules.h>
++#include <security/_pam_modutil.h>
+ 
+ /* some syslogging */
+ 
+@@ -156,7 +157,7 @@
+     }
+ 
+     /* su to a uid 0 account ? */
+-    pwd = getpwnam(username);
++    pwd = _pammodutil_getpwnam(pamh, username);
+     if (!pwd) {
+         if (ctrl & PAM_DEBUG_ARG) {
+             _pam_log(LOG_NOTICE,"unknown user %s",username);
+@@ -165,7 +166,7 @@
+     }
+      
+     if (ctrl & PAM_USE_UID_ARG) {
+-	tpwd = getpwuid(getuid());
++	tpwd = _pammodutil_getpwuid(pamh, getuid());
+ 	if (!tpwd) {
+ 	    if (ctrl & PAM_DEBUG_ARG) {
+                 _pam_log(LOG_NOTICE, "who is running me ?!");
+@@ -176,7 +177,7 @@
+     } else {
+ 	fromsu = PAM_getlogin();
+ 	if (fromsu) {
+-	    tpwd = getpwnam(fromsu);
++	    tpwd = _pammodutil_getpwnam(pamh, fromsu);
+ 	}
+ 	if (!fromsu || !tpwd) {
+ 	    if (ctrl & PAM_DEBUG_ARG) {
+@@ -191,11 +192,11 @@
+      */
+      
+     if (!use_group[0]) {
+-	if ((grp = getgrnam("wheel")) == NULL) {
+-	    grp = getgrgid(0);
++	if ((grp = _pammodutil_getgrnam(pamh, "wheel")) == NULL) {
++	    grp = _pammodutil_getgrgid(pamh, 0);
+ 	}
+     } else {
+-	grp = getgrnam(use_group);
++	grp = _pammodutil_getgrnam(pamh, use_group);
+     }
+ 
+     if (!grp || (!grp->gr_mem && (tpwd->pw_gid != grp->gr_gid))) {

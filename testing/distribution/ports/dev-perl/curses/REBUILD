@@ -1,0 +1,26 @@
+#
+# build script for term-readkey
+#
+%author: jfried
+%package-group: dev-perl -
+%sub-group: curses -
+%required: ("libglibc >=2.3.3", "perl >=5.8.3", "libncurses >=5.4", "term-readkey >=2.30")
+%build-required: ()
+%description: Terminal screen handling and optimization
+%name: curses
+%version: 1.08b
+%build: $DATA
+%sourcefile: Curses-1.08b.tgz
+%source-url: ("http://search.cpan.org/CPAN/authors/id/G/GI/GIRAFFED/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_other perl Makefile.PL
+lip_make
+lip_install DESTDIR=%install_dir
+# prefix=%install_dir/usr libdir=%install_dir/usr/lib infodir=%install_dir/usr/share/info mandir=%install_dir/usr/share/man includedir=%install_dir/usr/include
+# -- execution of post-install-scritps
+__DATA__
+

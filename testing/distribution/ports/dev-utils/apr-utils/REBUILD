@@ -1,0 +1,28 @@
+#
+#	Example File for apr-util-1.0.0.tar.gz
+#
+%author: jfried
+%package-group: dev-util -
+%sub-group: apr-utils -
+%required: ("libapr >=1.0.0", "libdb4 >=4.2.52")
+%description: Apache Portable Runtime utils
+%name: apr-utils
+%version: 1.0.0
+%build: $DATA
+%sourcefile: apr-util-1.0.0.tar.gz
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib --with-apr=/usr --with-dbm=db4
+lip_make
+lip_install DESTDIR=%install_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__

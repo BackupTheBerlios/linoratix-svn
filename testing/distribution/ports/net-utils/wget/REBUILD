@@ -1,0 +1,23 @@
+#
+# buildscript for wget
+#
+%author: jfried
+%package-group: net-utils -
+%sub-group: wget
+%required: ("libglibc >=2.3.3", "libopenssl >=0.9.7c")
+%build-required: ()
+%description: GNU Wget is a utility for noninteractive download of files from the Web. It supports HTTP and FTP protocols, as well as retrieval through HTTP proxies. It can follow HTML links, download many pages, and convert the links for local viewing. It can also mirror FTP hierarchies or only those files that have changed. Wget has been designed for robustness over slow network connections; if a download fails due to a network problem, it will keep retrying until the whole file has been retrieved.
+%name: wget
+%version: 1.9.1
+%build: $DATA
+%sourcefile: wget-1.9.1.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+lip_cd %compile_dir
+lip_configure --prefix=/usr --sysconfdir=/etc/wget --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make
+lip_install DESTDIR=%install_dir
+__DATA__

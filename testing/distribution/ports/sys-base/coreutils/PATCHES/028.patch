@@ -1,0 +1,35 @@
+--- src/tail.c.old	2004-01-27 23:34:20.710623104 -0500
++++ src/tail.c	2004-01-27 23:41:00.938779176 -0500
+@@ -1351,7 +1351,7 @@
+   const char *p = argv[1];
+   const char *n_string = NULL;
+   const char *n_string_end;
+-  bool obsolete_usage;
++  bool obsolete_usage, obsolete_usage_posixly_correct;
+ 
+   int t_from_start;
+   int t_count_lines;
+@@ -1363,7 +1363,8 @@
+   if (argc < 2)
+     return 0;
+ 
+-  obsolete_usage = (posix2_version () < 200112) || !getenv ("POSIXLY_CORRECT");
++  obsolete_usage = (posix2_version () < 200112);
++  obsolete_usage_posixly_correct = !getenv ("POSIXLY_CORRECT");
+ 
+   /* If P starts with `+' and the POSIX version predates 1003.1-2001,
+      or if P starts with `-N' (where N is a digit), or `-l', then it
+@@ -1485,10 +1486,11 @@
+ 
+       if (! obsolete_usage)
+ 	{
+-	  error (0, 0, _("`%s' option is obsolete; use `%s-%c %.*s'"),
++	  error (0, 0, _("`%s' option is obsolete; use `%s-%c %.*s' since this will be removed in the future"),
+ 		 argv[1], t_forever ? " -f" : "", t_count_lines ? 'n' : 'c',
+ 		 (int) (n_string_end - n_string), n_string);
+-	  usage (EXIT_FAILURE);
++	if (!obsolete_usage_posixly_correct)
++		  usage (EXIT_FAILURE);
+ 	}
+ 
+       /* Set globals.  */

@@ -1,0 +1,28 @@
+#
+# package build script module-init-tools
+#
+%author: jfried
+%package-group: sys-kernel -
+%sub-group: module-init-tools -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: The Module Init tools contains programs that you can use to work with kernel modules
+%name: module-init-tools
+%version: 3.0
+%build: $DATA
+%sourcefile: module-init-tools-3.0.tar.bz2
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --exec-prefix=/ --prefix=/
+lip_sed -e "s:^INSTALL =.*:INSTALL = /usr/bin/install:" Makefile > Makefile.new
+lip_cp Makefile.new Makefile
+lip_make
+lip_make check
+lip_install prefix=%install_dir exec_prefix=%install_dir mandir=%man_dir infodir=%info_dir
+# -- execution of post-install-scritps
+__DATA__
+

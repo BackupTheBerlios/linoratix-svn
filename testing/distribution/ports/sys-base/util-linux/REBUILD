@@ -1,0 +1,121 @@
+#
+# package build script for util-linux
+#
+%author: jfried
+%package-group: sys-base -
+%sub-group: util-linux -
+%required: ("libselinux >=1.14")
+%build-required: ()
+%description: Miscellaneous system utils
+%name: util-linux
+%version: 2.12
+%build: $DATA
+%sourcefile: util-linux-2.12.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+%filesystems: $FILESYSTEMS
+%inittab: $INITTAB
+%issue: $ISSUE
+%securetty: $SECURETTY
+%shells: $SHELLS
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_patch -Np1 -i %patch_dir/losetup-combined.patch
+lip_patch -Np1 -i %patch_dir/%name-%version-kernel-2.6.patch
+lip_patch -Np1 -i %patch_dir/%name-%version-selinux.diff
+lip_configure --prefix=/usr --bindir=/bin
+lip_make HAVE_KILL=yes HAVE_SLN=yes
+lip_install HAVE_KILL=yes HAVE_SLN=yes DESTDIR=%install_dir
+lip_mkdir -p %install_dir/etc
+lip_add_file %install_dir/etc/filesystems %filesystems
+lip_add_file %install_dir/etc/inittab %inittab
+lip_add_file %install_dir/etc/issue %issue
+lip_add_file %install_dir/etc/securetty %securetty
+lip_add_file %install_dir/etc/shells %shells
+# -- execution of post-install-scritps
+__DATA__
+
+
+__FILESYSTEMS__
+	ext2
+	ext3
+	xfs
+	jfs
+	vfat
+	umsdos
+	msdos
+	iso9660
+	minix
+	ntfs
+	hpfs
+	ufs
+	sysv
+	romfs
+	reiserfs
+nodev	autofs
+nodev	proc
+nodev	smbfs
+nodev	nfs
+nodev	coda
+nodev	devpts
+nodev	devfs
+__FILESYSTEMS__
+
+__INITTAB__
+id:2:initdefault:
+
+si:S:sysinit:/etc/rc.d/rc.sysinit
+
+l0:0:wait:/etc/rc.d/rc.0
+l1:1:wait:/etc/rc.d/rc.1
+l2:2:wait:/etc/rc.d/rc.2
+l3:3:wait:/etc/rc.d/rc.3
+l4:4:wait:/etc/rc.d/rc.4
+l5:5:wait:/etc/rc.d/rc.5
+l6:6:wait:/etc/rc.d/rc.6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -r now
+
+su:S1:respawn:/sbin/sulogin
+
+c1:2345:respawn:/sbin/agetty tty1 38400 linux
+c2:2345:respawn:/sbin/agetty tty2 38400 linux
+c3:2345:respawn:/sbin/agetty tty3 38400 linux
+c4:2345:respawn:/sbin/agetty tty4 38400 linux
+c5:2345:respawn:/sbin/agetty tty5 38400 linux
+c6:2345:respawn:/sbin/agetty tty6 38400 linux
+__INITTAB__
+
+__ISSUE__
+Welcome to Linoratix 0.6 on \l
+Kernel: \r (\v)
+Local time: \d
+Users logged in: \u
+__ISSUE__
+
+
+__SECURETTY__
+# /etc/securetty: list of terminals on which root is allowed to login.
+# See securetty(5) and login(1).
+tty1
+tty2
+tty3
+tty4
+tty5
+tty6
+tty7
+tty8
+tty9
+tty10
+tty11
+tty12
+__SECURETTY__
+
+__SHELLS__
+/bin/bash
+/bin/sh
+/bin/csh
+__SHELLS__
+

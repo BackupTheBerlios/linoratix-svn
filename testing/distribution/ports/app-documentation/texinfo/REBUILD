@@ -1,0 +1,27 @@
+#
+# texinfo
+#
+%author: jfried
+%package-group: app-documentation -
+%sub-group: texinfo -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: A collection of core GNU utils.
+%name: texinfo
+%version: 4.6
+%build: $DATA
+%sourcefile: texinfo-4.6.tar.bz2
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr
+lip_make
+lip_make check
+lip_install DESTDIR=%install_dir
+lip_make TEXMF=%install_dir/usr/share/texmf install-tex
+# -- execution of post-install-scritps
+__DATA__
+

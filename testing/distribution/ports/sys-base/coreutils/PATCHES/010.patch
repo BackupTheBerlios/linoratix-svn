@@ -1,0 +1,19 @@
+--- fileutils-4.1/src/dircolors.c.orig	Mon Aug  7 19:46:16 2000
++++ fileutils-4.1/src/dircolors.c	Fri Jul 20 20:56:09 2001
+@@ -69,13 +69,15 @@
+   "NORMAL", "NORM", "FILE", "DIR", "LNK", "LINK",
+   "SYMLINK", "ORPHAN", "MISSING", "FIFO", "PIPE", "SOCK", "BLK", "BLOCK",
+   "CHR", "CHAR", "DOOR", "EXEC", "LEFT", "LEFTCODE", "RIGHT", "RIGHTCODE",
+-  "END", "ENDCODE", NULL
++  "END", "ENDCODE", "SUID", "SETUID", "SGID", "SETGID", "WRO", "WRITEOTHERS",
++  "WT", "WROT", "WRITEOTHERSSTICKY", NULL
+ };
+ 
+ static const char *const ls_codes[] =
+ {
+   "no", "no", "fi", "di", "ln", "ln", "ln", "or", "mi", "pi", "pi",
+   "so", "bd", "bd", "cd", "cd", "do", "ex", "lc", "lc", "rc", "rc", "ec", "ec"
++  "su", "su", "sg", "sg", "wo", "wo", "wo", "wt", "wt", "wt", NULL
+ };
+ 
+ static struct option const long_options[] =

@@ -1,0 +1,50 @@
+Submitted By: Matthew Burgess <matthew@linuxfromscratch.org>
+Date: 2004-12-30
+Initial Package Version: 2.6.10
+Upstream Status: Not Sent - Already aware
+Origin: http://www.uwsg.iu.edu/hypermail/linux/kernel/0412.3/0792.html
+Description: Taken from the URL above:  It is unsafe to have capabilities
+             compiled as a module, or at least loaded after any untrusted
+             processes start.  Fix this problem by having the dummy module track
+             capabilities.
+
+diff -Naur linux-2.6.10.orig/security/dummy.c linux-2.6.10/security/dummy.c
+--- linux-2.6.10.orig/security/dummy.c	2004-12-24 21:34:26.000000000 +0000
++++ linux-2.6.10/security/dummy.c	2004-12-30 10:41:11.000000000 +0000
+@@ -74,12 +74,10 @@
+ 
+ static int dummy_capable (struct task_struct *tsk, int cap)
+ {
+-	if (cap_is_fs_cap (cap) ? tsk->fsuid == 0 : tsk->euid == 0)
+-		/* capability granted */
++	if (cap_raised (tsk->cap_effective, cap))
+ 		return 0;
+-
+-	/* capability denied */
+-	return -EPERM;
++	else
++		return -EPERM;
+ }
+ 
+ static int dummy_sysctl (ctl_table * table, int op)
+@@ -191,6 +189,10 @@
+ 
+ 	current->suid = current->euid = current->fsuid = bprm->e_uid;
+ 	current->sgid = current->egid = current->fsgid = bprm->e_gid;
++
++	dummy_capget(current, &current->cap_effective,
++	&current->cap_inheritable,
++	&current->cap_permitted);
+ }
+ 
+ static int dummy_bprm_set_security (struct linux_binprm *bprm)
+@@ -550,6 +552,9 @@
+ 
+ static int dummy_task_post_setuid (uid_t id0, uid_t id1, uid_t id2, int flags)
+ {
++	dummy_capget(current, &current->cap_effective,
++	&current->cap_inheritable,
++	&current->cap_permitted);
+ 	return 0;
+ }
+ 

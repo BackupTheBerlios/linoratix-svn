@@ -1,0 +1,26 @@
+#
+# package build script for libnewt
+#
+%author: jfried
+%package-group: dev-libs -
+%sub-group: newt -
+%required: ("libslang >=1.4.9")
+%build-required: ()
+%description: redhat's newt windowing toolkit development files
+%name: libnewt
+%version: 0.51.6
+%build: $DATA
+%sourcefile: newt-0.51.6.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make
+lip_install prefix=%install_dir/usr
+lip_ln libnewt.so.0.51.6 %install_dir/usr/lib/libnewt.so.51
+# -- execution of post-install-scritps
+__DATA__
+

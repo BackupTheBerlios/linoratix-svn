@@ -1,0 +1,44 @@
+--- fileutils-4.1/src/ls.c.restore	Thu Aug  9 14:22:54 2001
++++ fileutils-4.1/src/ls.c	Thu Aug  9 14:30:20 2001
+@@ -106,6 +106,7 @@
+ #include "system.h"
+ #include <fnmatch.h>
+ #include <termcap.h>
++#include <signal.h>
+ 
+ #include "argmatch.h"
+ #include "error.h"
+@@ -809,6 +810,21 @@
+    least one other command line argument.  */
+ static struct obstack subdired_obstack;
+ 
++/* Restore default colors on ^C and friends */
++void signal_handler(int sig);
++void signal_handler(int sig)
++{
++	if(print_with_color) {
++		put_indicator(&color_indicator[C_LEFT]);
++		put_indicator(&color_indicator[C_RIGHT]);
++	}
++	if(sig==SIGTERM)
++	       exit(143);
++	else if(sig==SIGKILL)
++		exit(137);
++	signal(sig, signal_handler);
++}
++
+ /* Save the current index on the specified obstack, OBS.  */
+ #define PUSH_CURRENT_DIRED_POS(obs)					\
+   do									\
+@@ -854,6 +870,11 @@
+   bindtextdomain (PACKAGE, LOCALEDIR);
+   textdomain (PACKAGE);
+ 
++  /* Make sure we leave the terminal with sane colors if we're killed */
++  signal(SIGTERM, signal_handler);
++  signal(SIGKILL, signal_handler);
++  signal(SIGSTOP, signal_handler);
++  
+   atexit (close_stdout);
+ 
+ #define N_ENTRIES(Array) (sizeof Array / sizeof *(Array))

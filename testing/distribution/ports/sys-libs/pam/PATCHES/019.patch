@@ -1,0 +1,104 @@
+o Preserve permissions on files when updating them.
+--- Linux-PAM-0.77/modules/pam_unix/pam_unix_passwd.c	2003-06-27 19:09:16.000000000 -0400
++++ Linux-PAM-0.77/modules/pam_unix/pam_unix_passwd.c	2003-06-27 19:17:35.000000000 -0400
+@@ -254,6 +254,7 @@
+     int oldmask;
+     int found = 0;
+     struct passwd *pwd = NULL;
++    struct stat st;
+ 
+     if (howmany < 0) {
+ 	return PAM_SUCCESS;
+@@ -276,8 +277,22 @@
+ 	return PAM_AUTHTOK_ERR;
+     }
+ 
+-    chown(OPW_TMPFILE, 0, 0);
+-    chmod(OPW_TMPFILE, 0600);
++    if (fstat(fileno(opwfile), &st) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
++
++    if (fchown(fileno(pwfile), st.st_uid, st.st_gid) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
++    if (fchmod(fileno(pwfile), st.st_mode) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
+ 
+     while (fgets(buf, 16380, opwfile)) {
+ 	if (!strncmp(buf, forwho, strlen(forwho))) {
+@@ -350,6 +365,7 @@
+     FILE *pwfile, *opwfile;
+     int err = 1;
+     int oldmask;
++    struct stat st;
+ 
+     oldmask = umask(077);
+     pwfile = fopen(PW_TMPFILE, "w");
+@@ -364,8 +380,23 @@
+ 	return PAM_AUTHTOK_ERR;
+     }
+ 
+-    chown(PW_TMPFILE, 0, 0);
+-    chmod(PW_TMPFILE, 0644);
++    if (fstat(fileno(opwfile), &st) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
++
++    if (fchown(fileno(pwfile), st.st_uid, st.st_gid) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
++    if (fchmod(fileno(pwfile), st.st_mode) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
++
+     tmpent = fgetpwent(opwfile);
+     while (tmpent) {
+ 	if (!strcmp(tmpent->pw_name, forwho)) {
+@@ -409,6 +440,7 @@
+     FILE *pwfile, *opwfile;
+     int err = 1;
+     int oldmask;
++    struct stat st;
+ 
+     spwdent = getspnam(forwho);
+     if (spwdent == NULL) {
+@@ -427,8 +459,23 @@
+ 	return PAM_AUTHTOK_ERR;
+     }
+ 
+-    chown(SH_TMPFILE, 0, 0);
+-    chmod(SH_TMPFILE, 0600);
++    if (fstat(fileno(opwfile), &st) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
++
++    if (fchown(fileno(pwfile), st.st_uid, st.st_gid) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
++    if (fchmod(fileno(pwfile), st.st_mode) == -1) {
++	fclose(opwfile);
++	fclose(pwfile);
++	return PAM_AUTHTOK_ERR;
++    }
++
+     stmpent = fgetspent(opwfile);
+     while (stmpent) {
+ 
