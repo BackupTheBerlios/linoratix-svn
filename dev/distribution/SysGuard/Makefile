@@ -15,3 +15,7 @@ distclean: clean backups
 backups:
 	rm *~
 
+install:
+	install libSysGuard.so /lib
+	install SysGuard.sh /sbin
+
