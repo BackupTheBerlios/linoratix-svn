@@ -1,0 +1,24 @@
+#
+# build script for sortversions
+#
+%author: jfried
+%package-group: dev-perl -
+%sub-group: sortversions -
+%required: ("libglibc >=2.3.4-r1", "perl >=5.8.6")
+%build-required: ()
+%description: A perl module for simple terminal control.
+%name: sortversions
+%version: 1.1
+%build: $DATA
+%sourcefile: SortVersions-1.1.tar.gz
+%source-url: ("http://search.cpan.org/CPAN/authors/id/K/KJ/KJALB")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+include perl_module_build.lif
+# prefix=%install_dir/usr libdir=%install_dir/usr/lib infodir=%install_dir/usr/share/info mandir=%install_dir/usr/share/man includedir=%install_dir/usr/include
+# -- execution of post-install-scritps
+__DATA__
+
