@@ -4,7 +4,7 @@
 %author: ogu
 %package-group: x11-base -
 %sub-group: fluxbox-devel -
-%required: ("libglibc >=2.3.3", "xorg >=6.8.2", "libfreetype2 >=2.1.9", "bash >=3.0")
+%required: ("libglibc >=2.3.3", "xorg >=6.8.2", "libfreetype2 >=2.1.9")
 %build-required: ()
 %description: A lightweight and highly-configurable window manager
 %name: fluxbox-devel
