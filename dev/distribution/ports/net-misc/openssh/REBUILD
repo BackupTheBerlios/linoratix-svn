@@ -1,0 +1,35 @@
+#
+# package build script for openssh
+#
+%author: jfried
+%package-group: net-misc -
+%sub-group: openssh -
+%required: ("libglibc >=2.3.4", "libopenssl >=0.9.7e")
+%build-required: ()
+%description: Port of OpenBSD's free SSH release
+%name: openssh
+%version: 3.9_p1
+%build: $DATA
+%sourcefile: openssh-3.9p1.tar.gz
+%source-url: ("ftp://ftp.de.openbsd.org/pub/unix/OpenBSD/OpenSSH/portable/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+lip_configure --prefix=/usr --sysconfdir=/etc/ssh --libexecdir=/usr/sbin --datadir=/usr/share/openssh --disable-suid-ssh --with-privsep-path=/var/empty --with-privsep-user=sshd --with-md5-passwords 
+
+lip_make
+lip_make install-files DESTDIR=%install_dir
+lip_chmod 600 %install_dir/etc/ssh/sshd_config
+
+lip_mkdir -p %install_dir/etc/pam.d
+lip_get_file ssh.pam %install_dir/etc/pam.d/ssh
+
+lip_mkdir %install_dir/etc/rc.d
+lip_get_file rc.sshd %install_dir/etc/rc.d
+
+# -- execution of post-install-scritps
+__DATA__
+

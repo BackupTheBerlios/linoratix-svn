@@ -1,0 +1,43 @@
+#
+# package build script for cracklib
+#
+%author: jfried
+%package-group: sys-libs -
+%sub-group: cracklib -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: Password Checking Library.
+%name: libcracklib
+%_name: cracklib
+%version: 2.7
+%build: $DATA
+%sourcefile: cracklib,2.7.tar.gz
+%source-url: ("http://www.crypticide.com/users/alecm/security/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+# some patches
+lip_patch -Np1 -i %patch_dir/%_name-%version-redhat.patch
+lip_patch -Np1 -i %patch_dir/%_name-%version-gentoo-new.diff
+lip_patch -Np1 -i %patch_dir/%_name-%version-static-lib.patch
+lip_patch -Np1 -i %patch_dir/%_name-%version-libdir.patch
+lip_patch -Np0 -i %patch_dir/%_name-%version-parallel-make.patch
+lip_patch -Np1 -i %patch_dir/%_name-%version-cross-compile.patch
+
+# set the correct dict path
+lip_sed -i -e 's|/usr/dict/words|/usr/share/dict/words|' util/create-cracklib-dict
+
+lip_make all
+
+# make patch
+lip_mkdir -p %install_dir/usr/{lib,sbin,include,bin}
+
+lip_install DESTDIR="%install_dir" install LIBDIR=/usr/lib
+
+
+# -- execution of post-install-scritps
+__DATA__
+

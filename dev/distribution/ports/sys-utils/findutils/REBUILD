@@ -17,10 +17,13 @@ __DATA__
 lip_extract %sourcefile
 # -- execution of pre-install-scripts
 lip_cd %compile_dir
+lip_sed -i '/^SUBDIRS/s/locate//' Makefile.in
+
 lip_configure --prefix=/usr --libexecdir=/usr/lib/locate --mandir=/usr/share/man --infodir=/usr/share/info
+
 lip_make
-lip_install DESTDIR=%install_dir
-# prefix=%install_dir/usr libexecdir=%install_dir/usr/lib/locate mandir=%install_dir/usr/share/man infodir=%install_dir/usr/share/info libdir=%install_dir/usr/lib
+# lip_install DESTDIR=%install_dir
+lip_install prefix=%install_dir/usr libexecdir=%install_dir/usr/lib/locate mandir=%install_dir/usr/share/man infodir=%install_dir/usr/share/info libdir=%install_dir/usr/lib
 # -- execution of post-install-scritps
 __DATA__
 

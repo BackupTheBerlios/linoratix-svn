@@ -1,0 +1,25 @@
+#
+# package build script for libtool
+#
+%author: jfried
+%package-group: dev-utils -
+%sub-group: libtool -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: A shared library tool for developers.
+%name: libtool
+%version: 1.5.10
+%build: $DATA
+%sourcefile: libtool-1.5.10.tar.gz
+%source-url: ("ftp://ftp.gnu.org/gnu/libtool/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr
+lip_make
+lip_install DESTDIR=%install_dir
+# -- execution of post-install-scritps
+__DATA__
+

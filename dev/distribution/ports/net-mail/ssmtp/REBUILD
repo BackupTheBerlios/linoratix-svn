@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-mail -
 %sub-group: ssmtp -
-%required: ("libglibc >=2.3.3", "libopenssl >=0.9.7c")
+%required: ("libglibc >=2.3.3", "libopenssl >=0.9.7e")
 %build-required: ()
 %description: A secure, effective and simple way of getting mail off a system to your mail hup.
 %name: ssmtp
@@ -21,7 +21,7 @@ lip_cd %compile_dir
 lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info
 lip_make
 lip_install prefix=%install_dir/usr libdir=%install_dir/usr/lib infodir=%install_dir/usr/share/info mandir=%install_dir/usr/share/man includedir=%install_dir/usr/include bindir=%install_dir/usr/bin etcdir=%install_dir/etc
-lip_ln -s ssmtp /usr/bin/sendmail
+lip_ln -s ssmtp %install_dir/usr/bin/sendmail
 # -- execution of post-install-scritps
 __DATA__
 
