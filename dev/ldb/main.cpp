@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <map>
+//#include <exception>
 
 #include "libldb.h"
 
@@ -11,6 +12,7 @@ int main(int argc, char **argv)
    try {
       if (argc != 2) 
          throw "usage: <binary> <driver.so>";
+//         throw std::exception("usage: <binaey> <driver.so>");
 
    	map <string, string> my_con, my_insert, my_set;
    	map <string, string> my_query;
@@ -48,11 +50,14 @@ int main(int argc, char **argv)
 	
    	datenbank->Insert(my_insert, my_set);
 
-   } catch (const char* e) {
+   } catch (std::exception& e) {
+      cout << "Exception: " << e.what() << endl;
+      return -1;
+    } catch (const char* e) {
       cout << "Exception: " << e << endl;
       return -1;
    } catch (...) {
-      cout << "Undefined Exception" << endl;
+      cout << "Exception: undefined" << endl;
       return -2;
    }
 

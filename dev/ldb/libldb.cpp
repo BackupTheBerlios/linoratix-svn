@@ -1,5 +1,6 @@
 #include <iostream>
 #include <dlfcn.h>
+//#include <exception>
 
 #include "libldb.h"
 
@@ -14,6 +15,7 @@ db::db(char* driver)
 	this->handle = dlopen(driver, RTLD_LAZY);
 	if(!this->handle)
       throw "kein Handle";
+//      throw std::exception("kein Handle");
 	
 	this->_connect = (connect_t) dlsym(handle, "l_connect");	
 	this->_select = (select_t) dlsym(handle, "l_select");
@@ -24,7 +26,8 @@ db::db(char* driver)
 	this->_next_record = (next_record_t) dlsym(handle, "l_next_record");
 	
 	if(! this->_is_driver()) // Seg Fault wenn es kein Treiber ist!
-      throw "dies ist kein treiber";
+      throw "Dies ist kein Treiber";
+//      throw std::exception("Dies ist kein Treiber");
 }
 
 db::~db()
