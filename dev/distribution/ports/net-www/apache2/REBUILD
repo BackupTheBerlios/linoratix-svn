@@ -1,0 +1,78 @@
+#
+# apache2 build file
+#
+%author: jfried
+%package-group: net-www -
+%sub-group: apache2 -
+%required: ("libdb4 >=4.2.52", "libgdbm >=1.8.3", "libopenssl >=0.9.7e")
+%build-required: ()
+%description:  The Apache package contains an open-source HTTP server. It is useful for creating local intranet web sites or running huge web serving operations.
+%name: apache2
+%version: 2.0.53
+%build: $DATA
+%sourcefile: httpd-2.0.53.tar.bz2
+%source-url: ("http://www.apache.org/dist/httpd/")
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+#lip_patch -Np1 -i %patch_dir/httpd-2.0.52-config-1.patch
+
+lip_sed -i -e 's:(" PLATFORM "):(Linoratix/Linux):g' server/core.c
+
+# gruppe und benutzer anlegen
+#lip_other groupadd apache
+#lip_other useradd -c "Apache Server" -d /dev/null -g apache -s /bin/false apache
+
+lip_configure --enable-mods-shared=all --prefix=/usr --sysconfdir=/etc/apache --sbindir=/usr/sbin --libexecdir=/usr/lib/apache --includedir=/usr/include/apache --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make
+lip_install DESTDIR=%install_dir
+
+# hostname
+lip_sed -i -e "s/#ServerName www.example.com:80/ServerName `hostname`.`dnsdomainname`:80/gm" %install_dir/etc/apache/httpd.conf
+
+# document root
+lip_sed -i -e "s:DocumentRoot \"/usr/htdocs\":DocumentRoot \"/var/www/htdocs\":gm" %install_dir/etc/apache/httpd.conf
+lip_mkdir %install_dir/var/www -p
+lip_sed -i -e "s:<Directory \"/usr/htdocs\">:<Directory \"/var/www/htdocs\">:gm" %install_dir/etc/apache/httpd.conf
+lip_mv %install_dir/usr/htdocs %install_dir/var/www
+
+# icons
+lip_sed -i -e "s:Alias /icons/ \"/usr/icons/\":Alias /icons/ \"/var/www/icons/\":gm" %install_dir/etc/apache/httpd.conf
+lip_sed -i -e "s:<Directory \"/usr/icons\">:<Directory \"/var/www/icons\">:gm" %install_dir/etc/apache/httpd.conf
+lip_mv %install_dir/usr/icons %install_dir/var/www
+
+# manuel
+lip_sed -i -e "s:/usr/manual:/var/www/manual:gm" %install_dir/etc/apache/httpd.conf
+lip_mv %install_dir/usr/manual %install_dir/var/www
+
+# cgi-bin
+lip_sed -i -e "s:/usr/cgi-bin:/var/www/cgi-bin:gm" %install_dir/etc/apache/httpd.conf
+lip_mv %install_dir/usr/cgi-bin %install_dir/var/www
+
+# error
+lip_sed -i -e "s:/usr/error:/var/www/error:gm" %install_dir/etc/apache/httpd.conf
+lip_mv %install_dir/usr/error %install_dir/var/www
+
+# sachen entfernen die man net braucht
+lip_rm -rf %install_dir/usr/build
+
+# user, group
+lip_sed -i -e "s:User nobody:User apache:gm" %install_dir/etc/apache/httpd.conf
+lip_sed -i -e "s:Group #-1:Group apache:gm" %install_dir/etc/apache/httpd.conf
+
+# serveradmin
+lip_sed -i -e "s:ServerAdmin you@example.com:ServerAdmin webmaster@`hostname`.`dnsdomainname`:gm" %install_dir/etc/apache/httpd.conf
+
+# logs
+lip_sed -i -e "s:logs/:/var/log/apache/:gm" %install_dir/etc/apache/httpd.conf
+lip_mkdir -p %install_dir/var/log/apache
+
+# chown
+lip_chown -R apache:apache %install_dir/var/www
+lip_chown -R apache:apache %install_dir/var/log/apache
+
+# -- execution of post-install-scripts
+__DATA__
