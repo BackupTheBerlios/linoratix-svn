@@ -1,0 +1,31 @@
+#
+#rebuild file for openldap
+#
+%author: ogu
+%package-group: net-utils -
+%sub-group: openldap -
+%required: ("libglibc >=2.3.3", "libdb4 >=4.2.52", "libopenssl >=0.9.7e", "tcp_wrappers >=7.6")
+%build-required: ()
+%description: LDAP Server
+%name: openldap
+%version: 2.2.23
+%build: $DATA
+%sourcefile: openldap-2.2.23.tgz
+%source-url: ("ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib
+lip_make
+lip_install DESTDIR=%install_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__
