@@ -162,8 +162,9 @@ sub read_spec_file
 		exit 2;
 	}
 
-	system("rm -rfv /var/cache/lip/mklip ");
-	system("rm -rfv /var/cache/lip/build/* ");
+	$self->message("Cleaning builddirectory...\n");
+	system("rm -rf /var/cache/lip/mklip ");
+	system("rm -rf /var/cache/lip/build/* ");
 	mkdir("/var/cache/lip/mklip", 700);
 	mkdir("/var/cache/lip/mklip/FILES", 700);
 	mkdir("/var/cache/lip/mklip/PATCHES", 700);
@@ -179,6 +180,28 @@ sub read_spec_file
 		}
 		eval("\@required = ".$build_script{"required"});
 	}
+
+	# source files
+	my @source_urls = ();
+
+	if($build_script{"sourcefiles"} ne "undef" || $build_script{"sourcefiles"} ne "")
+	{
+		eval("\@source_urls = ".$build_script{"sourcefiles"});
+	}
+	if($build_script{"sourcefile"} ne "undef" || $build_script{"sourcefile"} ne "")
+	{
+		push(@source_urls, $build_script{"sourcefile"});
+	}
+
+	unless(@source_urls)
+	{
+		$self->error("No sourcefile specified!");
+		exit 118;
+	}
+	if($source_urls[-1] eq "")
+	{
+		pop @source_urls;
+	}
 	# Download servers
 	if($build_script{"source-url"} ne "undef") {
 		unless($build_script{"source-url"} =~ m/^\(/) {
@@ -188,25 +211,41 @@ sub read_spec_file
 		eval("\@download_urls = ".$build_script{"source-url"});
 		my $success_dl = 0;
 		my $count_server = 0;
-		while($success_dl eq "0" or $count_server eq scalar(@download_urls)) {
-			unless(-f $ENV{"DISTFILE_PATH"}."/".$build_script{"sourcefile"}) {
-				system("/usr/bin/wget --passive-ftp -c -O " . $ENV{"DISTFILE_PATH"} . "/" . $build_script{"sourcefile"} . " " . $download_urls[$count_server] . "/" . $build_script{"sourcefile"});
-				if($? eq "0") {
+
+		# die verschiedenen dateien runterladen
+		# hier muess auh gekuckt werden, dass der success_dl richtig gesetzt und interpretiert wird...
+
+
+		foreach my $dl_file (@source_urls)
+		{
+			$success_dl = 0;
+			$count_server = 0;
+
+			# die verschieden server durchgehen
+			while($success_dl eq "0" or $count_server eq scalar(@download_urls)) 
+			{
+				unless(-f $ENV{"DISTFILE_PATH"}."/".$dl_file) 
+				{
+					system("/usr/bin/wget --passive-ftp -c -O " . $ENV{"DISTFILE_PATH"} . "/" . $dl_file . " " . $download_urls[$count_server] . "/" . $dl_file);
+					if($? eq "0") 
+					{
+						$success_dl = 1;
+						$count_server = 0;
+						last;
+					}
+				} else {
 					$success_dl = 1;
-					$count_server = 0;
 					last;
 				}
-			} else {
-				$success_dl = 1;
-				last;
+				$count_server++;
 			}
-			$count_server++;
 		}
 		if($success_dl ne "1") {
 			$self->error("Error downloading sourcefile!... abording...\n");
 			exit 3;
 		}
 	}
+
 
 	# REQUIRED for building
 	if($build_script{"build-required"} ne "undef") {
@@ -732,7 +771,7 @@ sub execute_build_script
 			}
 			close(FH);
 		}
-		
+
 		$zaehler++;
 	}
 
@@ -842,6 +881,57 @@ sub lip_extract
 		chomp($compile_dir);
 	}
 }
+
+
+sub lip_extract_all
+{
+	my $self = shift;
+	my $files = shift;
+	my @files;
+	eval("\@files = $files");
+	my $file;
+	my $packmode;
+	my @dir_1;
+	my %dir_1;
+	my @dir_2;
+	my %dir_2;
+
+	@dir_1 = `ls -1`;
+	$dir_1{$_} = "-" foreach(@dir_1);
+	
+	foreach $file (@files)
+	{
+		$file = $self->parse_parameter($file);
+		if(-f $ENV{"DISTFILE_PATH"} . "/" . $file) 
+		{
+			$file = $ENV{"DISTFILE_PATH"} . "/" . $file;
+		}
+
+		$packmode = "/bin/bunzip2" if($file =~ m/\.bz2$/);
+		$packmode = "/bin/tar xjf" if($file =~ m/\.tar\.bz2$/);
+		$packmode = "/bin/tar xf" if($file =~ m/\.tar$/);
+		$packmode = "/bin/tar xzf" if($file =~ m/\.tar\.gz$|\.tgz$/);
+		$packmode = "/usr/bin/unzip" if($file =~ m/\.zip$/);
+
+		$self->message("extracting $file\n");
+		system("$packmode $file ");
+		if($? ne "0") 
+		{
+			$self->error("error in function lip_extract_all, line ".$REBUILD_LINE);
+			exit 1;
+		}
+	}
+
+	@dir_2 = `ls -1`;
+	$dir_2{$_} = "-" foreach(@dir_2);
+	unless($compile_dir) {
+		foreach (keys %dir_2) {
+			$compile_dir = $_ unless exists $dir_1{$_};
+		}
+		chomp($compile_dir);
+	}
+}
+
 
 
 # rm
