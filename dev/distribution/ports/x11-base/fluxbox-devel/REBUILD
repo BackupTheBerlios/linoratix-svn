@@ -1,0 +1,32 @@
+#
+#rebuild file for fluxbox-devel
+#
+%author: ogu
+%package-group: x11-base -
+%sub-group: fluxbox-devel -
+%required: ("libglibc >=2.3.3", "xorg >=6.8.2", "libfreetype2 >=2.1.9", "gcc >=3.4.3", "bash >=3.0")
+%build-required: ()
+%description: A lightweight and highly-configurable window manager
+%name: fluxbox-devel
+%version: 0.9.12
+%build: $DATA
+%sourcefile: fluxbox-0.9.12.tar.gz
+%source-url: ("http://heanet.dl.sourceforge.net/sourceforge/fluxbox")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib
+lip_make
+lip_install DESTDIR=%install_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__
+
