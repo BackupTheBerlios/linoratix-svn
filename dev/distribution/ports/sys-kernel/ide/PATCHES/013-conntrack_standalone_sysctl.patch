@@ -1,0 +1,36 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/02 10:47:03-08:00 rusty@rustcorp.com.au 
+#   [PATCH] Fix cleanup path when sysctl registration fails
+#   
+#   nfsim gains sysctl support, and sure enough, --failtest uncovered an
+#   unregister when the registration had failed.
+#   
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# net/ipv4/netfilter/ip_conntrack_standalone.c
+#   2004/12/30 00:18:29-08:00 rusty@rustcorp.com.au +3 -1
+#   Fix cleanup path when sysctl registration fails
+# 
+diff -Nru a/net/ipv4/netfilter/ip_conntrack_standalone.c b/net/ipv4/netfilter/ip_conntrack_standalone.c
+--- a/net/ipv4/netfilter/ip_conntrack_standalone.c	2005-01-04 18:29:37 -08:00
++++ b/net/ipv4/netfilter/ip_conntrack_standalone.c	2005-01-04 18:29:37 -08:00
+@@ -791,7 +791,8 @@
+ 	ip_ct_sysctl_header = register_sysctl_table(ip_ct_net_table, 0);
+ 	if (ip_ct_sysctl_header == NULL) {
+ 		printk("ip_conntrack: can't register to sysctl.\n");
+-		goto cleanup;
++		ret = -ENOMEM;
++		goto cleanup_localinops;
+ 	}
+ #endif
+ 
+@@ -800,6 +801,7 @@
+  cleanup:
+ #ifdef CONFIG_SYSCTL
+  	unregister_sysctl_table(ip_ct_sysctl_header);
++ cleanup_localinops:
+ #endif
+ 	nf_unregister_hook(&ip_conntrack_local_in_ops);
+  cleanup_inoutandlocalops:

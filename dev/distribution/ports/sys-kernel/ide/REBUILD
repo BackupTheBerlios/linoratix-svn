@@ -17,11 +17,8 @@
 __DATA__
 lip_extract %sourcefile
 lip_cd %compile_dir
-# 001 und 002 ist selinux und bootsplash
-# lip_other for patch in %patch_dir/*.patch; do patch -Np1 -i $patch; done
-# -- execution of pre-install-scripts
-# lip_sed -e "s:EXTRAVERSION = -selinux1:EXTRAVERSION = -linoratix-ide:" Makefile > Makefile.p
-#lip_copy %compile_dir/Makefile.p %compile_dir/Makefile
+lip_other for x in %patch_dir/0*.patch; do patch -Np1 -i $x; done
+# lip_patch -Np1 -i %patch_dir/999-linux-2.6.10-security_fix-1.patch
 lip_make clean
 lip_get_file config %compile_dir/.config
 lip_make oldconfig

@@ -1,0 +1,29 @@
+#
+# build script for parted
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: parted -
+%required: ("libglibc >=2.3.3", "e2fsprogs >=1.35", "libncurses >=5.4", "libreadline >=4.3")
+%build-required: ()
+%description: Create, destroy, resize, check, copy partitions and file systems
+%name: parted
+%version: 1.6.21
+%build: $DATA
+%sourcefile: parted-1.6.21.tar.gz
+%source-url: ("http://ftp.gnu.org/gnu/parted/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_other aclocal
+lip_other libtoolize --copy --force
+lip_other automake
+lip_other autoconf
+lip_configure --prefix=/usr --with-readline --disable-Werror --mandir=/usr/share/man --infodir=/usr/share/info
+lip_make
+lip_install DESTDIR=%install_dir
+# -- execution of post-install-scritps
+__DATA__
+

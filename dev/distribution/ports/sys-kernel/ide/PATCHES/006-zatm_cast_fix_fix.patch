@@ -1,0 +1,42 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/29 10:40:39-08:00 viro@parcelfarce.linux.theplanet.co.uk 
+#   [PATCH] zatm fix
+#   
+#   Repairs the breakage introduced in gcc4 fixes.  Original had expanded
+#   to
+#   
+#   	((struct zatm_dev *)(dev)->dev_data) = zatm_dev;
+#   
+#   and that's what gcc4 had complained about (cast-as-lvalue).  Proper fix is,
+#   of course,
+#   
+#   	dev->dev_data = zatm_dev;
+#   
+#   What we have in 2.6.10 is
+#   
+#   	dev = (struct atm_dev *)zatm_dev;
+#   
+#   which doesn't cause complaints, but doesn't do anything good (leak + corruption
+#   at the very least).
+#   
+#   Signed-off-by: Al Viro <viro@parcelfarce.linux.theplanet.co.uk>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# drivers/atm/zatm.c
+#   2004/12/26 22:04:22-08:00 viro@parcelfarce.linux.theplanet.co.uk +1 -1
+#   zatm fix
+# 
+diff -Nru a/drivers/atm/zatm.c b/drivers/atm/zatm.c
+--- a/drivers/atm/zatm.c	2005-01-04 18:01:25 -08:00
++++ b/drivers/atm/zatm.c	2005-01-04 18:01:25 -08:00
+@@ -1605,7 +1605,7 @@
+ 		goto out_disable;
+ 
+ 	zatm_dev->pci_dev = pci_dev;
+-	dev = (struct atm_dev *)zatm_dev;
++	dev->dev_data = zatm_dev;
+ 	zatm_dev->copper = (int)ent->driver_data;
+ 	if ((ret = zatm_init(dev)) || (ret = zatm_start(dev)))
+ 		goto out_release;

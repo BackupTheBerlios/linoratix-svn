@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-boot -
 %sub-group: grub -
-%required: ("libglibc >=2.3.4")
+%required: ("libglibc >=2.3.4","diffutils >=2.8.1")
 %build-required: ()
 %description: The Grand Unified Bootloader
 %name: grub

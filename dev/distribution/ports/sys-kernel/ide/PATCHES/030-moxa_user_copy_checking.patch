@@ -1,0 +1,58 @@
+Revision: linux-drivers-char--moxa-overflow--0--patch-1
+Archive: dilinger@voxel.net--2005-public
+Creator: Andres Salomon <dilinger@voxel.net>
+Date: Fri Jan  7 18:05:38 EST 2005
+Standard-date: 2005-01-07 23:05:38 GMT
+Modified-files: moxa.c
+New-patches: dilinger@voxel.net--2005-public/linux-drivers-char--moxa-overflow--0--patch-1
+Summary: sanity check dltmp.len size before all copy_from_user() calls
+Keywords: 
+
+Make sure the length we're passing copy_from_user() is never negative or
+too large for moxaBuff.
+
+
+
+* modified files
+
+--- orig/drivers/char/moxa.c
++++ mod/drivers/char/moxa.c
+@@ -1666,7 +1666,7 @@
+ 
+ 	if(copy_from_user(&dltmp, argp, sizeof(struct dl_str)))
+ 		return -EFAULT;
+-	if(dltmp.cardno < 0 || dltmp.cardno >= MAX_BOARDS)
++	if(dltmp.cardno < 0 || dltmp.cardno >= MAX_BOARDS || dltmp.len < 0)
+ 		return -EINVAL;
+ 
+ 	switch(cmd)
+@@ -2775,6 +2775,8 @@
+ 	void __iomem *baseAddr;
+ 	int i;
+ 
++	if(len < 0 || len > sizeof(moxaBuff))
++		return -EINVAL;
+ 	if(copy_from_user(moxaBuff, tmp, len))
+ 		return -EFAULT;
+ 	baseAddr = moxaBaseAddr[cardno];
+@@ -2822,7 +2824,7 @@
+ 	void __iomem *baseAddr;
+ 	int i;
+ 
+-	if(len > sizeof(moxaBuff))
++	if(len < 0 || len > sizeof(moxaBuff))
+ 		return -EINVAL;
+ 	if(copy_from_user(moxaBuff, tmp, len))
+ 		return -EFAULT;
+@@ -2842,6 +2844,8 @@
+ 	void __iomem *baseAddr, *ofsAddr;
+ 	int retval, port, i;
+ 
++	if(len < 0 || len > sizeof(moxaBuff))
++		return -EINVAL;
+ 	if(copy_from_user(moxaBuff, tmp, len))
+ 		return -EFAULT;
+ 	baseAddr = moxaBaseAddr[cardno];
+
+
+
