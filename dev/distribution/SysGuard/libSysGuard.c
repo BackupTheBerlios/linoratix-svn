@@ -114,8 +114,9 @@ void _init(int argc, char *argv[])
 
 int unlink(const char *path) 
 {
-	int _return = 0;
+	int _return = 1;
 	char _action[401];
+	
 	_action[0] = '\0'; _action[400] = '\0';
 
 	snprintf(_action, 400, "%s unlink %s", getenv("SYSGUARD_ACTION"), rewrite(path, R_LINK));
@@ -136,4 +137,100 @@ int unlink(const char *path)
 	{
 		return -1;
 	}
+	
+	return -1;
 }
+
+int remove(const char *path) 
+{
+	char _action[401];
+	int _return = 1;
+	
+	_action[0] = '\0'; _action[400] = '\0';
+
+	snprintf(_action, 400, "%s remove %s", getenv("SYSGUARD_ACTION"), rewrite(path, R_LINK));
+
+
+	if(_action[0] == '/')
+	{
+		_return = system(_action);
+		if(_return == 0)
+		{
+			return _real_remove(path);
+		}
+		else
+		{
+			free(_action);
+			return -1;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+	
+	return -1;
+}
+
+int rename(const char *oldpath, const char *newpath) 
+{
+	char _action[401];
+	int _return = 1;
+	
+	_action[0] = '\0'; _action[400] = '\0';
+
+	snprintf(_action, 400, "%s rename %s %s", getenv("SYSGUARD_ACTION"), rewrite(oldpath, R_LINK), rewrite(newpath, R_FILE));
+
+
+	if(_action[0] == '/')
+	{
+		_return = system(_action);
+		if(_return == 0)
+		{
+			return _real_rename(oldpath, newpath);
+		}
+		else
+		{
+			free(_action);
+			return -1;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+	
+	return -1;
+}
+
+int rmdir(const char *path) 
+{
+	char _action[401];
+	int _return = 1;
+	
+	_action[0] = '\0'; _action[400] = '\0';
+
+	snprintf(_action, 400, "%s rmdir %s", getenv("SYSGUARD_ACTION"), rewrite(path, R_LINK));
+
+
+	if(_action[0] == '/')
+	{
+		_return = system(_action);
+		if(_return == 0)
+		{
+			return _real_rmdir(path);
+		}
+		else
+		{
+			free(_action);
+			return -1;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+	
+	return -1;
+}
+

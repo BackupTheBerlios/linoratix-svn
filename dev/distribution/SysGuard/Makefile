@@ -9,3 +9,9 @@ sysguard:
 
 clean:
 	rm *.so
+
+distclean: clean backups
+
+backups:
+	rm *~
+
