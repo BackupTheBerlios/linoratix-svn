@@ -95,13 +95,13 @@ bool create_remain_disk()
 	part = ped_partition_new (disk, part_type, fs_type, len_start, len_start + len_root);
 	ped_disk_add_partition (disk, part, constraint);
 	ped_partition_set_system (part, fs_type);
-	cout << "root:" << s2 << "5" << endl;
+	cout << "/:" << s2 << "5" << endl;
 	
 	// home
 	part = ped_partition_new (disk, part_type, fs_type, len_start + len_root, len_start + len_root + len_home);
 	ped_disk_add_partition (disk, part, constraint);
 	ped_partition_set_system (part, fs_type);
-	cout << "home:" << s2 << "6" << endl;
+	cout << "/home:" << s2 << "6" << endl;
 
 	// swap
 	part = ped_partition_new (disk, part_type, fs_type, len_start + len_root + len_home, dev_len-1);
@@ -180,19 +180,19 @@ bool create_one_disk()
 	part = ped_partition_new (disk, part_type, fs_type, 0, len_boot);
 	ped_disk_add_partition (disk, part, constraint);
 	ped_partition_set_system (part, fs_type);
-	cout << "boot:" << s2 << "1" << endl;
+	cout << "/boot:" << s2 << "1" << endl;
 	
 	// nun die root partitions
 	part = ped_partition_new (disk, part_type, fs_type, len_boot, len_boot + len_root);
 	ped_disk_add_partition (disk, part, constraint);
 	ped_partition_set_system (part, fs_type);
-	cout << "root:" << s2 << "2" << endl;
+	cout << "/:" << s2 << "2" << endl;
 	
 	// und die home
 	part = ped_partition_new (disk, part_type, fs_type, len_boot + len_root, len_boot + len_root + len_home);
 	ped_disk_add_partition (disk, part, constraint);
 	ped_partition_set_system (part, fs_type);
-	cout << "home:" << s2 << "3" << endl;
+	cout << "/home:" << s2 << "3" << endl;
 
 	// und die swap
 	part = ped_partition_new (disk, part_type, fs_type, len_boot + len_root + len_home, dev_len-1);

@@ -26,6 +26,25 @@ sub _()
 		"MSG_PARTITION_BY_HAND"				=> "Partitionen selber verwalten. (nur für Experten).",
 		"MSG_HOWTO_PARTITION"				=> "Wie soll partitioniert werden?",
 		"MSG_PARTITION_MODI"				=> "Art der Partitionierung",
+		"MSG_INIT_DISKS"					=> "Initialisiere Festplatten...",
+		"MSG_INIT_PARTITIONS"				=> "Initialisiere Partitionen...",
+		"MSG_READ_DISK_INFO"			=> "Lese Festplatteninformationen aus...",
+		"MSG_SEARCH_HARDWARE"			=> "Suche nach Plug'n'Play fähiger Hardware...",
+		"MSG_READ_TIMEZONE"				=> "Lese Zeitzonen...",
+		"MSG_SELECT_TIMEZONE"			=> "Bitte wählen Sie hier Ihre Zeitzone aus."
+										.   "\n\n"
+										.   "Das wird benötigt, dass Ihr Computer die richtige Uhrzeit anzeigt.",
+		"MSG_TIMEZONE"			=> "Zeitzone: ",
+		"MSG_REALLY_PARTITION"	=> "Wenn Sie jetzt fortfahren wird die Partitionstabelle Ihrer Festplatte\nverändert.\n\nBitte vergewissern Sie sich, dass Sie ein aktuelles Backup Ihrer Daten\nhaben.",
+		"MSG_FORMAT"			=> "Formatiere",
+		"MSG_THIS_MAY_TAKE_A_MINUTE"	=> "Bitte haben Sie etwas Geduld.",
+		"MSG_PART_DISK"				=> "Partitioniere Festplatte...",
+		"MSG_PART_FORMAT_BOOT"		=> "Formatiere /boot...",
+		"MSG_PART_FORMAT_ROOT"		=> "Formatiere /...",
+		"MSG_PART_FORMAT_HOME"		=> "Formatiere /home...",
+		"MSG_PART_FORMAT_SWAP"		=> "Formatiere swap...",
+		"MSG_PART_MOUNT"			=> "Mounte die Partitionen...",
+		"MSG_INSTALL_BASE_SYSTEM"	=> "Installiere das Basissystem.\n\nBitte haben Sie etwas Gedult.",
 		
 		"MNU_FILE"					=> "Datei",
 		
@@ -33,12 +52,18 @@ sub _()
 		"SCR_TARGET_DISK"				=> "Zeilfestplatte wählen",
 		"SCR_HOWTO_PARTITION"				=> "Wie soll partitioniert werden?",
 		"SCR_PARTITIONING"				=> "Partitionieren",
+		"SCR_TIMEZONE"					=> "Zeitzone",
+		"SCR_PREPARE_DISK"			=> "Bereite Festplatte vor.",
+		"SCR_INSTALL_BASE_SYSTEM"	=> "Basissystem installieren",
 		
 		"HLP_TARGET_DISK"				=> "Wählen Sie hier die Festplatte aus auf der Linoratix GNU/Linux installiert"
 								.  "\n"
 								.  "werden soll."
 								.  "\n\n"
 								.  "Danach können Sie die Partitierung bestimmen.",
+		
+		"BTN_CANCEL"			=> " < Abbrechen > ",
+		"BTN_NEXT"				=> " < Weiter > ",
 	);
 	return $texte{$_[0]};
 }
