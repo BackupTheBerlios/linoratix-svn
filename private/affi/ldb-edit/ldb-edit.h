@@ -1,11 +1,13 @@
-
-#ifndef __LDB-EDIT_H
-   #define __LDB-EDIT_H
+#ifndef __LDBEDIT_H
+   #define __LDBEDIT_H
 
    #include "libldb.h"
    #include <iostream>
    #include <exception>
 
    using namespace std;
+
+   #include <wx/wx.h>
+
 #endif
 

@@ -1,17 +1,15 @@
 all: binary
 
-	wxlibs=`wx-config --libs`
-	wxcxx=`wx-config --cxxflags`
-
 binary:
-	cp ../ldb/libldb.so ../ldb/sqlite-backend.so ../ldb/libldb.h .
-	g++ -o ldb-edit ldb-edit.cpp -L. -Wl,-R. -ldl -lldb ${wxlibs} ${wxcxx}
+	cp ../../../dev/ldb/libldb.so ../../../dev/ldb/sqlite-backend.so ../../../dev/ldb/libldb.h .
+	g++ -o MainFrame.o -c MainFrame.cpp `wxgtk-2.4-config --cxxflags`
+	g++ -o ldb-edit.o -c ldb-edit.cpp `wxgtk-2.4-config --cxxflags`
+	g++ -o ldb-edit ldb-edit.o MainFrame.o -L. -Wl,-R. -ldl -lldb `wxgtk-2.4-config --libs` `wxgtk-2.4-config --cxxflags`
 	
 clean:
-	rm libldb.so
-	rm sqlite-backend.so
 	rm libldb.h
 	rm *.so
+	rm *.o
 	rm ldb-edit
 	rm *~
 
