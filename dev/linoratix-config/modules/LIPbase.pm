@@ -14,7 +14,7 @@ use File::Basename;
 use File::Copy;
 use File::Find;
 use Storable;
-use LWP::Simple;
+### use LWP::Simple;
 
 use vars qw(@ISA @EXPORT $MOD_VERSION @COMPATIBLE);
 use Exporter;
@@ -102,14 +102,11 @@ sub update_server
 		$self->message("downloading cache file.\n");
 
 		if($proto eq "media" || $proto eq "file") {
-			my $_dl = get("$server/packages.cache");
-			open(TH, ">$prefix/tmp/lip-tmp.cache") or exit 1070;
-				print TH $_dl;
-			close(TH);
+			copy("$server/packages.cache", "$prefix/tmp/lip-tmp.cache");
 		} elsif($proto eq "http") {
-			system("wget -O /tmp/lip-tmp.cache $server/packages.cache");
+			system("wget -O $prefix/tmp/lip-tmp.cache $server/packages.cache");
 		} elsif($proto eq "ftp") {
-			system("wget --passive-ftp -O /tmp/lip.cache $server/package.cache");
+			system("wget --passive-ftp -O $prefix/tmp/lip.cache $server/package.cache");
 		}
 
 		if($proto eq "media") {
@@ -748,14 +745,11 @@ sub add_server
 #
 	$self->message("downloading cache file.\n");
 	if($proto eq "media" || $proto eq "file") {
-		my $_dl = get("$server/packages.cache");
-		open(TH, ">$prefix/tmp/lip-tmp.cache") or exit 1070;
-			print TH $_dl;
-		close(TH);
+		copy("$server/packages.cache", "$prefix/tmp/lip-tmp.cache");
 	} elsif($proto eq "http") {
-		system("wget -O /tmp/lip-tmp.cache $server/packages.cache");
+		system("wget -O $prefix/tmp/lip-tmp.cache $server/packages.cache");
 	} elsif($proto eq "ftp") {
-		system("wget --passive-ftp -O /tmp/lip.cache $server/package.cache");
+		system("wget --passive-ftp -O $prefix/tmp/lip.cache $server/package.cache");
 	}
 	if($proto eq "media") {
 		$server =~ s/^file:/media:/;
