@@ -15,6 +15,16 @@ linoratix-config:
 		runlevel einstellungen, was wird gestartet und so
 		motd
 		issue
+		systemzeit einstellen
+
+	user:
+		neu
+		benutzer anlegen
+		gruppen anlegen
+		
+	selinux:
+		selinux konfigurieren
+
 	LIPdev:
 		REBUILD datei so erweitern, das die REBUILD datei zum bauen eines Packetes ausreicht (like ebuild)
 
@@ -47,6 +57,12 @@ libgpm:
 
 shadow:
 	rebuild
+
+strace, ptrace:
+	neu
+
+ihrgendein suspend
+	software suspend2 z.b.
 
 
 
