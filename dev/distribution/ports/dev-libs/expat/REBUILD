@@ -1,0 +1,26 @@
+#
+# package build script for expat
+#
+%author: jfried
+%package-group: dev-libs -
+%sub-group: expat -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: Expat is a fast, non-validating, stream-oriented XML parsing library.
+%name: libexpat
+%version: 1.95.5
+%build: $DATA
+%sourcefile: expat-1.95.5.tar.gz
+%source-url: ("http://heanet.dl.sourceforge.net/sourceforge/expat/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man
+lip_make
+lip_install prefix=%install_dir/usr mandir=%man_dir infodir=%info_dir
+# -- execution of post-install-scritps 
+__DATA__
+
+
