@@ -1,0 +1,25 @@
+#
+# package build script for grep
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: grep -
+%required: ("libpcre >=4.5")
+%build-required: ("libpcre >=4.5")
+%description: GNU grep
+%name: grep
+%version: 2.5.1
+%build: $DATA
+%sourcefile: grep-2.5.1.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --with-included-regex --bindir=/bin
+lip_make
+lip_install prefix=%install_dir/usr bindir=%install_dir/usr/bin mandir=%install_dir/usr/share/man infodir=%install_dir/usr/share/info
+# -- execution of post-install-scritps
+__DATA__
+

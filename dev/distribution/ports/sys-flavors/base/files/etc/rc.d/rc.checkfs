@@ -1,0 +1,23 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+write_message "Checking filesystem..."
+/sbin/fsck -A -a -C > /dev/tty9 2> /dev/tty9
+check_success $?
+if [ $? -gt 1 ]; then
+   echo
+   echo "ERROR:"
+   echo "Your filesystem has been severely damaged. You can probably correct this"
+   echo "problem by running e2fsck manually (eg. with the -v and -y options). After"
+   echo "you logout, the system will reboot."
+   echo
+   PS1="(Repair filesystem)# "
+   export PS1
+   /sbin/sulogin
+   /bin/umount -a -r
+   /sbin/reboot -f
+fi
+
+

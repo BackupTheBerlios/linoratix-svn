@@ -1,0 +1,37 @@
+#!/bin/sh
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+### this would be a good spot for hdparm, because
+### the whole boot process will benefit from it!
+
+### And the console font as well:
+# echo "Setting console font..."
+# /usr/bin/setfont lat9u-12.psfu.g
+
+### mplayer likes this...
+# echo "Configuring RTC..."
+# echo 1024 > /proc/sys/dev/rtc/max-user-freq
+
+#/usr/sbin/syslogd
+#/usr/sbin/klogd -c3
+#/usr/sbin/metalog -B -c3
+#check_success $?
+
+for script in /etc/runlevels/boot/*
+do
+	$script start
+	set_progress
+done
+
+### Use modules? If yes, uncomment this:
+### You may find this useful when you have some (non-networking) daemons
+### and an extra .rc-file for them:
+# echo "Starting daemons..."
+# if [ -x /etc/rc.d/rc.daemons ]; then
+# 	/etc/rc.d/rc.daemons
+# fi
+
+echo $SP_PROGRESS > /tmp/sp_progress
+

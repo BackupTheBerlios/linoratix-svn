@@ -1,0 +1,24 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+function start()
+{
+	if [ -f "/tmp/random-seed" ]; then
+	  write_message "Initializing random number generator..."
+	  /bin/cat /tmp/random-seed >/dev/urandom 2> /dev/tty9
+	  check_success $?
+	  rm -f /tmp/random-seed > /dev/tty9 2> /dev/tty9
+	fi
+}
+
+function stop()
+{
+	write_message "Saving random seed to a temporary file..."
+	/bin/dd if=/dev/urandom of=/tmp/random-seed count=1 bs=512 2>/dev/null
+	check_success $?
+}
+
+$1
+

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+
+function start()
+{
+	write_message "Initializing swap partitions..."
+	/sbin/swapon -a > /dev/tty9 2> /dev/tty9
+	check_success $?
+}
+
+function stop()
+{
+	write_message "Deactivating swap partitions..."
+	/sbin/swapoff -a > /dev/tty9 2> /dev/tty9
+	check_success $?
+}
+
+
+$1
+

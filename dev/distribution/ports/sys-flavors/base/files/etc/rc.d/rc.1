@@ -1,0 +1,20 @@
+#!/bin/sh
+write_message "Unmounting remote filesystems..."
+/bin/umount -a -tnfs > /dev/tty9 2> /dev/tty9
+check_succes $?
+
+# insert a line for each network card you use here. This is an example for
+#  a single network card set-up (configured as eth0):
+#
+# echo "Bringing down network interface eth0..."
+# /sbin/ifconfig eth0 down
+
+write_message "Sending all processes the TERM signal..."
+/sbin/killall5 -15 > /dev/tty9 2> /dev/tty9
+check_success $?
+sleep 1
+
+
+write_message "Sending all processes the KILL signal..."
+/sbin/killall5 -9 > /dev/tty9 2> /dev/tty9
+check_success $?

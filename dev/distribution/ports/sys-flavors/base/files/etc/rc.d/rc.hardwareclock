@@ -1,0 +1,23 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+function start()
+{
+write_message "Setting system time from hardware clock..."
+/sbin/hwclock --hctosys --utc > /dev/tty9 2> /dev/tty9
+check_success $?
+}
+
+function stop()
+{
+write_message "Saving the system time to hardware clock..."
+/sbin/hwclock --systohc --utc > /dev/tty9 2> /dev/tty9
+check_success $?
+
+
+}
+
+$1
+

@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# hotplug This scripts starts hotpluggable subsystems.
+#
+# chkconfig: 2345 01 99
+# description:	Starts and stops each hotpluggable subsystem. \
+#		On startup, may simulate hotplug events for devices \
+#		that were present at boot time, before filesystems \
+#		(or other resources) used by hotplug agents were available.
+#
+# $Id: hotplug,v 1.3 2002/12/03 02:01:48 dbrownell Exp $
+#
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+source /etc/rc.d/functions
+
+
+case "$1" in
+    start)
+	write_message "Starting system log daemon..."
+	/usr/sbin/metalog -B -c3 > /dev/tty9 2> /dev/tty9
+	check_success $?
+	;;
+    stop)
+	write_message "Stopping system log daemon..."
+	killall /usr/sbin/metalog > /dev/tty9 2> /dev/tty9
+	check_success $?
+        ;;
+    restart)
+	$0 stop
+	$0 start
+	;;
+    *)
+	write_message $"Usage: $0 {start|stop|restart}" usage
+	exit 3
+	;;
+esac
+
+

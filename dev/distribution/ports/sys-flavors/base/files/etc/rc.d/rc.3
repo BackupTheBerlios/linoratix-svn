@@ -1,0 +1,69 @@
+#!/bin/sh
+# In this example, the network card is configured with 192.168.0.2 as ip
+#  address and a netmask of 255.255.255.0. This network card uses 192.168.0.1
+#  as the default gateway. This is the set up you would use if the box
+#  192.168.0.1 would be the gateway.
+
+source /etc/rc.d/functions
+
+### You may wish to add some commands changing sysctl states here, for example:
+# echo 1 > /proc/sys/net/ipv4/ip_forward	# enable IP forwarding
+# echo 1 > /proc/sys/net/ipv4/tcp_syncookies	# defend against SYN flood
+
+#echo "Setting up loopback networking..."
+#/sbin/ifconfig lo 127.0.0.1
+#/sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo
+
+# echo "Setting up eth0..."
+/etc/rc.d/rc.network
+
+#/sbin/ifconfig eth0 192.168.0.1 broadcast 192.168.0.255 netmask 255.255.255.0
+#/sbin/route add -net default gw 192.168.0.1 netmask 0.0.0.0
+
+write_message "Mounting remote filesystems..."
+/bin/mount -a -v -tnfs
+check_success $?
+
+### you can create additional scripts for specific (networking) tasks,
+### for example NFS, which needs a lot of daemons to work (see 3.2)
+### or your firewall script:
+
+# if [ -x /etc/rc.d/rc.firewall ]; then
+#	echo "Restoring firewall rules..."
+#	/etc/rc.d/rc.firewall
+# fi
+
+# if [ -x /etc/rc.d/rc.netdaemons ]; then
+#	echo "Starting network daemons..."
+#	/etc/rc.d/rc.netdaemons
+# fi
+
+
+if [ -x /etc/rc.d/rc.local ]; then
+	/etc/rc.d/rc.local
+fi
+
+write_message "Starting graphical login manager..."
+
+if [ -x /opt/kde/bin/kdm ]; then
+	/opt/kde/bin/kdm -nodaemon
+elif [ -x /usr/bin/gdm ]; then
+	/usr/bin/gdm -nodaemon
+elif [ -x /usr/X11R6/bin/xdm ]; then
+	/usr/X11R6/bin/xdm -nodaemon
+else
+	echo "You chose to start graphical login mode, but you don't have either KDM or"
+	echo "GDM or XDM installed. This script looks for these display managers in the"
+	echo "following locations:"
+	echo
+	echo "   KDM      /opt/kde/bin/kdm"
+	echo "   GDM      /usr/bin/gdm"
+	echo "   XDM      /usr/X11R6/bin/xdm"
+	echo
+	echo "This message will go away in 10 seconds, and after that you will be dropped"
+	echo "in runlevel 2."
+	sleep 10
+	/sbin/telinit 2 
+fi
+
+

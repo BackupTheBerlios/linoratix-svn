@@ -1,0 +1,10 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+write_message "Setting up domainname..."
+/bin/domainname `cat /etc/HOSTNAME |cut -d . -f2-` > /dev/tty9 2> /dev/tty9
+check_success $?
+
+

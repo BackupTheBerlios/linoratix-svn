@@ -1,0 +1,10 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+write_message "Unmounting local filesystems..."
+/bin/umount -a -tnonfs > /dev/tty9 2> /dev/tty9
+check_success $?
+
+

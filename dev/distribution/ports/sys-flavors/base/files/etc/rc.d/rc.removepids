@@ -1,0 +1,10 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+write_message "Removing stale PID files..."
+/bin/rm /var/run/*.pid > /dev/tty9 2> /dev/tty9
+/bin/rm /etc/dhcpc/*.pid > /dev/tty9 2> /dev/tty9
+
+

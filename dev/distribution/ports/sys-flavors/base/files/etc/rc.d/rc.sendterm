@@ -1,0 +1,11 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+write_message "Sending all processes the TERM signal..."
+/sbin/killall5 -15 > /dev/tty9 2> /dev/tty9
+check_success $?
+sleep 1
+
+

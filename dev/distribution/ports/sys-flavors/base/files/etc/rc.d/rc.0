@@ -1,0 +1,46 @@
+#!/bin/bash
+
+do_shutdown=yes
+
+chvt 1
+echo "silent" > /proc/splash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+if [ -f /tmp/sp_progress ]; then
+	rm /tmp/sp_progress
+fi
+	
+
+for script in /etc/runlevels/shutdown/*
+do
+	$script stop
+	set_progress
+done
+
+
+
+
+case "$0" in
+	*6)
+		/sbin/reboot -w
+	;;
+	
+	*0)
+		/sbin/halt -w
+	;;
+esac
+
+case "$0" in
+	*6)
+		write_message "Please stand by while rebooting..." warn
+		/sbin/reboot -d -f -i > /dev/tty9 2> /dev/tty9
+	;;
+	
+	*0)
+		write_message "Bye..." warn
+		/sbin/halt -d -f -p > /dev/tty9 2> /dev/tty9
+	;;
+esac
+

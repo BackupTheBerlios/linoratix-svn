@@ -1,0 +1,53 @@
+#!/bin/sh
+
+source /etc/rc.d/functions
+
+write_message "Setting up loopback networking..."
+/sbin/ifconfig lo 127.0.0.1 > /dev/tty9 2> /dev/tty9
+/sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo > /dev/tty9 2> /dev/tty9
+check_success $?
+
+for netdev in $(ls -v /etc/conf.d/net.*)
+do
+	source $netdev
+	write_message "Setting up ${netdev#*.*.}..."
+	if [ "$DHCP" = "yes" ]
+	then
+		if [ "$DHCP_HOSTNAME" != "" ]
+		then
+			DHCP_HOSTNAME="-h $DHCP_HOSTNAME"
+		fi
+		if [ "$DHCP_TIMEOUT" = "" ]
+		then
+			DHCP_TIMEOUT=10
+		fi
+
+		# setting up dhcp with dhcpcd
+		# later we will support more dhcp clients
+		if [ -x /sbin/dhcpcd ]
+		then
+			/sbin/dhcpcd -t $DHCP_TIMEOUT $DHCP_HOSTNAME ${netdev#*.*.} > /dev/tty9 2> /dev/tty9
+			check_success $?
+		else
+			check_success 1
+		fi
+		if [ "$?" != "0" -a -x /etc/rc.d/rc.network-fallback ]
+		then
+			/etc/rc.d/rc.network-fallback ${netdev#*.*.}
+		fi
+	else
+		/sbin/ifconfig ${netdev#*.*.} up $IP netmask $NETMASK > /dev/tty9 2> /dev/tty9
+		/sbin/ifconfig ${netdev#*.*.} > /dev/null 2> /dev/null
+		check_success $?
+	fi
+
+	# setting gateway
+	if [ "$GATEWAY" != "" ]
+	then
+		write_message "Setting default gateway..."
+		/sbin/route add -net default gw $GATEWAY dev ${netdev#*.*.} \
+			netmask 0.0.0.0 metric 1 > /dev/tty9 2> /dev/tty9
+		check_success $?
+	fi
+done
+
