@@ -129,7 +129,6 @@ int unlink(const char *path)
 		}
 		else
 		{
-			free(_action);
 			return -1;
 		}
 	}
@@ -160,7 +159,6 @@ int remove(const char *path)
 		}
 		else
 		{
-			free(_action);
 			return -1;
 		}
 	}
@@ -191,7 +189,6 @@ int rename(const char *oldpath, const char *newpath)
 		}
 		else
 		{
-			free(_action);
 			return -1;
 		}
 	}
@@ -222,7 +219,6 @@ int rmdir(const char *path)
 		}
 		else
 		{
-			free(_action);
 			return -1;
 		}
 	}
