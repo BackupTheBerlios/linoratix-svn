@@ -1,39 +1,59 @@
+nach prioritaet geordnet
+
+
 fuer 1.0
-----------
-
-bash:
-	rebuild
-
-mc:
-	rebuild
-
-vim: 
-	update
-
-gpm:
-	neu
+--------------------------------------------------
 
 linoratix-config:
 	LIP:
-		suchen von dateien in welchem packet
 		updaten von packeten
 		wenn installation abbricht, weitermachen (wie: apt-get -f install)
+		installation von quellcode packeten, diese dann prozessoroptimiert compilieren => wir brauchen so wie gentoo eine datei in der man die prozessoroptimierung einstellen kann.
+		bei entfernen von packeten muss drauf geachtet werden ob ein anderes packete diese datei auch installiert hat
+		
 	base:
 		runlevel einstellungen, was wird gestartet und so
 		motd
 		issue
+	LIPdev:
+		REBUILD datei so erweitern, das die REBUILD datei zum bauen eines Packetes ausreicht (like ebuild)
 
-hotplug:
-	wenn neue hardware eingesteckt wird, diese automatisch einrichten -> wenn usb stick fstab bearbeiten
+	ACPI:
+		neu
+		einstellungen was passiert bei powerbutton und so
 
+		
 CQL:
 	linoratix-config auf CQL portieren
 
 acpid:
-	neu
 	reaktion auf events wie powerbutton
+	init scripte
+
 
 installation:
 	richtigen kernel installieren, -> fuer ide, ide-kernel, scsi-kernel, usb-kernel fuer usb stick installationen
 	framebuffer mit bootsplash
+	prozessortyp erkennung, das die besten optimierungsflags eingestellt werden koennen (fuer selbst gebaute packete)
+
+
+
+packete:
+	aufteilung in base, devel, multimedia
+
+
+libgpm:
+	rebuild (no command not found.. ??)
+
+shadow:
+	rebuild
+
+
+
+
+fuer 2.0
+--------------------------------------------------
+hotplug:
+	wenn neue hardware eingesteckt wird, diese automatisch einrichten -> wenn usb stick fstab bearbeiten
+
 
