@@ -1,0 +1,48 @@
+#
+# package build script for gcc
+#
+%author: jfried
+%package-group: dev-util -
+%sub-group: gcc3 -
+%required: ("binutils >=2.14")
+%build-required: ("binutils >=2.14")
+%description: The GNU Compiler.
+%name: gcc3
+%version: 3.4.3
+%build: $DATA
+%sourcefile: gcc-core-3.4.3.tar.bz2
+%source-url: ("http://download.linoratix.com/distfiles")
+%g__: gcc-g++-3.4.3.tar.bz2
+%g77: gcc-g77-3.4.3.tar.bz2
+%java: gcc-java-3.4.3.tar.bz2
+%objc: gcc-objc-3.4.3.tar.bz2
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+#lip_get_file %g__ /var/cache/lip/build/%g__
+lip_extract %g__
+#lip_get_file %g77 /var/cache/lip/build/%g77
+lip_extract %g77
+#lip_get_file %java /var/cache/lip/build/%java
+lip_extract %java
+#lip_get_file %objc /var/cache/lip/build/%objc
+lip_extract %objc
+lip_cd %compile_dir
+# failed lip_patch %patch_dir/gcc-%version-altivec-fix.patch
+#lip_patch -Np1 -i %patch_dir/gcc-%version-linoratix.patch
+lip_patch -Np1 -i %patch_dir/gcc-%version-linkonce-1.patch
+lip_patch -Np1 -i %patch_dir/gcc-%version-no_fixincludes-1.patch
+lip_mkdir %compile_dir/gcc-build-l
+lip_cd %compile_dir/gcc-build-l
+-CONFIGURE_PATH=%compile_dir
+lip_configure --prefix=/usr --enable-shared --enable-threads=posix --enable-__cxa_atexit --enable-clocale=gnu --enable-languages=c,c++,java,objc,f77 --mandir=%man_dir --infodir=%info_dir
+lip_make
+lip_install DESTDIR=%install_dir
+lip_mkdir %install_dir/lib
+lip_ln -svf ../usr/bin/cpp %install_dir/lib
+lip_ln -svf gcc %install_dir/usr/bin/cc
+# -- execution of post-install-scritps
+__DATA__
+
+

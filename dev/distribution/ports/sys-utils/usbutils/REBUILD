@@ -1,0 +1,25 @@
+#
+# package build script for usbutils
+#
+%author: jfried
+%package-group: sys-utils -
+%sub-group: usbutils -
+%required: ("libglibc >=2.3.4")
+%build-required: ("libglibc >=2.3.4")
+%description: USB enumeration utilities.
+%name: usbutils
+%version: 0.11
+%build: $DATA
+%sourcefile: usbutils-0.11.tar.gz
+%source-url: ("http://download.linoratix.com/distfiles")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_configure --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man --datadir=/usr/share/misc
+lip_make
+lip_install DESTDIR=%install_dir
+# -- execution of post-install-scritps
+__DATA__
+
