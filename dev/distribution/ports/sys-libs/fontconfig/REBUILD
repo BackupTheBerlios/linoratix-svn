@@ -1,0 +1,34 @@
+#
+#rebuild file for fontconfig	
+#
+%author: ogu	
+%package-group: sys-libs -
+%sub-group: fontconfig -
+%required: ("libglibc >=2.3.3", "libexpat >=1.95.6", "libfreetype2 >=2.1.9", "zlib >=1.2.1" )
+%build-required: ()
+%description: A library for configuring and customizing font access
+%name: fontconfig
+%version: 2.2.3
+%build: $DATA
+%sourcefile: fontconfig-2.2.3.tar.gz
+%source-url: ("http://www.fontconfig.org/release")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_configure --prefix=/usr --mandir=/usr/share/man 
+--infodir=/usr/share/info --libexecdir=/usr/lib
+lip_make
+lip_install DESTDIR=%install_dir
+# DEST_DIR=%install_dir includedir=%install_dir libdir=%lib_dir bindir=%bin_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, 
+#DESTDIR=%install_dir includedir=/usr/include/fontconfig
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__
