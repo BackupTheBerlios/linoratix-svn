@@ -9,7 +9,8 @@ echo -e "${GREEN}>>${NORMAL} Checking dependencies..."
 function check_mysql()
 {
 	echo -n "Checking for mysql...		"
-	if [ -f /usr/lib/libmysqlclient.so.14 ];
+#	if [ -f /usr/lib/libmysqlclient.so.14 ];
+   if [ -f /usr/lib/libmysqlclient.so.12 ];
 	then
 		echo -e "[  ${GREEN}OK${NORMAL}  ]"
 	else

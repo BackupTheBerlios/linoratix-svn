@@ -18,7 +18,7 @@ int main()
 	my_con["unix_socket"] = NULL;
 	my_con["client_flag"] = NULL; */
 	
-	db *datenbank = new db("./mysql.so");
+	db *datenbank = new db("./mysql-backend.so");
 	
 
 	
