@@ -4,7 +4,7 @@
 %author: ogu	
 %package-group: dev-libs -
 %sub-group: xml2 -
-%required: ("libglibc >=2.3.3", "zlib >=1.2.1", "bash >=3.0")
+%required: ("libglibc >=2.3.3", "libzlib >=1.2.1")
 %build-required: ()
 %description: XML parsing library, v2
 %name: libxml2
