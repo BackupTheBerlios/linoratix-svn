@@ -66,6 +66,78 @@ shadow:
 strace, ptrace:
 	neu
 
+gnupg:
+	neu
+
+Dateisysteme:
+	reiserfs
+	xfs
+	jfs vielleicht?
+
+joe:
+	neu
+
+libusb:
+	neu
+
+bc:
+	neu
+
+hdparm:
+	neu
+
+ruby:
+	neu
+
+nasm:
+	rebuild
+
+libgnet:
+	neu
+
+Links:
+	neu
+
+ncftp:
+	neu
+rsync:
+	neu
+
+traceroute:
+	neu
+
+libvorbis:
+	neu
+
+libogg:
+	neu
+
+libao:
+	neu
+
+libmpeg3:
+	neu
+
+libmad:
+	neu
+
+libFAME:
+	neu
+
+libdvdcss:
+	neu
+
+libdvdread:
+	neu
+
+liba52:
+	neu
+
+libmikmod:
+	neu
+
+
+
 ihrgendein suspend
 	software suspend2 z.b.
 
