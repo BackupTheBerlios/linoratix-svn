@@ -293,8 +293,26 @@ extern "C" int l_column_names(map<string, string>& out) {
 
 
 extern "C" int l_insert(string& table, map<string, string>& insert, string& sql_query) {
-      
+   sql_query = "INSERT INTO " + table + " (";
+   string tmp = " values (";
+  
+   map<string, string>::iterator iter = insert.begin(), end = insert.end();
    
+   while(iter != end) { // foreach like
+      sql_query += iter->first;
+      tmp += string("'") + sqlite3_mprintf("%q", iter->second.c_str()) + "'";
+      iter++;
+      if(iter != end) {
+         sql_query += ", ";
+         tmp += ", ";
+      }
+   } 
+
+   sql_query += ")";
+   tmp += ")";
+
+   sql_query += tmp + ";"; // complete statement 
+   DEBUG(sql_query)
    return true;
 }
 

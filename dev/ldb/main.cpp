@@ -54,12 +54,12 @@ int main(int argc, char **argv)
          string tmp;
          
          if(columns > 0) {
-            // Feldnamen
+            // column name 
             for(int x = 0; x < columns; x++) {
                tmp = x;
                cout << "| " << setw(11) << titles[tmp] << " | ";
             } cout << endl;
-            // Feldinhalte
+            // column value
             while(datenbank->NextRecord()) {
                for(int x = 0; x < columns; x++) {
                   tmp = x;
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
                } cout << endl;
       	   }
          }
-      } // ich bin König der Treppen :P
+      } // iam the stairs king :-P 
 
       string table = "test";
       my_set["zahl"] = "123";

@@ -92,7 +92,8 @@ int db::Insert(string& table, map<string,string>& set)
 	string sql_query;
 	
 	if(this->_insert(table, set, sql_query))
-      return this->query(sql_query);
+      if(this->query(sql_query))
+         return this->_execute();
    else
       return -1;  // failure
 }
