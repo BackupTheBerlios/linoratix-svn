@@ -1,0 +1,32 @@
+#
+#rebuild file for php5
+#
+%author: ogu
+%package-group: net-www -
+%sub-group: php5 -
+%required: ("libglibc >=2.3.3", "libopenssl >=0.9.7e", "libjpeg >=6b", "libfreetype2 >=2.1.9", "libpng >=1.2.6", "pam >=0.77", "gdbm 
+>=1.8.3", "libxml2 >=2.6.17", "openldap >=2.2.23", "ncurses >=5.4", "curl >=7.12.1")
+%build-required: ()
+%description: A high-level scripting language
+%name: php
+%version: 5.0.3
+%build: $DATA
+%sourcefile: php-5.0.3.tar.gz
+%source-url: ("http://www.php.net/distributions")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib
+lip_make
+lip_install DESTDIR=%install_dir
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__
