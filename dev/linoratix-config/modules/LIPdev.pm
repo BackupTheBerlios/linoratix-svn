@@ -14,6 +14,8 @@ use File::Basename;
 use File::Copy;
 use Storable;
 
+use Linoratix::LIPbase;
+
 use vars qw(@ISA @EXPORT $MOD_VERSION @COMPATIBLE);
 use Exporter;
 $MOD_VERSION = "0.0.10";
@@ -27,6 +29,8 @@ our $files;
 our $REBUILD_LINE=0;
 our $CONFIGURE_PATH=".";
 
+our $base;
+our $bin_dir;
 our $installed_packages;
 
 # namespcae 300 - 399
@@ -39,6 +43,8 @@ sub new
 
 	bless($self, $class);
 
+	$base = Linoratix::LIPbase->new();
+
 	$self->message("Retrieving information for installed packages...   ");
 	if(-f $self->param("prefix") . "/var/cache/lip/installed_packages.cache") {
 		$installed_packages = retrieve($self->param("prefix") . "/var/cache/lip/installed_packages.cache");
@@ -47,10 +53,13 @@ sub new
 
 	$self->{"path"} = getcwd();
 
+	$bin_dir = $self->param("bin-dir");
+
 	$self->help() if($self->option("help"));
 	$self->read_spec_file() if($self->param("rebuild"));
-	$self->create_bin_lip() if($self->param("bin-dir"));
+#	$self->create_bin_lip() if($self->param("bin-dir"));
 	$self->build_package_cache() if($self->param("rebuild-package-cache"));
+	$self->read_spec_file($ENV{"PORTS_PATH"}."/".$self->param("ports-build")) if($self->param("ports-build"));
 
 	return $self;
 }
@@ -61,7 +70,8 @@ sub help
 	
 	$self->message("linoratix-config $BASE_VERSION\n");
 	$self->message("	module: LIPdev $MOD_VERSION\n\n");
-	print "	--rebuild [package] [--spec [buildfile]]	rebuild a Linoratix package from source\n";
+	print "	--rebuild <package> [--spec buildfile]	rebuild a Linoratix package from source\n";
+	print "	--ports-build <package>				rebuild from ports\n";
 	print "	--rebuild-package-cache [path]			rebuilds package cache for path\n";
 	print "	--help						display help message\n\n";
 }
@@ -96,10 +106,10 @@ sub read_spec_file
 	my @download_urls;
 
 	
-	$self->warning(">>> see tty8 for output and tty9 for errors\n\n");
+	$self->warning("see tty8 for output and tty9 for errors\n\n");
 
 	# clean up build dir
-	$self->message(">>> Cleaning up build directory\n");
+	$self->message("Cleaning up build directory\n");
 	system("rm -rfv /var/cache/lip/mklip ");
 	system("rm -rfv /var/cache/lip/build/* ");
 
@@ -117,9 +127,18 @@ sub read_spec_file
 
 
 
-	$self->message(">>> Building " . basename($rebuild_file) . "\n");
-
-	chomp(my $build_script = `$exec_string 2> /dev/tty9`);
+	if($rebuild_file) {
+		$self->message("Building ports: $rebuild_file\n");
+		open(FH, "<$rebuild_file/REBUILD") or exit 281;
+		{
+			local $/;
+			$build_script = <FH>;
+		}
+		close(FH);
+	} else {
+		$self->message("Building " . basename($rebuild_file) . "\n");
+		chomp(my $build_script = `$exec_string 2> /dev/tty9`);
+	}
 
 	#
 	# %(.*?): var-name
@@ -167,11 +186,14 @@ sub read_spec_file
 		eval("\@download_urls = ".$build_script{"source-url"});
 		my $success_dl = 0;
 		my $count_server = 0;
-		while($success_dl eq "0" or $count_server eq scalar()) {
-			system("/usr/bin/wget --passive-ftp -c -O " . $ENV{"DISTFILE_PATH"} . "/" . $download_urls[$count_server] . "/" . $build_script{"sourcefile"});
+		while($success_dl eq "0" or $count_server eq scalar(@download_urls)) {
+			system("/usr/bin/wget --passive-ftp -c -O " . $ENV{"DISTFILE_PATH"} . "/" . $build_script{"sourcefile"} . " " . $download_urls[$count_server] . "/" . $build_script{"sourcefile"});
 			if($? eq "0") {
 				$success_dl = 1;
+				$count_server = 0;
+				last;
 			}
+			$count_server++;
 		}
 		if($success_dl ne "1") {
 			$self->error("Error downloading sourcefile!... abording...\n");
@@ -226,18 +248,23 @@ sub read_spec_file
 
 	mkdir("/var/cache/lip/build") unless(-d "/var/cache/lip/build");
 	chdir("/var/cache/lip/build");
-	system("tar --get " . $build_script{"sourcefile"} . " -v -z -f " . $self->param("rebuild") . " ");
-	system("tar --get PATCHES -v -z -f " . $rebuild_file . " ");
+
+	unless($rebuild_file) {
+		system("tar --get " . $build_script{"sourcefile"} . " -v -z -f " . $self->param("rebuild") . " ");
+		system("tar --get PATCHES -v -z -f " . $rebuild_file . " ");
+	} else {
+		system("/bin/cp -R " . $ENV{"PORTS_PATH"} . "/" . $self->param("ports-build") . "/PATCHES /var/cache/lip/build") if(-d $ENV{"PORTS_PATH"} . "/" . $self->param("ports-build") . "/PATCHES" );
+	}
 	
 	$self->execute_build_script(%build_script);
 
-#	$self->message(">>> Searching new files\n");
+#	$self->message("Searching new files\n");
 	# find what is newer than $start_date;
 use File::Find;
 #	find(\&changes, "/boot", "/bin", "/lib", "/etc", "/sbin", "/usr", "/lib", "/var", "/opt");
 
 	# Creating Package
-	$self->message(">>> Creating binary package\n");
+	$self->message("Creating binary package\n");
 	if($self->param("bin-dir")) {
 		chdir($self->param("bin-dir"));
 	} else {
@@ -251,7 +278,7 @@ use File::Find;
 	# makeing tar archive from FILES/*
 	$ENV{"LD_PRELOAD"} = $oldpreload;
 
-	$self->message(">>> Creating MANIFEST\n");
+	$self->message("Creating MANIFEST\n");
 	# Create MANIFEST file
 	find(\&manifest, "/var/cache/lip/mklip");
 
@@ -271,7 +298,7 @@ use File::Find;
 	mkdir("/usr/src/LIPS/BUILDS") unless(-d "/usr/src/LIPS/BUILDS");
 	system("tar cvzf /usr/src/LIPS/BUILDS/" . $build_script{"name"} . "-" . $build_script{"version"} . ".lip * ");
 
-	$self->message(">>> done.\n\n");
+	$self->message("done.\n\n");
 }
 
 sub create_bin_lip
@@ -279,17 +306,17 @@ sub create_bin_lip
 	my $self = shift;
 
 use File::Find;
-	$self->message(">>> Creating MANIFEST\n");
+	$self->message("Creating MANIFEST\n");
 	# Create MANIFEST file
 	find(\&manifest, $self->param("bin-dir"));
 
 	# Creating Package
-	$self->message(">>> Creating binary package\n");
+	$self->message("Creating binary package\n");
 	chdir($self->param("bin-dir"));
 
 	system("tar cvzf /usr/src/LIPS/BUILDS/" . $self->param("bin-name") . "-" . $self->param("bin-version") . ".lip * ");
 
-	$self->message(">>> done.\n\n");
+	$self->message("done.\n\n");
 }
 
 sub execute_build_script
@@ -382,7 +409,7 @@ sub lip_extract
 
 	@dir_1 = `ls -1`;
 	$dir_1{$_} = "-" foreach(@dir_1);
-	$self->message(">>> extracting $file\n");
+	$self->message("extracting $file\n");
 	system("$packmode $file ");
 	if($? ne "0") {
 		$self->error("error in function lip_extract, line ".$REBUILD_LINE);
@@ -468,7 +495,7 @@ sub lip_configure
 	
 	$parameter = $self->parse_parameter($parameter);
 
-	$self->message(">>> configure $parameter\n");
+	$self->message("configure $parameter\n");
 	system("$CONFIGURE_PATH/configure $parameter ");
 	if($? ne "0") {
 		$self->error("error in function lip_configure, line ".$REBUILD_LINE);
@@ -484,7 +511,7 @@ sub lip_make
 
 	$parameter = $self->parse_parameter($parameter);
 
-	$self->message(">>> make $parameter\n");
+	$self->message("make $parameter\n");
 	if($parameter eq "oldconfig" or $parameter eq "config") {
 		system("yes |make $parameter ");
 	} else {
@@ -504,7 +531,7 @@ sub lip_install
 
 	$parameter = $self->parse_parameter($parameter);
 
-	$self->message(">>> make install $parameter\n");
+	$self->message("make install $parameter\n");
 	system("make install $parameter ");
 	if($? ne "0") {
 		$self->error("error in function lip_install, line ".$REBUILD_LINE);
@@ -703,15 +730,12 @@ sub lip_sed
 
 sub manifest
 {
-	my $self = shift;
 	my $file = getcwd() . "/$_";
 	my @stat = stat($file);
-	my $p    = $self->param("bin-dir");
-	chomp($p);
 
-	if($self->param("bin-dir")) {
-		$file =~ s/^$p//;
-		open(FH, ">>".$self->param("bin-dir")."/MANIFEST") or exit 340;
+	if($bin_dir) {
+		$file =~ s/^$bin_dir//;
+		open(FH, ">>".$bin_dir."/MANIFEST") or exit 340;
 	} else {
 		$file =~ s:^/var/cache/lip/mklip::;
 		open(FH, ">>/var/cache/lip/mklip/MANIFEST") or exit 341;
