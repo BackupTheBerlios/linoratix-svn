@@ -280,6 +280,7 @@ sub read_spec_file
 			$self->message("$n, $v already installed. skipping...\n");
 		}
 		$self->get_installed_packages();
+		$base->read_installed_packages();
 	}
 
 	my $count = 0;

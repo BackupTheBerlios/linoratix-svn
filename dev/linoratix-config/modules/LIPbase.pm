@@ -15,6 +15,7 @@ use File::Copy;
 use File::Find;
 use Storable;
 ### use LWP::Simple;
+use Sort::Versions;
 
 use vars qw(@ISA @EXPORT $MOD_VERSION @COMPATIBLE);
 use Exporter;
@@ -497,7 +498,7 @@ sub check_if_package_is_required_by_installed_package
 							# kucken ob provides da ist
 							if($p eq $do_provide || $p eq $package) {
 								if($self->_check_version($v, $ip->{$group}->{$subgroup}->{$pkg})) {
-									push(@needed, $pkg);
+									push(@needed, [$pkg, $ver]);
 								}
 							}
 						}
@@ -539,7 +540,7 @@ sub _find_in_i_package_dep_by_name
 							$ip->{$group}->{$subgroup}->{$pkg}
 						)
 					) {
-						print "package: $package\n";
+						print "\npackage: $package\n";
 						print "do_provide: $do_provide\n";
 						print "provide: $provide\n";
 						print "pkg: $pkg\n";
@@ -556,6 +557,61 @@ sub _find_in_i_package_dep_by_name
 	return 0;
 }
 
+# 1. benoetigte version (>=2.3.4)
+# 2. verfuegbare version
+sub _check_version_vs_version
+{
+	my $self = shift;
+	my $want_version = shift;
+	my $avail_version = shift;
+
+	my $vergleich;
+	my $eval;
+
+	if($want_version =~ m/^\>=/) {
+		$want_version =~ s/^\>=//;
+		$vergleich = 1;
+	} elsif($want_version =~ m/^\<=/) {
+		$want_version =~ s/^\<=//;
+		$vergleich = 2;
+	} elsif($want_version =~ m/^\>/) {
+		$want_version =~ s/^\>/gt \"/;
+		$eval = $want_version
+	} elsif($want_version =~ m/^\</) {
+		$want_version =~ s/^\</lt \"/;
+		$eval = $want_version;
+	} elsif($want_version =~ m/^=/) {
+		$want_version =~ s/^=/eq \"/;
+		$eval = $want_version;
+	}
+
+	if($vergleich == 1) {
+		print "      check_v_vs_v: $want_version => $avail_version\n";
+		my $c = $self->_compare_versions($want_version, $avail_version);
+		print "      erg: $c\n";	
+		if($c == 1 || $c == 2)
+		{
+			return $avail_version;
+		}
+		else
+		{
+			return 0;
+		}
+		
+	} elsif($vergleich == 2) {
+		my $c = $self->_compare_versions($avail_version, $want_version);
+		if($c == 1 || $c == 2)
+		{
+			return $avail_version;
+		}
+		else
+		{
+			return 0;
+		}
+	} else {
+		return $avail_version;
+	}
+}
 # uebergabe wenn ich das richtig sehe
 # version die das zu installierende packet verlangt und dann das 
 # installierte packet
@@ -590,7 +646,6 @@ sub _check_version
 	foreach (keys %{$package}) {
 		if($vergleich == 1) {
 			my $c = $self->_compare_versions($version, $_);
-			
 			#$eval = "if(\"$_\" gt \"$version\" || \"$_\" eq \"$version\") { 
 			#		return \"$_\"; 
 			#	}";
@@ -639,6 +694,49 @@ sub _check_version
 #  wenn sie gleich sind kommt 2 zurueck
 #  wenn zahl 1 groesser ist kommt 0
 sub _compare_versions
+{
+	my $self = shift;
+	my $v1 = shift;
+	my $v2 = shift;
+
+
+#	my @vall = ();
+#	$v1 = "2.3.4-r1";
+#	$v2 = "2.3.4";
+
+#	push(@vall, $v1, $v2);
+
+#	my @erg = sort versions @vall;
+	#print "\n#########\nv1: $v1, v2: $v2\n" . Dumper(@erg) . "\n##########\n";
+
+	print "         compare: $v1 => $v2\n";
+#	print "            1: $erg[0]\n";
+#	print "            2: $erg[1]\n";
+#	print Dumper(@erg);
+
+	return 1 if versioncmp($v2, $v1)==1;
+	return 2 if versioncmp($v2, $v1)==0;
+	return 0 if versioncmp($v2, $v1)==-1;
+
+#	return 2 if($v1 eq $v2);
+#	return 1 if($erg[1] eq $v2);
+#	return 0 if($erg[1] eq $v1);
+}
+
+sub blub
+{
+	my $self = shift;
+	my $v1 = "2.3.4-r1";
+	my $v2 = "2.3.4";
+
+	print "groesser" if versioncmp($v1, $v2)==1;
+}
+
+# wenn die 2. "zahl" groesser ist kommt 1 zurueck
+#  wenn sie gleich sind kommt 2 zurueck
+#  wenn zahl 1 groesser ist kommt 0
+# @deprecated! das machen wir jetzt mit Sort::Versions...
+sub _compare_versions__deprecated
 {
 	my $self = shift;
 	my $i = 0;
@@ -725,7 +823,7 @@ sub _check_if_installed
 	my $package = shift;
 	my $version = shift;
 
-	return $self->_find_in_i_package_dep_by_name($package, $version);
+	return $self->_find_in_i_package_by_name_and_version($package, $version);
 }
 
 
@@ -752,6 +850,36 @@ sub _find_in_i_package_by_name
 			foreach my $pkg ( keys %{$ip->{$group}->{$subgroup}}) {
 				if($pkg eq $name) {
 					return "$group/$subgroup/$pkg";
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+sub _find_in_i_package_by_name_and_version
+{
+	my $self = shift;
+	my $name = shift;
+	my $version = shift;
+
+	my $ip = $installed_packages;
+
+	foreach my $group (keys %{$ip}) {
+		next if($group eq "__global-information");
+		foreach my $subgroup (keys %{$ip->{$group}}) {
+			foreach my $pkg ( keys %{$ip->{$group}->{$subgroup}}) {
+				if($pkg eq $name) {
+					foreach my $ver ( keys %{$ip->{$group}->{$subgroup}->{$name}} )
+					{
+						if($ver eq $version)
+						{
+							return "$group/$subgroup/$pkg/$ver";
+						}
+					}
+
+					return 0;
 				}
 			}
 		}
@@ -1012,6 +1140,64 @@ sub get_all_deps
 	my %uniq = ();
 	@ret_p = grep { ! $uniq{$_} ++ } @ret_p;
 	return @ret_p;
+}
+
+# alle packete (installierten) zurückliefern die $package benoetigen
+sub get_all_i_packages_that_require
+{
+	my $self = shift;
+	my $package = shift;
+
+	my @req_p = ();
+	
+	my $ip = $installed_packages;
+
+	foreach my $group (keys %{$ip}) {
+		next if($group eq "__global-information");
+		foreach my $subgroup (keys %{$ip->{$group}}) {
+			foreach my $pkg ( keys %{$ip->{$group}->{$subgroup}}) {
+				foreach my $ver ( keys %{$ip->{$group}->{$subgroup}->{$pkg}} )
+				{ 
+					foreach my $req ( @{$ip->{$group}->{$subgroup}->{$pkg}->{$ver}->{"required"}} )
+					{
+						if($req =~ m/$package/i)
+						{
+							push(@req_p, "$group/$subgroup/$pkg/$ver");
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return @req_p;
+}
+
+# kucken ob $package mit einer der versionen laufen kann
+sub check_needs
+{
+	my $self = shift;
+	my $package = shift;
+	my @deinstall_package_versions = @_;
+
+	my @s_v;
+	
+	my ($p_name, $p_ver) = split(/ /, $package);
+	
+	my @versions_ok = ();
+	
+	# todo: muss noch sortiert werden die deinstall_packag... 1,2,3,4
+	foreach my $version (@deinstall_package_versions)
+	{
+		print "   checke: $p_ver => $version\n";
+		my $check_ret = $self->_check_version_vs_version($p_ver, $version);
+		if($check_ret)
+		{
+			push(@versions_ok, $check_ret);
+		}
+		@s_v = sort versions @versions_ok;
+	}
+	return $s_v[-1];
 }
 
 1;
