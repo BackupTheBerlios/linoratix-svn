@@ -4,8 +4,8 @@
 %author: jfried
 %package-group: sys-kernel -
 %sub-group: headers -
-%required: ("libglibc >=2.3.4")
-%build-required: ("tar >=1.13.93", "bzip2 >=1.0.2")
+%required: ()
+%build-required: ()
 %description: The Linoratix GNU/Linux Kernel Headerfiles
 %name: headers
 %version: 2.6.10
