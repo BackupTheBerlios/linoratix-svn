@@ -1,0 +1,26 @@
+#!/bin/bash
+
+source /etc/rc.d/functions
+source /etc/conf.d/rc.conf
+
+
+DEV_PATH=$1
+
+# alle ports top-verzeichnisse durchlaufen
+for d in $(find . -type d -maxdepth 1 |grep -v .svn)
+do
+	if [ ! "$d" = "." ]; then
+		# jetzt die unterverzeichnisse
+		cd $d
+
+		for port in $(find . -type d -maxdepth 1 |grep -v .svn)
+		do
+			if [ ! "$port" = "." ]; then
+				# hier abgleichen
+				rsync -v --exclude=.svn --update --recursive $DEV_PATH/${d/\.\//}/${port/\.\//} .
+			fi
+		done
+
+		cd ..
+	fi
+done
