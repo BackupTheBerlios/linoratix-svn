@@ -16,7 +16,7 @@
 __DATA__
 lip_extract %sourcefile
 # -- execution of pre-install-scripts
-lip_cd %compile_dir 
+lip_cd %compile_dir
 lip_other ./install.sh %install_dir
 __DATA__
 

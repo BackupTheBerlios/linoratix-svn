@@ -29,6 +29,8 @@ lip_other automake -a
 lip_other autoconf
 
 lip_other LIBS="-lpam -lpam_misc -lselinux" ./configure --with-libpam --disable-desrpc --with-libcrypt --with-libcrack --enable-shared --libdir=/usrlib
+lip_other echo '#define HAVE_SETLOCALE 1' >> config.h
+lip_sed -i '/extern char/d' libmisc/xmalloc.c
 lip_make
 lip_install DESTDIR=%install_dir
 
