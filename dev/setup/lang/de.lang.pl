@@ -71,6 +71,15 @@ sub _()
 										. "müssen Sie einen Bootmanager installieren",
 		"MSG_SCANNING_PARTITIONS"		=> "Scanne Partitionen...",
 		"MSG_INSTALL_GRUB"			=> "Installiere GRUB",
+		"MSG_CONFIGURING_SYSTEM"		=> "Konfiguriere das System...",
+		"MSG_SETTING_TIMEZONE_TO"		=> "Setzte Zeitzone auf: ",
+		"MSG_HOSTNAME_INFO"				=> "Geben Sie hier den Computernamen ein."
+										.  "\n"
+										.  "Dieser Name identifiziert Ihren Computer im Netzwerk."
+										.  "\n\n"
+										.  "Beispiel: linux.home.net",
+		"MSG_HOSTNAME"						=> "Computername",
+		"MSG_SETTING_HOSTNAME"			=> "Setzte Computername auf: "
 		
 		"MNU_FILE"					=> "Datei",
 		
@@ -83,6 +92,8 @@ sub _()
 		"SCR_INSTALL_BASE_SYSTEM"	=> "Basissystem installieren",
 		"SCR_CHOOSE_CATEGORIE"		=> "Kategorieen auswählen",
 		"SCR_BOOTMANAGER"			=> "Bootmanager",
+		"SCR_CONFIGURE_SYSTEM"		=> "Konfiguriere System",
+		"SCR_HOSTNAME"				=> "Computername",
 		
 		"HLP_TARGET_DISK"				=> "Wählen Sie hier die Festplatte aus auf der Linoratix GNU/Linux installiert"
 								.  "\n"

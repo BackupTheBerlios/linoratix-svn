@@ -63,7 +63,7 @@ else
 $cui->setprogress(1, _("MSG_INIT_DISKS"));
 
 # Wizard index
-my $current_step = 1;
+my $current_step = 11;
 
 # partitionsinfos
 my $partinfo = {};
@@ -104,6 +104,8 @@ my %screens = (
 	'8' => _("SCR_INSTALL_BASE_SYSTEM"),
 	'9' => _("SCR_BOOTMANAGER"),
 	'10'=> _("SCR_BOOTMANAGER"),
+	'11'=> _("SCR_HOSTNAME"),
+	'99'=> _("SCR_CONFIGURE_SYSTEM"),
 );
 
 # bring all screens to the right 
@@ -649,7 +651,7 @@ $cui->set_binding( \&goto_prev_step, "\cP" );
 
 # load 1st window
 
-dialog_1();
+dialog_11();
 $w{$current_step}->focus();
 
 
@@ -1186,6 +1188,8 @@ sub dialog_8
 		-text => _("MSG_INSTALL_BASE_SYSTEM")
 	);
 	
+	$w{8}->draw;	
+	
 	my $all_pkgs_count = 0;
 	my @all_pkgs = @{$setup_config->{"categories"}};
 	#print STDERR Dumper(@{$setup_config->{"categories"}});
@@ -1365,7 +1369,8 @@ sub dialog_10
 		while(<MTAB>)
 		{
 			chomp;
-			$_ =~ s:/mnt/root::;
+			$_ =~ s:/mnt/root/:/:;
+			$_ =~ s:/mnt/root:/:;
 			print FH $_."\n";
 		}
 	close(MTAB);
@@ -1373,9 +1378,75 @@ sub dialog_10
 	
 	system("chroot /mnt/root /sbin/ldconfig");
 	system("ln -sf /boot /mnt/root/boot");
-	system("chroot /mnt/root /usr/sbin/grub-install hd0 > /dev/null");
+	system("chroot /mnt/root /usr/sbin/grub-install --no-floppy hd0 > /dev/null");
 	
 	$w{10}->getobj('mbr_progress')->pos($_p);
 	$w{10}->getobj('mbr_label')->text(_("MSG_INSTALL_GRUB"));
 	$w{10}->draw;
+}
+
+sub dialog_11
+{
+	$w{11}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_HOSTNAME_INFO")
+	);	
+	
+	$w{11}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_HOSTNAME") . ":",
+    	-y => 6, # ==
+    	-x => 5,	
+	);	
+
+	$w{11}->add(
+    	"txt_hostname", 'TextEntry',
+    	-sbborder => 1,
+    	-y => 6, # ==
+    	-x => 21,
+	    -width => 40,
+	);
+}
+
+sub dialog_99
+{
+	$w{99}->add
+	(
+		undef, 'Label',
+		-text => _("MSG_CONFIGURING_SYSTEM")
+	);
+	
+	$w{99}->add
+	(
+		'conf_label', 'Label',
+		-text => _("MSG_SETTING_TIMEZONE_TO") . $setup_config->{"timezone"},
+		-x => 2,
+		-y => 5, #==
+		-width => 70,
+	);
+		
+	$w{99}->add(
+		'conf_progress', 'Progressbar',
+		-x => 2,
+		-y => 10, #==
+		-max => 4,
+		-width => 70,
+	);
+	
+	$w{99}->getobj('conf_progress')->pos(1);
+	$w{99}->draw;
+	system("ln -sf /usr/share/zoneinfo/" . $setup_config->{"zoneinfo"} . " /mnt/root/etc/localtime");
+	
+	$w{99}->getobj('conf_label')->text(_("MSG_SETTING_HOSTNAME") . $w{11}->getobj("txt_hostname"));
+	$w{99}->getobj('conf_progress')->pos(2);
+	my $hostname = $w{11}->getobj("txt_hostname");
+	my @hostname_parts = split(/\.(.*)/, $hostname);
+	open(FH, ">/mnt/root/etc/HOSTNAME");
+		print FH $hostname_parts[0] . "\n";
+	close(FH);
+	open(FH, ">/mnt/root/etc/dnsdomainname");
+		print FH $hostname_parts[1] . "\n";
+	close(FH);
 }
