@@ -86,8 +86,9 @@ sub install_by_version
 	my $iversion;
 
 	$FROM_DB=1;
-
-	if(!$base->find_in_i_package_dep_by_name($pkg, $version)) {
+	# ??? if(!$base->find_in_i_package_dep_by_name($pkg, $version)) {
+	my $x = $base->find_package_dep_by_name($pkg, $version);
+	if($x) {
 		my $p = $base->get_package_by_path($package);
 		$iversion = $base->_check_version($version, $p);
 		$self->_install($package, $iversion);
@@ -177,6 +178,9 @@ sub _install
 	{
 		$package_to_install->{$version}->{"__server"} = "file://".dirname($bin_pkg);
 		$package_to_install->{$version}->{"rebuild-url"} = undef;
+		my $_prov = `/bin/tar xzOf $bin_pkg PROVIDES`;
+		chomp($_prov);
+		$package_to_install->{$version}->{"provides"} = $_prov;
 		my @_req = `/bin/tar xzOf $bin_pkg REQUIRED`;
 		chomp(@_req);
 		$package_to_install->{$version}->{"required"} = \@_req;
@@ -195,6 +199,7 @@ sub _install
 	}
 
 	my $deps = $package_to_install->{$version}->{"required"};
+
 	foreach my $d (@{$deps}) {
 		chomp($d);
 		my($n,$v) = split(/ /, $d);

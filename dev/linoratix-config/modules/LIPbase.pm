@@ -44,7 +44,7 @@ sub new
 	$pkgdb = $self->load_caches();
 	$installed_packages = $self->read_installed_packages();
 	if($self->param("plugin") eq "LIPbase") {
-		$self->add_server() if($self->param("add-server"));
+		$self->add_server($self->param("add-server")) if($self->param("add-server"));
 		$self->check_dep_int() if($self->option("check-deps"));
 		$self->update_server() if($self->option("update-server"));
 		$self->help() if($self->option("help"));
@@ -325,11 +325,25 @@ sub _find_package_by_name
 {
 	my $self = shift;
 	my $name = shift;
-
+	my $provide = "";
+	my $do_provide = "";
+	
 	foreach my $group (keys %{$pkgdb}) {
 		foreach my $subgroup (keys %{$pkgdb->{$group}}) {
 			foreach my $pkg ( keys %{$pkgdb->{$group}->{$subgroup}}) {
-				if($pkg eq $name) {
+				foreach my $ver (keys %{$pkgdb->{$group}->{$subgroup}->{$pkg}}) {
+					$provide = $pkgdb->{"$group"}->{"$subgroup"}->{"$pkg"}->{"$ver"}->{"provides"};
+					last;
+				}
+				if($provide)
+				{
+					$do_provide = $provide;
+				}
+				else
+				{
+					$do_provide = $pkg;
+				}
+				if($do_provide eq $name) {
 					return "$group/$subgroup/$pkg";
 				}
 			}
@@ -464,7 +478,6 @@ sub check_if_package_is_required_by_installed_package
 						foreach my $d(@{$deps}) {
 							my($p,$v) = split(/ /, $d);
 							# kucken ob provides da ist
-#							print ">>$d = $package"."\n";
 							if($p eq $do_provide) {
 								if($self->_check_version($v, $ip->{$group}->{$subgroup}->{$pkg})) {
 									push(@needed, $pkg);
@@ -504,7 +517,8 @@ sub _find_in_i_package_dep_by_name
 					{
 						$do_provide = $package;
 					}
-					if($pkg eq $do_provide && $self->_check_version($version,
+					
+					if($package eq $do_provide && $self->_check_version($version,
 							$ip->{$group}->{$subgroup}->{$pkg}
 						)
 					) {
@@ -549,23 +563,107 @@ sub _check_version
 
 	foreach (keys %{$package}) {
 		if($vergleich == 1) {
-			$eval = "if(\"$_\" gt \"$version\" || \"$_\" eq \"$version\") { 
-					return \"$_\"; 
-				}";
+			my $c = $self->_compare_versions($version, $_);
+			
+			#$eval = "if(\"$_\" gt \"$version\" || \"$_\" eq \"$version\") { 
+			#		return \"$_\"; 
+			#	}";
+
+			if($c == 1 || $c == 2)
+			{
+				return $_;
+			}
+			else
+			{
+				return 0;
+			}
+			
 		} elsif($vergleich == 2) {
-			$eval = "if(\"$_\" lt \"$version\" || \"$_\" eq \"$version\") { 
-					return \"$_\"; 
-				}";
+			my $c = $self->_compare_versions($_, $version);
+			if($c == 1 || $c == 2)
+			{
+				return $_;
+			}
+			else
+			{
+				return 0;
+			}
+	
+		#	$eval = "if(\"$_\" lt \"$version\" || \"$_\" eq \"$version\") { 
+		#			return \"$_\"; 
+		#		}";
 		} else {
-			$eval = "if(\"$_\" $eval\") {
+			$eval = "if(\"$_\" eq $eval\") {
 					return \"$_\";
 				}";
 		}
+
+		if($version eq "2.6.7")
+		{
+			print "!!! $eval\n";
+		}
 		if($r = eval($eval)) {
+			if($version eq "2.6.7")
+			{
+				print ">>> $r\n";
+			}
 			return $r;
+		}
+		else
+		{
+			print "hmm...\n @!\n $!\n";
 		}
 	}
 	return 0;
+}
+
+# wenn die 2. "zahl" groesser ist kommt 1 zurueck
+#  wenn sie gleich sind kommt 2 zurueck
+#  wenn zahl 1 groesser ist kommt 0
+sub _compare_versions
+{
+	my $self = shift;
+	my $i = 0;
+	my $v1 = shift;
+	my $v2 = shift;
+
+	if($v1 eq $v2) { return 2; }
+
+	$v1 =~ s/-(.*?)$//;
+	my $m1 = $1;
+	$v2 =~ s/-(.*?)$//;
+	my $m2 = $1;
+
+	my @d1_maj = split(/\./, $v1);
+	my @d2_maj = split(/\./, $v2);
+
+	my $iterations_maj = 0;
+
+	if(scalar(@d1_maj) >= scalar(@d2_maj))
+	{
+		$iterations_maj = scalar(@d1_maj);
+	}
+	else
+	{
+		$iterations_maj = scalar(@d2_maj);
+	}
+
+
+	for($i = 0; $i < $iterations_maj; $i++)
+	{
+		if($d1_maj[$i] < $d2_maj[$i])
+		{
+			return 1;
+		}
+	}
+
+	if(unpack("C", $m1) < unpack("C", $m2))
+	{
+		return 1;
+	}
+
+	return 0;
+
 }
 
 sub get_deps_from_pkg
@@ -723,6 +821,9 @@ sub add_server
 	my $tempdb;
 	my $server2;
 	my ($dummy2, $dummy3);
+	
+	$self->message("Adding server: $server\n");
+	
 	$server = $self->param("add-server") unless($server); 
 	my  ($proto, $dummy) = split("://", $server);
 	$server2 = $server;
@@ -745,7 +846,9 @@ sub add_server
 #
 	$self->message("downloading cache file.\n");
 	if($proto eq "media" || $proto eq "file") {
-		copy("$server/packages.cache", "$prefix/tmp/lip-tmp.cache");
+		my $_server = $server;
+		$_server =~ s#^media://|file://##;
+		copy("$_server/packages.cache", "$prefix/tmp/lip-tmp.cache");
 	} elsif($proto eq "http") {
 		system("wget -O $prefix/tmp/lip-tmp.cache $server/packages.cache");
 	} elsif($proto eq "ftp") {
@@ -782,7 +885,7 @@ sub add_server
 		$self->_save_config_file();
 		# server cache datei speichern
 		$dummy2 =~ s:/:_:g;
-		mkdir("$prefix/var/cache/lip/ldb/".$proto."__".$dummy2);
+		mkdir("$prefix/var/cache/lip/ldb/".$proto."__".$dummy2) or die($!);
 		if(-f "$prefix/var/cache/lip/ldb/".$proto."__".$dummy2."/packages.cache") {
 			unlink("$prefix/var/cache/lip/ldb/".$proto."__".$dummy2."/packages.cache");
 		}

@@ -53,6 +53,7 @@ sub new
 
 	$self->help() if($self->option("help"));
 	$self->read_spec_file() if($self->param("rebuild"));
+	$self->mkcd() if ($self->param("mkcd"));
 #	$self->create_bin_lip() if($self->param("bin-dir"));
 	$self->build_package_cache() if($self->param("rebuild-package-cache"));
 	$self->read_spec_file($ENV{"PORTS_PATH"}."/".$self->param("ports-build")) if($self->param("ports-build"));
@@ -78,8 +79,9 @@ sub help
 	$self->message("linoratix-config $BASE_VERSION\n");
 	$self->message("	module: LIPdev $MOD_VERSION\n\n");
 	print "	--rebuild <package> [--spec buildfile]	rebuild a Linoratix package from source\n";
-	print "	--ports-build <package> [--install [--fake]]		rebuild from ports\n";
+	print "	--ports-build <package> [--install [--fake]]	rebuild from ports\n";
 	print "	--rebuild-package-cache [path]			rebuilds package cache for path\n";
+	print "	--mkcd <path> --from-ports <package>				creates an installation cd\n";
 	print "	--help						display help message\n\n";
 }
 
@@ -160,6 +162,15 @@ sub read_spec_file
 		exit 2;
 	}
 
+	system("rm -rfv /var/cache/lip/mklip ");
+	system("rm -rfv /var/cache/lip/build/* ");
+	mkdir("/var/cache/lip/mklip", 700);
+	mkdir("/var/cache/lip/mklip/FILES", 700);
+	mkdir("/var/cache/lip/mklip/PATCHES", 700);
+	mkdir("/var/cache/lip/mklip/SCRIPTS", 700);
+
+
+
 	# REQUIRED
 	if($build_script{"required"} ne "undef") {
 		unless($build_script{"required"} =~ m/^\(/) {
@@ -167,11 +178,7 @@ sub read_spec_file
 			exit 2;
 		}
 		eval("\@required = ".$build_script{"required"});
-		open(FH, ">/var/cache/lip/mklip/REQUIRED") or exit 300;
-		print FH join("\n", @required);
-		close(FH);
 	}
-
 	# Download servers
 	if($build_script{"source-url"} ne "undef") {
 		unless($build_script{"source-url"} =~ m/^\(/) {
@@ -200,6 +207,7 @@ sub read_spec_file
 			exit 3;
 		}
 	}
+
 	# REQUIRED for building
 	if($build_script{"build-required"} ne "undef") {
 		unless($build_script{"build-required"} =~ m/^\(/) {
@@ -234,7 +242,9 @@ sub read_spec_file
 		}
 		$self->get_installed_packages();
 	}
+
 	my $count = 0;	
+	my @orig_required = @required;
 	foreach my $del (@required)
 	{
 		foreach my $todel (@build_required)
@@ -270,30 +280,26 @@ sub read_spec_file
 				{
 					system("linoratix-config --plugin LIPdev --ports-build $package_path --install");
 				}
+				$self->get_installed_packages();
 			} else {
 				$self->message("$n, $v already installed. skipping...\n");
 			}
-			$self->get_installed_packages();
 		}
 	}
-
-	system("rm -rfv /var/cache/lip/mklip ");
-	system("rm -rfv /var/cache/lip/build/* ");
-
 	# make temp dir for lip creation
-	mkdir("/var/cache/lip/mklip", 700);
-	mkdir("/var/cache/lip/mklip/FILES", 700);
-	mkdir("/var/cache/lip/mklip/PATCHES", 700);
-	mkdir("/var/cache/lip/mklip/SCRIPTS", 700);
-
 	# soapbox aktivieren, das nurnoch dahin geschrieben werden kann wo ich will :)=
 	my $oldpreload = $ENV{"LD_PRELOAD"};
 	$ENV{"LD_PRELOAD"} = "/lib/libsoapbox.so:".$ENV{"LD_PRELOAD"};
 	$ENV{"SOAPBOXPATH"} = ":/var/cache/lip/mklip/FILES:/var/cache/lip/build:/dev:/tmp:/usr/src/LIPS/BUILDS";
 	$ENV{"SOAPBOXACTION"} = "err";
 
-
-
+	# REQUIRED
+	if(scalar(@orig_required) >= 1)
+	{
+		open(FH, ">/var/cache/lip/mklip/REQUIRED") or exit 300;
+		print FH join("\n", @orig_required);
+		close(FH);
+	}
 
 	# GROUP
 	open(FH, ">/var/cache/lip/mklip/GROUP") or exit 302;
@@ -393,6 +399,74 @@ use File::Find;
 	}
 
 	$self->message("done.\n\n");
+}
+
+sub mkcd
+{
+	my $self = shift;
+	my $from_port = $self->param("from-ports");
+	my $cd_path = $self->param("mkcd");
+	my @content = ();
+	my @required = ();
+	my @version = ();
+	my @name = ();
+
+	$self->message("Creating installation cd in $cd_path\n");
+
+	system("mkdir -p $cd_path");
+	system("rm -rf $cd_path/*");
+	system("mkdir -p $cd_path/Linoratix");
+
+	open(FH, "<$ENV{PORTS_PATH}/$from_port/REBUILD") or sub { print "--".$!; }; 
+	chomp(@content = <FH>);
+	close(FH);
+
+	my @this_name = grep { /^\%name:(.*)$/ } @content;
+	my @this_version = grep { /^\%version:(.*)$/ } @content;
+	$this_name[0] =~ m/^\%name:(.*)$/;
+	my $this_name = $1;
+	$this_name =~ s/^\s+|\s+$//g;
+	$this_version[0] =~ m/^\%version:(.*)$/;
+	my $this_version = $1;
+	$this_version =~ s/^\s+|\s+$//g;
+
+	@required = grep { /^\%required:/ } @content;
+	$required[0] =~ m/^\%required:(.*)$/;
+
+	eval("\@required = $1");
+
+	$self->message("Copying Packages...\n");
+	push(@required, "$this_name =$this_version");
+	foreach(@required)
+	{
+		m/^(.*?) .*$/;
+		my $name = $1;
+		my $path = $ENV{"PORTS_PATH"} . $base->find_package_path_in_ports($name);
+		open(FH, "<$path/REBUILD") or die($!);
+		chomp(@content = <FH>);
+		close(FH);
+		@version = grep { /^\%version:(.*)$/ } @content;
+		@name = grep { /^\%name:(.*)$/ } @content;
+		$version[0] =~ m/^\%version:(.*)$/;
+		my $v = $1;
+		$name[0] =~ m/^\%name:(.*)$/;
+		my $n = $1;
+		$v =~ s/^\s+|\s+$//g;
+		$n =~ s/^\s+|\s+$//g;
+		if(-f "/usr/src/LIPS/BUILDS/$n-$v.lip", "$cd_path/Linoratix/$n-$v.lip")
+		{
+			print "	$n-$v.lip\n";
+			copy("/usr/src/LIPS/BUILDS/$n-$v.lip", "$cd_path/Linoratix/$n-$v.lip");
+		}
+		else
+		{
+			$self->error("$n-$v not found...\n");
+			exit(342);
+		}
+	}
+
+	$self->message("Rebuilding package-cache...\n");
+	system("cd $cd_path/Linoratix; linoratix-config --plugin LIPdev --rebuild-package-cache . > /dev/null 2>&1");
 }
 
 sub create_bin_lip
@@ -662,10 +736,10 @@ sub lip_cd
 
 	$dir = $self->parse_parameter($dir);
 	
-	$self->message("cd $dir\n");
+	$self->message("cd '$dir'\n");
 	chdir($dir);
-	if($? ne "0") {
-		$self->error("error in function lip_cd, line ".$REBUILD_LINE);
+	if($!) {
+		$self->error("error in function lip_cd $!, line ".$REBUILD_LINE);
 		exit 1;
 	}
 
