@@ -1,0 +1,32 @@
+#
+# package build script for vlan
+#
+%author: jfried
+%package-group: net-misc -
+%sub-group: vlan -
+%required: ("libglibc >=2.3.4", "iproute2 >=2.6.9")
+%build-required: ()
+%description: VLAN is an implementation of the 802.1Q VLAN protocol for Linux. It allows one to have Virtual LANs on a single ethernet cable, giving you the ability to segregate LANs efficiently. It should support up to 4094 vlan interfaces per ethernet device.
+%name: vlan
+%version: 1.8
+%build: $DATA
+%sourcefile: vlan.1.8.tar.gz
+%source-url: ("http://www.candelatech.com/~greear/vlan")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+lip_make
+
+lip_sed -e "s:/usr/local/bin/vconfig:/sbin/vconfig:g" -i vlan_test.pl
+lip_sed -e "s:/usr/local/bin/vconfig:/sbin/vconfig:g" -i vlan_test2.pl
+
+lip_mkdir -p %install_dir/sbin
+lip_mkdir -p %install_dir/usr/share/vlan
+
+lip_cp vconfig %install_dir/sbin
+lip_cp vlan_test*.pl %install_dir/usr/share/vlan
+
+__DATA__
