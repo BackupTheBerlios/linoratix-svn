@@ -4,10 +4,10 @@
 %author: ogu	
 %package-group: sys-libs -
 %sub-group: fontconfig -
-%required: ("libglibc >=2.3.3", "libexpat >=1.95.6", "libfreetype2 >=2.1.9", "zlib >=1.2.1" )
+%required: ("libglibc >=2.3.3", "libexpat >=1.95.6", "libfreetype2 >=2.1.9", "libzlib >=1.2.1" )
 %build-required: ()
 %description: A library for configuring and customizing font access
-%name: fontconfig
+%name: libfontconfig
 %version: 2.2.3
 %build: $DATA
 %sourcefile: fontconfig-2.2.3.tar.gz
