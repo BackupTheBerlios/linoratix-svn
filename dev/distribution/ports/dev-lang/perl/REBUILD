@@ -8,14 +8,31 @@
 %build-required: ("bash >=3.0", "coreutils >=5.2.1")
 %description: The Perl scripting language.
 %name: perl
-%version: 5.8.3
+%version: 5.8.6
 %build: $DATA
-%sourcefile: perl-5.8.3-stable.tar.gz
-%source-url: ("http://download.linoratix.com/distfiles")
+%sourcefile: perl-5.8.6.tar.gz
+%source-url: ("http://www.cpan.org/src")
+
 __DATA__
 lip_extract %sourcefile
 # -- execution of pre-install-scripts
 lip_cd %compile_dir
+
+lip_patch -Np0 -i %patch_dir/%name-%version-prelink-lpthread.patch
+lip_patch -Np0 -i %patch_dir/%name-%version-perldoc-emptydirs.patch
+lip_patch -Np0 -i %patch_dir/%name-%version-reorder-INC.patch
+lip_patch -Np0 -i %patch_dir/%name-%version-picdl.patch
+lip_patch -Np1 -i %patch_dir/%name-%version-noksh.patch
+# lip_patch -Np0 -i %patch_dir/%name-%version-nonblock.patch
+lip_patch -Np1 -i %patch_dir/%name-%version-tempfiles.patch
+
+
+
+
+
+
+
+
 lip_other ./configure.gnu --prefix=/usr -Dpager="/bin/less -isR"
 lip_make
 lip_install DESTDIR=%install_dir INSTALLMAN1DIR=%install_dir/usr/share/man/man1 INSTALLMAN3DIR=%man_dir/man3
