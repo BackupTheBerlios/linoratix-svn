@@ -1,0 +1,35 @@
+#
+# package build script for iproute2
+#
+%author: jfried
+%package-group: net-utils -
+%sub-group: iproute2 -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description:  The Iproute2 package contains programs for basic and advanced IPV4-based networking.
+%name: iproute2
+%version: 2.6.9
+%build: $DATA
+%sourcefile: iproute2-2.6.9-041019.tar.gz
+%source-url: ("http://developer.osdl.org/dev/iproute2/download/")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+lip_patch -Np1 -i %patch_dir/2.6.9.20041106-esfq.patch
+lip_patch -Np1 -i %patch_dir/2.6.9.20041019-wrr.patch
+
+lip_configure
+
+lip_mkdir %install_dir/sbin
+lip_mkdir %install_dir/usr/share/man/{man3,man8} -p
+
+lip_make SBINDIR=%install_dir/sbin
+
+lip_install DESTDIR=%install_dir SBINDIR=/sbin
+
+# -- execution of post-install-scritps
+__DATA__
+
