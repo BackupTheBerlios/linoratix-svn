@@ -11,7 +11,16 @@ use File::Copy;
 
 use Data::Dumper;
 
-require("lang/de.lang.pl");
+my $cmdline = `cat /proc/cmdline`;
+chomp($cmdline);
+if($cmdline =~ m/ lang=(.*?) /)
+{
+	require("lang/$1.lang.pl");
+}
+else
+{
+	require("lang/en.lang.pl");
+}
 
 # ---------------------------------------------------------------------
 # Loading
@@ -1396,89 +1405,95 @@ sub dialog_10
 
 sub dialog_11
 {
-	$w{11}->add
-	(
-		undef, 'Label',
-		-text => _("MSG_HOSTNAME_INFO")
-	);	
+	unless($w{11}->getobj('txt_hostname'))
+	{
+		$w{11}->add
+		(
+			undef, 'Label',
+			-text => _("MSG_HOSTNAME_INFO")
+		);	
+		
+		$w{11}->add
+		(
+			undef, 'Label',
+			-text => _("MSG_HOSTNAME") . ":",
+	    	-y => 6, # ==
+	    	-x => 5,	
+		);	
 	
-	$w{11}->add
-	(
-		undef, 'Label',
-		-text => _("MSG_HOSTNAME") . ":",
-    	-y => 6, # ==
-    	-x => 5,	
-	);	
-
-	$w{11}->add(
-    	"txt_hostname", 'TextEntry',
-    	-sbborder => 1,
-    	-y => 6, # ==
-    	-x => 21,
-	    -width => 40,
-	);
+		$w{11}->add(
+	    	"txt_hostname", 'TextEntry',
+	    	-sbborder => 1,
+	    	-y => 6, # ==
+	    	-x => 21,
+		    -width => 40,
+		);
+	}
 }
 
 sub dialog_12
 {
-	$w{12}->add
-	(
-		undef, 'Label',
-		-text => _("MSG_ROOT_PASSWORD_INFO")
-	);	
+	unless($w{12}->getobj('txt_password1'))
+	{
+		$w{12}->add
+		(
+			undef, 'Label',
+			-text => _("MSG_ROOT_PASSWORD_INFO")
+		);	
+		
+		$w{12}->add
+		(
+			undef, 'Label',
+			-text => _("MSG_PASSWORD") . ":",
+	    	-y => 6, # ==
+	    	-x => 5,	
+		);	
 	
-	$w{12}->add
-	(
-		undef, 'Label',
-		-text => _("MSG_PASSWORD") . ":",
-    	-y => 6, # ==
-    	-x => 5,	
-	);	
-
-	$w{12}->add(
-    	"txt_password1", 'PasswordEntry',
-    	-sbborder => 1,
-    	-y => 6, # ==
-    	-x => 30,
-	    -width => 20,
-	);
+		$w{12}->add(
+	    	"txt_password1", 'PasswordEntry',
+	    	-sbborder => 1,
+	    	-y => 6, # ==
+	    	-x => 30,
+		    -width => 20,
+		);
+		
+		$w{12}->add
+		(
+			undef, 'Label',
+			-text => _("MSG_PASSWORD_REPEAT") . ":",
+	    	-y => 8, # ==
+	    	-x => 5,	
+		);	
 	
-	$w{12}->add
-	(
-		undef, 'Label',
-		-text => _("MSG_PASSWORD_REPEAT") . ":",
-    	-y => 8, # ==
-    	-x => 5,	
-	);	
-
-	$w{12}->add(
-    	"txt_password2", 'PasswordEntry',
-    	-sbborder => 1,
-    	-y => 8, # ==
-    	-x => 30,
-	    -width => 20,
-		-onchange => sub() 
-			{ 
-				my $me = shift;
-				if($me->get eq $me->parent->getobj("txt_password1")->get)
-				{
-					$me->parent->getobj("txt_password_ok")->text(_("MSG_PASSWORD_MATCH"));
-					$setup_config->{"root"}->{"password"} = $me->get;
+		$w{12}->add(
+	    	"txt_password2", 'PasswordEntry',
+	    	-sbborder => 1,
+	    	-y => 8, # ==
+	    	-x => 30,
+		    -width => 20,
+			-onchange => sub() 
+				{ 
+					my $me = shift;
+					if($me->get eq $me->parent->getobj("txt_password1")->get)
+					{
+						$me->parent->getobj("txt_password_ok")->text(_("MSG_PASSWORD_MATCH"));
+						$setup_config->{"root"}->{"password"} = $me->get;
+					}
+					else
+					{
+						$me->parent->getobj("txt_password_ok")->text(_("MSG_PASSWORD_NOT_MATCH"));
+					}
 				}
-				else
-				{
-					$me->parent->getobj("txt_password_ok")->text(_("MSG_PASSWORD_NOT_MATCH"));
-				}
-			}
-	);
-	
-	$w{12}->add
-	(
-		"txt_password_ok", 'Label',
-		-text => _("MSG_PASSWORD_NOT_MATCH"),
-    	-y => 11, # ==
-    	-x => 30,	
-	);		
+		);
+		
+		$w{12}->add
+		(
+			"txt_password_ok", 'Label',
+			-text => _("MSG_PASSWORD_NOT_MATCH"),
+	    	-y => 11, # ==
+	    	-x => 30,	
+		);		
+	}
 }
 
 
@@ -1490,22 +1505,25 @@ sub dialog_13
 		-text => _("MSG_CONFIGURING_SYSTEM")
 	);
 	
-	$w{13}->add
-	(
-		'conf_label', 'Label',
-		-text => _("MSG_SETTING_TIMEZONE_TO") . $setup_config->{"timezone"},
-		-x => 2,
-		-y => 5, #==
-		-width => 70,
-	);
-		
-	$w{13}->add(
-		'conf_progress', 'Progressbar',
-		-x => 2,
-		-y => 10, #==
-		-max => 6,
-		-width => 70,
-	);
+	unless($w{13}->getobj('conf_label'))
+	{
+		$w{13}->add
+		(
+			'conf_label', 'Label',
+			-text => _("MSG_SETTING_TIMEZONE_TO") . $setup_config->{"timezone"},
+			-x => 2,
+			-y => 5, #==
+			-width => 70,
+		);
+			
+		$w{13}->add(
+			'conf_progress', 'Progressbar',
+			-x => 2,
+			-y => 10, #==
+			-max => 6,
+			-width => 70,
+		);
+	}
 	
 	$w{13}->getobj('conf_progress')->pos(1);
 	$w{13}->draw;
@@ -1593,13 +1611,16 @@ sub dialog_14
 		-text => _("MSG_SETUP_FINISHED")
 	);
 	
-	$w{14}->add(
-		'end_progress', 'Progressbar',
-		-x => 2,
-		-y => 10, #==
-		-max => 10,
-		-width => 70,
-	);
+	unless($w{14}->getobj('end_progress'))
+	{
+		$w{14}->add(
+			'end_progress', 'Progressbar',
+			-x => 2,
+			-y => 10, #==
+			-max => 10,
+			-width => 70,
+		);
+	}
 	my $i=0;
 	for($i = 0; $i<=10; $i++)
 	{
@@ -1619,5 +1640,5 @@ sub dialog_14
 	system("umount /mnt/root/*");
 	system("umount /mnt/root");
 	system("clear");
-	system("/sbin/reboot & sleep 3; clear");
+	system("/sbin/reboot");
 }
