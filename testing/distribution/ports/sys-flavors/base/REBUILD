@@ -26,5 +26,4 @@ lip_mkdir -p %install_dir/var/run
 lip_mkdir -p %install_dir/var/lock
 lip_mkdir -p %install_dir/sys
 lip_other touch %install_dir/var/log/wtmp
-lip_rm %install_dir/install.sh
 __DATA__
