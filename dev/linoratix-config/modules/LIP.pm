@@ -50,7 +50,7 @@ sub new
 	$self->list_files() if($self->param("list-files"));
 	$self->search() if($self->param("search"));
 	$self->search_file() if($self->param("search-file"));
-	$self->prepend_install() if($self->option("prepend") && $self->param("install"));
+	$self->prepend_install($self->param("install")) if($self->option("prepend") && $self->param("install"));
 	$self->prepend_remove() if($self->option("prepend") && $self->param("remove"));
 
 	return $self;
@@ -458,9 +458,111 @@ sub _is_in_pkg
 
 sub prepend_install
 {
-	my $self    = shift;
-	my $package = $self->param("install");
+	my $self = shift;
+	my $package = shift;
+	my $version = "";
+
 	$self->message("Prepend install $package\n");
+	$package = $base->find_package_by_name($package);
+
+	$self->_prepend_install($package, $version);
+}
+
+sub _prepend_install
+{
+	my $self    = shift;
+	my $package = shift;
+	my $version = shift;
+
+	my $package_to_install = {};
+	my @versions = ();
+	my $bin_install = 0;
+	my($group, $subgroup, $pkg);
+	my $check_version = 1;
+	my $bin_pkg = "";
+	#soll ein binaer packet direkt installiert werden
+
+	if(-f $self->param("install") && $FROM_DB eq "0")
+	{
+		$bin_pkg = $self->param("install");
+		chomp(@versions = `tar xzOf $bin_pkg VERSION`);
+		$bin_install = 1;
+	}
+	else
+	{	
+		@versions = $base->get_versions_from_pkg($package);
+		($group, $subgroup, $pkg) = split(/\//, $package);
+	}
+
+	if(!$version) {
+		if(scalar(@versions) > 1) {
+			# abfragen welche version installiert werden soll
+		} else {
+			$version = $versions[0];
+		}
+		$check_version = 0;
+	}
+
+
+	if($bin_install)
+	{
+		$package_to_install->{$version}->{"__server"} = "file://".dirname($bin_pkg);
+		$package_to_install->{$version}->{"rebuild-url"} = undef;
+		my $_prov = `/bin/tar xzOf $bin_pkg PROVIDES`;
+		chomp($_prov);
+		$package_to_install->{$version}->{"provides"} = $_prov;
+		my @_req = `/bin/tar xzOf $bin_pkg REQUIRED`;
+		chomp(@_req);
+		$package_to_install->{$version}->{"required"} = \@_req;
+		my @_files = `/bin/tar xzOf $bin_pkg MANIFEST | grep ^/FILES`;
+		chomp(@_files);
+		$package_to_install->{$version}->{"files"} = \@_files;
+		$package_to_install->{$version}->{"status"} = "-";
+		$package_to_install->{$version}->{"md5"} = "";
+		my @_desc = `/bin/tar xzOf $bin_pkg DESCRIPTION`;
+		chomp(@_desc);
+		$package_to_install->{$version}->{"description"} = \@_desc;
+	}
+	else
+	{
+		$package_to_install = $base->get_package_by_path($package);
+	}
+
+	foreach($self->get_all_deps($version, $check_version, $package_to_install))
+	{
+		print "\t$_\n";
+	}
+
+
+}
+
+sub get_all_deps
+{
+	my $self = shift;
+	my $version = shift;
+	my $check_version = shift;
+	my $package_to_install = shift;
+	my @ret_p = ();
+
+	if($version && $check_version)
+	{
+		$version = $base->_check_version($version, $package_to_install);
+	}
+
+
+	my $deps = $package_to_install->{$version}->{"required"};
+	push(@ret_p, $package_to_install->{$version}->{"name"} . "-" . $version);
+	foreach my $d (@{$deps}) 
+	{
+		chomp($d);
+		my($n,$v) = split(/ /, $d);
+		#push(@ret_p, "$n-$v");
+		push(@ret_p, $self->get_all_deps($v, 1, $base->get_package_by_path($base->find_package_by_name($n))));
+	}
+
+	my %uniq = ();
+	@ret_p = grep { ! $uniq{$_} ++ } @ret_p;
+	return @ret_p;
 }
 
 sub prepend_remove

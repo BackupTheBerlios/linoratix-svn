@@ -543,6 +543,7 @@ sub _check_version
 	my $vergleich;
 	my $r;
 
+
 	# rausbekommen ob groesser, kleiner, ...
 	if($version =~ m/^\>=/) {
 		$version =~ s/^\>=//;
@@ -593,20 +594,12 @@ sub _check_version
 		#			return \"$_\"; 
 		#		}";
 		} else {
-			$eval = "if(\"$_\" eq $eval\") {
+
+			$eval = "if(\"$_\" $eval\") {
 					return \"$_\";
 				}";
 		}
-
-		if($version eq "2.6.7")
-		{
-			print "!!! $eval\n";
-		}
 		if($r = eval($eval)) {
-			if($version eq "2.6.7")
-			{
-				print ">>> $r\n";
-			}
 			return $r;
 		}
 		else

@@ -973,6 +973,7 @@ sub build_package_cache
 		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"files"} = \@manifest;
 		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"required"} = \@required;
 		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"md5"} = $md5[0];
+		$packages->{$main}->{$sub}->{$package_name[0]}->{$package_version[0]}->{"name"} = $package_name[0];
 	}
 	store($packages, "$dir/packages.cache");
 }
