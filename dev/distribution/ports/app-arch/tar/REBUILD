@@ -4,14 +4,14 @@
 %author: jfried
 %package-group: app-arch -
 %sub-group: tar -
-%required: ("libiconv >=1.9.1")
+%required: ("libglibc >=2.3.4-r1")
 %build-required: ()
 %description: utility used to store, backup or transport files.
 %name: tar
-%version: 1.13.93
+%version: 1.15.1
 %build: $DATA
-%sourcefile: tar-1.13.93.tar.bz2
-%source-url: ("http://download.linoratix.com/distfiles")
+%sourcefile: tar-1.15.1.tar.bz2
+%source-url: ("ftp://ftp.gnu.org/gnu/tar")
 
 __DATA__
 lip_extract %sourcefile

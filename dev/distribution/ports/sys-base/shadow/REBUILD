@@ -5,7 +5,7 @@
 %build-required: ()
 %description: shadow password file utilities.
 %name: shadow
-%version: 4.0.4.1
+%version: 4.0.4.1-r1
 %build: $DATA
 %sourcefile: shadow-4.0.4.1.tar.bz2
 %source-url: ("http://download.linoratix.com/distfiles")
@@ -22,13 +22,13 @@ __DATA__
 lip_extract %sourcefile
 lip_cd %compile_dir
 lip_patch -Np1 -i %patch_dir/shadow-4.0.4.1-pam-1.patch
-lip_patch -Np1 -i %patch_dir/shadow-4.0.4.1-selinux.diff
+#### lip_patch -Np1 -i %patch_dir/shadow-4.0.4.1-selinux.diff
 lip_rm aclocal.m4
 lip_other aclocal
 lip_other automake -a
 lip_other autoconf
 
-lip_other LIBS="-lpam -lpam_misc -lselinux" ./configure --with-libpam --disable-desrpc --with-libcrypt --with-libcrack --enable-shared --libdir=/usrlib
+lip_other LIBS="-lpam -lpam_misc" ./configure --with-libpam --disable-desrpc --with-libcrypt --with-libcrack --enable-shared --libdir=/usrlib
 lip_other echo '#define HAVE_SETLOCALE 1' >> config.h
 lip_sed -i '/extern char/d' libmisc/xmalloc.c
 lip_make

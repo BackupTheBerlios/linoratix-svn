@@ -8,7 +8,7 @@
 %build-required: ()
 %description: some base applications
 %name: sh-utils
-%version: 2.0.15
+%version: 2.0.15-r1
 %build: $DATA
 %sourcefile: sh-utils-2.0.15.tar.gz
 %source-url: ("ftp://alpha.gnu.org/gnu/fetish/")

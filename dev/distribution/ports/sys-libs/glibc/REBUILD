@@ -8,7 +8,7 @@
 %build-required: ("libgettext >=0.14.1", "headers =2.6.10")
 %description: The C library used in the GNU system.
 %name: libglibc
-%version: 2.3.4
+%version: 2.3.4-r1
 %build: $DATA
 %sourcefile: glibc-2.3.4.tar.bz2
 %ld.so.conf: $LDSOCONF

@@ -4,14 +4,14 @@
 %author: jfried
 %package-group: sys-libs -
 %sub-group: pam -
-%required: ("libglibc >=2.3.3", "libselinux >=1.14", "libcracklib >=2.7")
+%required: ("libglibc >=2.3.4-r1", "libcracklib >=2.7")
 %build-required: ()
 %description: Linux PAM authetication.
 %name: libpam
-%version: 0.77
+%version: 0.78
 %build: $DATA
-%sourcefile: Linux-PAM-0.77.tar.bz2
-%source-url: ("http://download.linoratix.com/distfiles")
+%sourcefile: Linux-PAM-0.78.tar.bz2
+%source-url: ("ftp://ftp.kernel.org/pub/linux/libs/pam/pre/library")
 
 # Different Pam-files
 %file_pam.d: $PAM
@@ -20,7 +20,7 @@ __DATA__
 lip_extract %sourcefile
 # -- execution of pre-install-scripts
 lip_cd %compile_dir
-lip_other for patch in %patch_dir/*.patch; do patch -Np1 -i $patch; done
+#lip_other for patch in %patch_dir/*.patch; do patch -Np1 -i $patch; done
 lip_cp /usr/share/automake-1.8/install-sh .
 lip_other autoconf
 lip_configure --enable-static-libpam --with-mailspool=/var/mail --enable-read-both-confs --sysconfdir=/etc 

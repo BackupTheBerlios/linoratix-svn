@@ -4,14 +4,14 @@
 %author: jfried
 %package-group: sys-base -
 %sub-group: util-linux -
-%required: ("libselinux >=1.14")
+%required: ("libglibc >=2.3.4")
 %build-required: ()
 %description: Miscellaneous system utils
 %name: util-linux
-%version: 2.12
+%version: 2.12-r1
 %build: $DATA
-%sourcefile: util-linux-2.12.tar.gz
-%source-url: ("http://download.linoratix.com/distfiles")
+%sourcefile: util-linux-2.12q.tar.gz
+%source-url: ("ftp://ftp.kernel.org/pub/linux/utils/util-linux")
 %filesystems: $FILESYSTEMS
 %inittab: $INITTAB
 %issue: $ISSUE
@@ -22,9 +22,23 @@ __DATA__
 lip_extract %sourcefile
 # -- execution of pre-install-scripts
 lip_cd %compile_dir
-lip_patch -Np1 -i %patch_dir/losetup-combined.patch
-lip_patch -Np1 -i %patch_dir/%name-%version-kernel-2.6.patch
-lip_patch -Np1 -i %patch_dir/%name-%version-selinux.diff
+##lip_patch -Np1 -i %patch_dir/losetup-combined.patch
+##lip_patch -Np1 -i %patch_dir/%name-%version-kernel-2.6.patch
+###lip_patch -Np1 -i %patch_dir/%name-%version-selinux.diff
+lip_patch -Np1 -i %patch_dir/util-linux-2.12p.diff
+lip_patch -Np1 -i %patch_dir/util-linux-2.11z-parallel-make.patch
+lip_patch -Np1 -i %patch_dir/util-linux-2.12i-nfsv4.patch
+lip_patch -Np1 -i %patch_dir/util-linux-2.12i-ignore-managed.patch
+lip_patch -Np1 -i %patch_dir/util-linux-2.12i-pic.patch
+lip_patch -Np1 -i %patch_dir/util-linux-2.12p-swapon-check-symlinks.patch
+
+# cramfs bugfix
+lip_patch -Np1 -i %patch_dir/util-linux-2.12q-cramfs-1.patch
+
+
+
+
+
 lip_configure --prefix=/usr --bindir=/bin
 lip_make HAVE_KILL=yes HAVE_SLN=yes
 lip_install HAVE_KILL=yes HAVE_SLN=yes DESTDIR=%install_dir

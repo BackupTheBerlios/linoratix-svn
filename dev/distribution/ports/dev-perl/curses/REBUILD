@@ -4,11 +4,11 @@
 %author: jfried
 %package-group: dev-perl -
 %sub-group: curses -
-%required: ("libglibc >=2.3.3", "perl >=5.8.3", "libncurses >=5.4", "term-readkey >=2.30")
+%required: ("libglibc >=2.3.4-r1", "perl >=5.8.6", "libncurses >=5.4", "term-readkey >=2.30-r1")
 %build-required: ()
 %description: Terminal screen handling and optimization
 %name: curses
-%version: 1.08b
+%version: 1.08b-r1
 %build: $DATA
 %sourcefile: Curses-1.08b.tgz
 %source-url: ("http://search.cpan.org/CPAN/authors/id/G/GI/GIRAFFED/")
