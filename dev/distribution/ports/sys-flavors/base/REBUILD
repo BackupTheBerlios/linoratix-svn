@@ -9,9 +9,9 @@
 %build-required: ("bash >=3.0", "libglibc >=2.3.3", "mktemp >=1.5", "gcc3 >=3.4.3", "m4 >=1.4","bison >=1.875","groff >=1.19","flex >=2.5.31","automake >=1.8.3", "patch >=2.5.4")
 %description: Linoratix base-system
 %name: linoratix-base
-%version: 0.8
+%version: 0.8.1
 %build: $DATA
-%sourcefile: linoratix-base-0.8.tar.gz
+%sourcefile: linoratix-base-0.8.1.tar.gz
 %source-url: ("http://download.linoratix.com/distfiles")
 
 
@@ -26,4 +26,5 @@ lip_mkdir -p %install_dir/var/run
 lip_mkdir -p %install_dir/var/lock
 lip_mkdir -p %install_dir/sys
 lip_other touch %install_dir/var/log/wtmp
+lip_rm %install_dir/install.sh
 __DATA__
