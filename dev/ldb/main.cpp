@@ -11,8 +11,8 @@ int main(int argc, char **argv)
 {
    try {
       if (argc != 2) 
-         throw "usage: <binary> <driver.so>";
-//         throw std::exception("usage: <binaey> <driver.so>");
+         throw "usage: <binary> <driver.so>"; 
+//         throw std::exception("usage: <binary> <driver.so>");
 
    	map <string, string> my_con, my_insert, my_set;
    	map <string, string> my_query;
@@ -28,10 +28,16 @@ int main(int argc, char **argv)
 //	   db *datenbank = new db("./mysql-backend.so");
       db *datenbank = new db(argv[1]);
 	
-
 	
 	   datenbank->Connect(my_con);
 
+      // create test
+      my_query["table"] = "test";
+      my_query["fields"] = "zahl int, text varchar(128)";
+      cout << "The create test has returned: '" << datenbank->Create(my_query) << "'" << endl;
+      
+
+/*
 	   my_query["table"] = "blocks";
 	   my_query["fields"]= "*";
 
@@ -49,6 +55,7 @@ int main(int argc, char **argv)
    	my_set["text"] = "joah mann";
 	
    	datenbank->Insert(my_insert, my_set);
+*/
 
    } catch (std::exception& e) {
       cout << "Exception: " << e.what() << endl;
@@ -57,7 +64,7 @@ int main(int argc, char **argv)
       cout << "Exception: " << e << endl;
       return -1;
    } catch (...) {
-      cout << "Exception: undefined" << endl;
+      cout << "Exception: undefined error" << endl;
       return -2;
    }
 

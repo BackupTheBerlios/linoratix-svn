@@ -25,6 +25,7 @@ using namespace std;
 
 static bool m_isconnected = false;
 static sqlite3 *db;
+static sqlite3_stmt *stmt;
 
 
 extern "C" bool l_is_driver() // for extern test that this is a linoratix db backend driver
@@ -50,15 +51,41 @@ extern "C" bool l_connect(map <string, string> con_data) // this does make the d
       m_isconnected = true;
       #ifdef _DO_DEBUG_ // show me where I am connected to
          string *database = &con_data["database"];
-         DEBUG("connected to database " + *database)
+         DEBUG("connected to database [" + *database + "]")
       #endif
       return true;
    }
 }
 
+// deletes the precompiled statement 
+bool clearstmt() {
+   if(stmt != NULL) { 
+      if(sqlite3_finalize(stmt) != SQLITE_OK) {
+         DEBUG("cant delet precompiled statement [" + string(sqlite3_errmsg(db)) + "]")
+         return false;
+      } else {
+         DEBUG("precompiled statement deleted")
+         return true;
+      }
+   } 
+}
+
+
+bool stmtok(string& sql_query) {
+   if(!sqlite3_complete(sql_query.c_str())) {
+      DEBUG("the statement did not pass the sqlite SQL-Check")
+      return false;
+   } else {
+      DEBUG("the statement did pass the sqlite SQL-Check")
+      return true;
+   }
+}
+
+
 // builds the sql_query content to pass them into the l_query function
 extern "C" bool l_select(map<string, string>& query, string& sql_query)
 {
+   clearstmt();
    sql_query = "SELECT ";
    
    // selected fields
@@ -96,9 +123,76 @@ extern "C" bool l_select(map<string, string>& query, string& sql_query)
       sql_query += "GROUP BY " + query["group"] + " ";
    }
 
-   sql_query += ";"; // end of query!
-   DEBUG(sql_query)
-   return true;
+   sql_query += ";"; // end of statement!
+   DEBUG("statement [" + sql_query + "]")
+
+   return stmtok(sql_query);
+}
+
+
+extern "C" bool l_create(map<string, string>& con_data, string& sql_query) {
+   clearstmt();
+   sql_query = "CREATE ";
+
+   // what shoud be created?
+   if(con_data.find("table") != con_data.end()) {
+      sql_query += "TABLE " + con_data["table"] + " ";
+   } else if(con_data.find("view") != con_data.end()) {
+      sql_query += "VIEW " +  con_data["view"] + " ";
+   } else {
+      DEBUG("what do you want to create? [view, table]")
+      return false;
+   }
+
+   // fields
+   if(con_data.find("fields") != con_data.end()) {
+      sql_query += "( " + con_data["fields"] + ") ";
+   } else {
+      DEBUG("whoops.. forgotten the fields?")
+      return false;
+   }
+   
+   sql_query += ";"; // end of statement!
+   DEBUG("statement [" + sql_query + "]")
+
+   return stmtok(sql_query);
+}
+
+
+// this function does execute the statement... call this function for all results
+extern "C" int l_query(string database, string sql_query) { // database var is not used here
+   if(sqlite3_prepare(db, sql_query.c_str(), sizeof(sql_query.c_str()), &stmt, NULL) != SQLITE_OK) {
+      DEBUG("preparing of statement failed [" + string(sqlite3_errmsg(db)) + "]")
+      return -1;
+   } else {
+      DEBUG("statement is prepared")
+      switch (sqlite3_step(stmt)) {
+         case SQLITE_ROW:
+            DEBUG("query successfully executed")
+            return 2;
+            break;
+         case SQLITE_DONE:
+            DEBUG("query successfully executed and at end of rows")
+            return 1;
+            break;
+         case SQLITE_ERROR:
+            DEBUG("error while executing query: [" + string(sqlite3_errmsg(db)) + "]")
+            return -1;
+            break;
+         case SQLITE_BUSY:
+            DEBUG("the database is busy")
+            return -1;
+            break;
+         case SQLITE_MISUSE:
+            DEBUG("no query found to execute [" + string(sqlite3_errmsg(db)) + "]")
+            return -1;
+            break;
+         default:
+            DEBUG("unknown query return [" + string(sqlite3_errmsg(db)) + "]")
+            return -1;
+            break;
+      }
+   }
 }
 
 
