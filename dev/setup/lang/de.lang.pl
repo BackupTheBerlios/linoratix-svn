@@ -55,6 +55,8 @@ sub _()
 		"MSG_PART_SIZE"				=> "Partitionsgröße eingeben.\n\nGeben Sie 'free' ein um den kompletten freien Speicherplatz zu verwenden.\nGrößenangabe in MB.",
 		"MSG_PART_TITLE"				=> "Partitionsgröße",
 		"MSG_SEKTOREN"			=> "Sektoren",
+		"MSG_PART_FORMAT"		=> "Formatieren",
+		"MSG_MOUNT_PART"		=> "Mounte",
 		
 		"MNU_FILE"					=> "Datei",
 		
@@ -74,8 +76,8 @@ sub _()
 		
 		"BTN_CANCEL"			=> " < Abbrechen > ",
 		"BTN_NEXT"				=> " < Weiter > ",
-		"BTN_PART_DELETE"		=> " < Partition löschen > ",
-		"BTN_PART_ADD"			=> " < Partition hinzufügen > ",
+		"BTN_PART_DELETE"		=> " < löschen > ",
+		"BTN_PART_ADD"			=> " < hinzufügen > ",
 		"BTN_PART_MOUNT"		=> " < Mountpunkt > ",
 	);
 	return $texte{$_[0]};

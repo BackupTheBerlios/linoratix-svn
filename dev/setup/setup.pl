@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+# <toactivate> beachten!!
+
 use strict;
 no strict "refs";
 use File::Temp qw( :POSIX );
@@ -306,6 +308,15 @@ sub part_button_box_callback($;)
 					. _("MSG_TYPE") . ": ".$partinfo->{$selected_partition}->{"type"}."\n"
 					. _("MSG_MOUNTPOINT") . ": ".$partinfo->{$selected_partition}->{"mountpoint"}."\n"
 					. _("MSG_SEKTOREN") . ": " . $partinfo->{$selected_partition}->{"sector_start"} . " - " . $partinfo->{$selected_partition}->{"sector_end"});
+		$setup_config->{"partitions"}->{"/dev/".$setup_config->{"target_disk"} . $selected_partition}->{"mountpoint"} = $mp;
+		if($mp eq "/" || $mp eq "swap" || $setup_config->{"partitions"}->{"/dev/".$setup_config->{"target_disk"} . $selected_partition}->{"format"})
+		{
+			$setup_config->{"partitions"}->{"/dev/".$setup_config->{"target_disk"} . $selected_partition}->{"format"} = "1";
+		}
+		else
+		{
+			$setup_config->{"partitions"}->{"/dev/".$setup_config->{"target_disk"} . $selected_partition}->{"format"} = "";
+		}
 	}
 	elsif($buttons->get eq "delete")
 	{
@@ -326,7 +337,7 @@ sub part_button_box_callback($;)
 		foreach(@partinfo)
 		{
 			my($part_id, $part_start, $part_end, $part_type, $part_fs, $part_size) = split(/:/, $_);
-			if($part_id ne $part_id1+1)
+			if($part_id1 && $part_id ne $part_id1+1 && $sec_end1)
 			{
 				$partinfo_intern->{$part_id-1}->{"sector_start"} = $sec_end1+1;
 				$partinfo_intern->{$part_id-1}->{"sector_end"} = $part_start;
@@ -350,6 +361,9 @@ sub part_button_box_callback($;)
 			$part_id1 = $part_id;
 			$sec_end1 = $part_end;
 		}
+		$sec_end1 = 0 unless($sec_end1);
+		$part_id1 = 0 unless($part_id1);
+		print STDERR "366: sec_end1: $sec_end1 || size_all: $size_all\n";
 		if($sec_end1 < $size_all)
 		{
 			$partinfo->{$part_id1+1}->{"sector_start"} = $sec_end1+1;
@@ -380,7 +394,10 @@ sub part_button_box_callback($;)
 		else
 		{
 			my $new_end_sector = $partinfo->{$selected_partition}->{"sector_start"};
+			$new_end_sector = 0 unless($new_end_sector);
 			$new_end_sector = $new_end_sector + ($np * 1024 * 2);
+			$partinfo->{$selected_partition}->{"sector_start"} = 0 if($partinfo->{$selected_partition}->{"sector_start"} eq "1");
+			#print STDERR "/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $new_end_sector . " " . $partinfo->{$selected_partition}->{"fs"} . " >>error.txt 2>&1";
 			system("/usr/sbin/createpart add_partition /dev/$setup_config->{target_disk} " . $partinfo->{$selected_partition}->{"sector_start"} . " " . $new_end_sector . " " . $partinfo->{$selected_partition}->{"fs"} . " >>error.txt 2>&1");
 		}
 		
@@ -394,12 +411,12 @@ sub part_button_box_callback($;)
 		chomp($size_all);
 		$size_all *= 2;			
 		my ($sec_end1,$sec_end2,$sec_end3, $part_id1, $part_id2, $part_id3);		
-			
+
 		chomp(@partinfo);
 		foreach(@partinfo)
 		{
 			my($part_id, $part_start, $part_end, $part_type, $part_fs, $part_size) = split(/:/, $_);
-			if($part_id ne $part_id1+1 && $part_end)
+			if($part_id1 && $part_id ne $part_id1+1 && $part_end)
 			{
 				$partinfo_intern->{$part_id-1}->{"sector_start"} = $sec_end1+1;
 				$partinfo_intern->{$part_id-1}->{"sector_end"} = $part_start;
@@ -427,6 +444,8 @@ sub part_button_box_callback($;)
 				$partinfo->{$part_id} = $partinfo_intern->{$part_id};
 			}
 		}
+		$sec_end1 = 0 unless($sec_end1);
+		$part_id1 = 0 unless($part_id1);
 		if($sec_end1 < $size_all)
 		{
 			$partinfo->{$part_id1+1}->{"sector_start"} = $sec_end1+1;
@@ -438,10 +457,96 @@ sub part_button_box_callback($;)
 			push(@$partinfo_values, $part_id1+1);
 			$partinfo_labels->{$part_id1+1} = $setup_config->{"target_disk"} . ($part_id1+1) . " (".sprintf("%.2f", $partinfo->{$part_id1+1}->{"size"} / 1024 / 1024)." GiB) [" . substr($partinfo->{$part_id1+1}->{"type"}, 0, 1)."]" ;
 		}
-			
+		
+		$setup_config->{"partitions"}->{"/dev/".$setup_config->{"target_disk"} . $selected_partition}->{"format"} = "1";		
+		
 		$w{6}->getobj('part_list')->values($partinfo_values);
 		$w{6}->getobj('part_list')->labels($partinfo_labels);
 		$w{6}->getobj('part_list')->draw;		
+	}
+	elsif($buttons->get eq "next")
+	{
+		my $max = 0;
+		foreach(keys %{$setup_config->{"partitions"}})
+		{
+			if($setup_config->{"partitions"}->{$_}->{"format"} eq "1")
+			{
+				$max++;
+			}
+		}			
+		foreach(keys %{$setup_config->{"partitions"}})
+		{
+			if($setup_config->{"partitions"}->{$_}->{"mountpoint"})
+			{
+				$max++;
+			}
+		}			
+		
+		$w{6}->add
+		(
+			'progress_label', 'Label',
+			-text => _("MSG_PART_DISK"),
+			-x => 2,
+			-y => 9, #==
+			-width => 70,
+		);
+		
+		$w{6}->add(
+			'progress_partition', 'Progressbar',
+			-x => 2,
+			-y => 10, #==
+			-max => $max,
+			-width => 70,
+		);
+
+		my $count = 0;
+		
+		foreach(keys %{$setup_config->{"partitions"}})
+		{
+			if($setup_config->{"partitions"}->{$_}->{"format"} eq "1" && $setup_config->{"partitions"}->{$_}->{"mountpoint"} ne "swap")
+			{
+				$w{6}->getobj('progress_partition')->pos($count);
+				$w{6}->getobj('progress_label')->text(_("MSG_PART_FORMAT") . ": " . "$_");
+				$w{6}->draw;
+				system("/sbin/mkfs.ext3 $_ >>./error.txt 2>&1" );
+				$count++;
+			}
+			if($setup_config->{"partitions"}->{$_}->{"mountpoint"} eq "swap")
+			{
+				$w{6}->getobj('progress_partition')->pos($count);
+				$w{6}->getobj('progress_label')->text(_("MSG_PART_FORMAT") . ": " . "$_");
+				$w{6}->draw;
+				system("/sbin/mkswap $_ >>./error.txt 2>&1" );
+				$count++;				
+			}
+		}
+		
+		foreach(keys %{$setup_config->{"partitions"}})
+		{
+			if($setup_config->{"partitions"}->{$_}->{"mountpoint"} eq "/")
+			{
+				system("/bin/mount $_ /mnt/root" . $setup_config->{"partitions"}->{$_}->{"mountpoint"} . "  >>./error.txt 2>&1");				
+			}
+		}
+		
+		foreach(keys %{$setup_config->{"partitions"}})
+		{
+			if($setup_config->{"partitions"}->{$_}->{"mountpoint"} && $setup_config->{"partitions"}->{$_}->{"mountpoint"} ne "swap")
+			{
+				$w{6}->getobj('progress_partition')->pos($count);
+				$w{6}->getobj('progress_label')->text(_("MSG_MOUNT_PART") . ": " . "$_");
+				$w{6}->draw;
+				system("mkdir -p /mnt/root" . $setup_config->{"partitions"}->{$_}->{"mountpoint"} . " >/dev/null 2>&1");
+				system("/bin/mount $_ /mnt/root" . $setup_config->{"partitions"}->{$_}->{"mountpoint"} . "  >>./error.txt 2>&1");
+				$count++;
+			}
+			if($setup_config->{"partitions"}->{$_}->{"mountpoint"} eq "swap")
+			{
+				# <toactivate> <swap> system("/sbin/swapon $_ >>./error.txt 2>&1");
+			}
+		}
+		
+		goto_next_step();
 	}
 	
 }
@@ -799,7 +904,7 @@ sub dialog_6
 				#	$sec_end1 = $part_start-1;
 				#}
 			#	if($part_id >= 2 && $sec_end1+1 ne $part_start) # hier ist ein freier bereich
-				if($part_id ne $part_id1+1)
+				if($part_id1 && $part_id ne $part_id1+1)
 				{
 					#next if($part_id-1 eq $part_id1);
 					$partinfo->{$part_id-1}->{"sector_start"} = $sec_end1+1;
@@ -823,6 +928,8 @@ sub dialog_6
 				$sec_end1 = $part_end;
 			}
 			
+			$sec_end1 = 0 unless($sec_end1);
+			$part_id1 = 0 unless($part_id1);
 			if($sec_end1 < $size_all)
 			{
 				$partinfo->{$part_id1+1}->{"sector_start"} = $sec_end1+1;
@@ -884,6 +991,10 @@ sub dialog_6
 					},{
 						-label => _("BTN_PART_MOUNT"),
 						-value => "mount",
+						-onpress => \&part_button_box_callback,
+					},{
+						-label => _("BTN_NEXT"),
+						-value => "next",
 						-onpress => \&part_button_box_callback,
 					},
 				],
