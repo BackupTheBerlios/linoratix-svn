@@ -9,15 +9,17 @@ using namespace std;
 
 class pm {
 public:
-	pm(const char* dbname, const char* dbpath);
+	pm();
 	~pm();
 
 	bool packetExists() {}
 	bool install() {}
 	bool remove() {}
 
-	char* listPaket() {}
+	char* listPackage() {}
 	char* searchFile() {}
+
+	bool setDBAccess(const char*, ...);
 	
 private:
 	string m_dbname;

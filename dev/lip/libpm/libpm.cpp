@@ -6,8 +6,8 @@
 #include "libpm.h"
 using namespace std;
 
-pm::pm(const char* dbname, const char* dbpath)
-: m_dbname(dbname), m_dbpath(dbpath) {
+pm::pm()
+{
 	
 	if(sqlite3_open((m_dbname + "/" + m_dbpath).c_str(), &m_db)) {
 		sqlite3_close(m_db);
@@ -19,3 +19,5 @@ pm::pm(const char* dbname, const char* dbpath)
 }
 
 pm::~pm() { if(m_ready) { sqlite3_close(m_db); } }
+
+
