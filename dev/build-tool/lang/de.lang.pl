@@ -33,7 +33,7 @@ sub _()
 		"MSG_OPTIMIZED_FOR_via_cyrix_3_via_c3"		=> "Optimiert für VIA CyrixIII/VIA-C3",
 		"MSG_OPTIMIZED_FOR_via_c3_2_nemiah"		=> "Optimiert für VIA-C3-2 Nemiah",
 		"MSG_OPTIMIZED_FOR_intel_pentium"		=> "Optimiert für Intel Pentium",
-		"MSG_OPTIMIZED_FOR_intel_pentium_mmx"		=> "Optimiert für Intel Pentium with MMX",
+		"MSG_OPTIMIZED_FOR_intel_pentium_mmx"		=> "Optimiert für Intel Pentium mit MMX",
 		"MSG_OPTIMIZED_FOR_intel_pentium_pro"		=> "Optimiert für Intel Pentium-Pro",
 		"MSG_OPTIMIZED_FOR_intel_pentium_2"		=> "Optimiert für Intel Pentium 2",
 		"MSG_OPTIMIZED_FOR_intel_pentium_3"		=> "Optimiert für Intel Pentium 3",
