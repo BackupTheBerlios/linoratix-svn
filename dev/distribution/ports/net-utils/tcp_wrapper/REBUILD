@@ -1,0 +1,39 @@
+#
+#rebuild file for tcp_wrappers
+#
+%author: ogu
+%package-group: net-utils -
+%sub-group: tcp_wrappers -
+%required: ("libglibc >=2.3.3", "bash >=3.0")
+%build-required: ()
+%description: Monitors and Controls incoming TCP connections
+%name: tcp_wrappers
+%version: 7.6
+%build: $DATA
+%sourcefile: tcp_wrappers_7.6.tar.gz
+%source-url: ("ftp://ftp.porcupine.org/pub/security")
+%conflicts: ()
+
+# build ...
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scipts
+lip_cd %compile_dir
+# lip_patch %patch_dir/<patchfile>
+lip_patch -Np1 -i %patch_dir/tcp_wrappers-7.6-shared_lib_plus_plus-1.patch
+lip_patch -Np1 -i %patch_dir/tcp_wrappers-7.6-gcc34-1.patch
+
+#lip_configure --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --libexecdir=/usr/lib
+lip_mkdir -p %install_dir/usr/lib
+lip_mkdir -p %install_dir/usr/share/man/man8/
+lip_mkdir -p %install_dir/usr/share/man/man{1,2,3,4,5,6,7,8}
+lip_make REAL_DAEMON_DIR=/usr/sbin STYLE=-DPROCESS_OPTIONS linux
+lip_mkdir -p %install_dir/usr/{bin,sbin,lib,include,share}
+lip_install DESTDIR=%install_dir
+
+# andere moeglichkeiten, DESTDIR=%install_dir ROOT_DIR=%install_dir, DEST_DIR=%install_dir
+#   prefix=%install_dir/usr infodir=%info_dir mandir=%man_dir
+#   oder andere
+# if your not sure READ the MAKEFILE
+# -- execution of post-install-scripts
+__DATA__
