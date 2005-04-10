@@ -1,0 +1,23 @@
+#
+# package build script for sdl_mixer
+#
+%author: jfried
+%package-group: media-libs -
+%sub-group: sdl_mixer -
+%required: ("libglibc >=2.3.3", "libsdl >=1.2.8")
+%build-required: ()
+%description: SDL_mixer is a simple multi-channel audio mixer. It supports 8 channels of 16 bit stereo audio, plus a single channel of music, mixed by the popular MikMod MOD, Timidity MIDI, Ogg Vorbis, and SMPEG MP3 libraries
+%name: libsdlmixer
+%version: 1.2.6
+%build: $DATA
+%sourcefile: SDL_mixer-1.2.6.tar.gz
+%source-url: ("http://www.libsdl.org/projects/SDL_mixer/release")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+include gnu_system_build.lif
+# -- execution of post-install-scritps
+__DATA__
+

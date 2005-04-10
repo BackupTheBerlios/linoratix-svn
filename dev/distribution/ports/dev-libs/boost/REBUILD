@@ -1,0 +1,26 @@
+#
+# package build script for boost
+#
+%author: jfried
+%package-group: dev-libs -
+%sub-group: boost -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: Boost was begun by members of the C++ standards committee Library Working Group to provide free peer-reviewed portable libraries to the C++ community. An additional objective is to establish "existing practice" and provide reference implementations so that the Boost libraries are suitable for eventual standardization. Indeed, the explicit intent is to propose many of these libraries for inclusion in the C++ Standard Library. The Boost Graph Library, formerly known as the Generic Graph Component Library (GGCL), is a collection of graph algorithms and data structures created in the generic programming style of the Standard Template Library (STL).
+%name: libboost
+%version: 1.31
+%build: $DATA
+%sourcefile: boost_1_31_0.tar.gz
+%source-url: ("http://optusnet.dl.sourceforge.net/sourceforge/boost")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+include gnu_system_build.lif
+
+# -- execution of post-install-scritps 
+__DATA__
+
+

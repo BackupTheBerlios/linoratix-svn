@@ -1,0 +1,23 @@
+#
+# package build script for sdl_image
+#
+%author: jfried
+%package-group: media-libs -
+%sub-group: sdl_image -
+%required: ("libglibc >=2.3.3", "libsdl >=1.2.8")
+%build-required: ()
+%description: SDL_image is a simple library to load images of various formats as SDL surfaces. It supports BMP, PPM, XPM, PCX, GIF, JPEG, PNG, and TGA formats.
+%name: libsdlimage
+%version: 1.2.4
+%build: $DATA
+%sourcefile: SDL_image-1.2.4.tar.gz
+%source-url: ("http://www.libsdl.org/projects/SDL_image/release")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+include gnu_system_build.lif
+# -- execution of post-install-scritps
+__DATA__
+

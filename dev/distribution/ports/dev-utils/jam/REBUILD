@@ -1,0 +1,27 @@
+#
+# package build script for jam
+#
+%author: jfried
+%package-group: dev-utils -
+%sub-group: jam -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: A powerful, multi-platform make replacement.
+%name: jam
+%version: 2.5
+%build: $DATA
+%sourcefile: jam-2.5.tar
+%source-url: ("ftp://ftp.perforce.com/pub/jam")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+lip_make
+lip_mkdir -p %install_dir/usr/{bin,lib}
+lip_cd %compile_dir/bin.linuxx86
+lip_cp jam mkjambase %install_dir/usr/bin
+lip_cp *.a %install_dir/usr/lib
+# -- execution of post-install-scritps
+__DATA__
+

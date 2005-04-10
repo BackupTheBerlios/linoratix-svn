@@ -1,0 +1,3 @@
+lip_other perl Makefile.PL
+lip_make
+lip_install DESTDIR=%install_dir

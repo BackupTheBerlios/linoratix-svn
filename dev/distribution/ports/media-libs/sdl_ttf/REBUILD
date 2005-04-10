@@ -1,0 +1,23 @@
+#
+# package build script for sdl_ttf
+#
+%author: jfried
+%package-group: media-libs -
+%sub-group: sdl_ttf -
+%required: ("libglibc >=2.3.3", "libsdl >=1.2.8")
+%build-required: ()
+%description: The SDL_ttf library is a wrapper around the Freetype library that allows you to use TrueType fonts to render text in SDL applications.
+%name: libsdlttf
+%version: 2.0.7
+%build: $DATA
+%sourcefile: SDL_ttf-2.0.7.tar.gz
+%source-url: ("http://www.libsdl.org/projects/SDL_ttf/release")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+include gnu_system_build.lif
+# -- execution of post-install-scritps
+__DATA__
+

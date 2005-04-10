@@ -1,0 +1,24 @@
+#
+# package build script for sdl
+#
+%author: jfried
+%package-group: media-libs -
+%sub-group: sdl -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: SDL Library.
+%name: libsdl
+%version: 1.2.8-r2
+%build: $DATA
+%sourcefile: SDL-1.2.8.tar.gz
+%source-url: ("http://www.libsdl.org/release")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+include gnu_system_build.lif
+lip_sed -i -e "s:-pthread::g" "%install_dir/usr/lib/libSDL.la" 
+# -- execution of post-install-scritps
+__DATA__
+

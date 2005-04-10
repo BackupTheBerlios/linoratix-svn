@@ -1,0 +1,29 @@
+#
+# package build script for cxxtools
+#
+%author: jfried
+%package-group: dev-libs -
+%sub-group: cxxtools -
+%required: ("libglibc >=2.3.4")
+%build-required: ()
+%description: cxxtools is a library of unrelated, but useful C++ classes. It contains an argument-parser, a base-64 encoder/decoder, a C++ interface to iconv, md5-stream for easy MD5 calculation, threading classes, socket classes, a dynamic exception-safe buffer, a wrapper for dlopen/dlsym, a pool template (e.g., for a connection pool in a multi-threaded application), query_params, and a class for easy parsing of CGI parameters (GET and POST) in a CGI program.
+%name: libcxxtools
+%version: 1.3.0
+%build: $DATA
+%sourcefile: cxxtools-1.3.0.tar.gz
+%source-url: ("http://www.tntnet.org/download")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+
+include gnu_system_build.lif
+
+#lip_configure --prefix=/usr --infodir=/usr/share/info --mandir=/usr/share/man
+#lip_make
+#lip_install DESTDIR=%install_dir
+# -- execution of post-install-scritps 
+__DATA__
+
+

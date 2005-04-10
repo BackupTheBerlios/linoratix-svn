@@ -1,0 +1,23 @@
+#
+# package build script for physfs
+#
+%author: jfried
+%package-group: dev-fs -
+%sub-group: physfs -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: abstraction layer for filesystems, useful for games.
+%name: physfs
+%version: 1.0
+%build: $DATA
+%sourcefile: physfs-1.0.0.tar.gz
+%source-url: ("http://icculus.org/physfs/downloads")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+include gnu_system_build.lif
+# -- execution of post-install-scritps
+__DATA__
+

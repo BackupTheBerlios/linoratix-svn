@@ -1,0 +1,23 @@
+#
+# package build script for sdl_net
+#
+%author: jfried
+%package-group: media-libs -
+%sub-group: sdl_net -
+%required: ("libglibc >=2.3.3")
+%build-required: ()
+%description: SDL Network Library.
+%name: libsdlnet
+%version: 1.2.5
+%build: $DATA
+%sourcefile: SDL_net-1.2.5.tar.gz
+%source-url: ("http://www.libsdl.org/projects/SDL_net/release")
+
+__DATA__
+lip_extract %sourcefile
+# -- execution of pre-install-scripts
+lip_cd %compile_dir
+include gnu_system_build.lif
+# -- execution of post-install-scritps
+__DATA__
+
