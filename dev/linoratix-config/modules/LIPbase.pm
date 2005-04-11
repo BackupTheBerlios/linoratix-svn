@@ -172,10 +172,9 @@ sub remove_installed_package_from_db
 {
 	my $self = shift;
 	my $package = shift;
-	my $version = shift;
 	
-	my ($group,$subgroup,$pkg) = split(/\//, $self->_find_in_i_package_by_name($package));
-	delete($installed_packages->{$group}->{$subgroup}->{$pkg}->{$version});
+	my ($group,$subgroup,$pkg,$ver) = split(/\//, $package);
+	delete($installed_packages->{$group}->{$subgroup}->{$pkg}->{$ver});
 
 	return 1; # alles ok
 }
@@ -325,18 +324,22 @@ sub _can_resolv_deps
 	return @return_list;
 }
 
-sub find_package_by_name
+# sucht nach einem packet namesn $name und version $version
+# in den verfuegbaren packeten
+sub find_package_by_name_and_version
 {
 	my $self = shift;
 	my $name = shift;
+	my $version = shift;
 	
-	return $self->_find_package_by_name($name);
+	return $self->_find_package_by_name_and_version($name, $version);
 }
 
-sub _find_package_by_name
+sub _find_package_by_name_and_version
 {
 	my $self = shift;
 	my $name = shift;
+	my $version = shift;
 	my $provide = "";
 	my $do_provide = "";
 	
@@ -348,37 +351,40 @@ sub _find_package_by_name
 			foreach my $pkg ( keys %{$pkgdb->{$group}->{$subgroup}}) {
 				foreach my $ver (keys %{$pkgdb->{$group}->{$subgroup}->{$pkg}}) {
 					$provide = $pkgdb->{"$group"}->{"$subgroup"}->{"$pkg"}->{"$ver"}->{"provides"};
-					last;
-				}
-				if($provide)
-				{
-					$do_provide = $provide;
-				}
-				else
-				{
-					$do_provide = ""; #$pkg;
-				}
-				if($do_provide eq $name || $pkg eq $name) {
-					return "$group/$subgroup/$pkg";
+					if($provide)
+					{
+						$do_provide = $provide;
+					}
+					else
+					{
+						$do_provide = ""; #$pkg;
+					}
+					if($ver eq $version && ($do_provide eq $name || $pkg eq $name)) {
+						return "$group/$subgroup/$pkg/$ver";
+					}
 				}
 			}
 		}
 	}
 
-	my $installed_p = $self->_find_in_i_package_by_name($name);
+	my $installed_p = $self->_find_in_i_package_by_name_and_version($name."/".$version);
 	return $installed_p if($installed_p);
 
 	return 0;
 }
 
+# uebergabe: pfade
+# es kommt nen hash zurueck der das packet enthaellt
 sub get_package_by_path
 {
 	my $self = shift;
 	my $path = shift;
-	my($group, $subgroup, $pkg) = split(/\//, $path);
-	return $pkgdb->{$group}->{$subgroup}->{$pkg};
+	my($group, $subgroup, $pkg, $ver) = split(/\//, $path);
+	$pkgdb->{$group}->{$subgroup}->{$pkg}->{$ver}->{"version"} = $ver;
+	return $pkgdb->{$group}->{$subgroup}->{$pkg}->{$ver};
 }
 
+# dependencies aus packet (hash) und version (string) holen
 sub get_package_deps
 {
 	my $self = shift;
@@ -388,6 +394,11 @@ sub get_package_deps
 	return $package->{$version}->{"required"};
 }
 
+# @strange
+# uebergabe: string, packetname
+# uebergabe: string, version
+# kuckt ob das packete ($package) die versionsanforderung von ($version) erfuellt
+# zurueckgegeben werden die packete die es giebt von dem packet (also alle versionen...)
 sub find_package_dep_by_name
 {
 	my $self = shift;
@@ -422,7 +433,7 @@ sub _find_package_dep_by_name
 							$pkgdb->{$group}->{$subgroup}->{$pkg}
 						)
 					) {
-						return $pkgdb->{$group}->{$subgroup}->{$pkg};
+						return $pkgdb->{$group}->{$subgroup}->{$pkg}->{$ver};
 					}
 				}
 			}
@@ -431,6 +442,7 @@ sub _find_package_dep_by_name
 	return 0;
 }
 
+# das gleiche fuer installierte packete
 sub find_in_i_package_dep_by_name
 {
 	my $self = shift;
@@ -446,8 +458,8 @@ sub find_in_i_package_version_by_name
 	my $self = shift;
 	my $package = shift;
 	my @versions = ();
-	my ($group, $subgroup, $pkg) = split(/\//, 
-			$self->_find_in_i_package_by_name($package)); # gibt den pfad
+	my ($group, $subgroup, $pkg) = split(/\//, $package);
+
 	foreach my $ver ( sort keys %{$installed_packages->{$group}->{$subgroup}->{$pkg}}) {
 		push(@versions, $ver);
 	}
@@ -548,7 +560,7 @@ sub _find_in_i_package_dep_by_name
 						print "group: $group\n";
 						print "subgroup: $subgroup\n";
 
-						return $ip->{$group}->{$subgroup}->{$pkg};
+						return $ip->{$group}->{$subgroup}->{$pkg}->{$ver};
 					}
 				}
 			}
@@ -811,9 +823,8 @@ sub check_if_installed
 {
 	my $self = shift;
 	my $package = shift;
-	my $version = shift;
 	
-	return $self->_check_if_installed($package, $version);
+	return $self->_check_if_installed($package);
 }
 
 # checks if a package is alreday installed
@@ -821,26 +832,72 @@ sub _check_if_installed
 {
 	my $self = shift;
 	my $package = shift;
-	my $version = shift;
-
-	return $self->_find_in_i_package_by_name_and_version($package, $version);
+	
+	my($group, $subgroup, $pkg, $ver) = split(/\//, $package);
+	if($installed_packages->{$group}->{$subgroup}->{$pkg}->{$ver})
+	{
+		return 1;
+	} else
+	{
+		return 0;
+	}
 }
 
 
-sub get_in_package_by_path_and_version
+sub get_in_package_by_path
 {
 	my $self = shift;
 	my $package = shift;
-	my $version = shift;
-	my($group, $subgroup, $pkg) = split(/\//, $package);
+	my($group, $subgroup, $pkg, $ver) = split(/\//, $package);
 
-	return $installed_packages->{$group}->{$subgroup}->{$pkg}->{$version};
+	return $installed_packages->{$group}->{$subgroup}->{$pkg}->{$ver};
 }
 
-sub _find_in_i_package_by_name
+
+sub find_in_i_package_by_name
 {
 	my $self = shift;
 	my $name = shift;
+	my ($provide, $do_provide);
+	
+	my $ip = $installed_packages;
+	my($group, $subgroup, $pkg) = split(/\//, $name);
+
+	foreach my $ver (keys %{$ip->{$group}->{$subgroup}->{$pkg}}) {
+		$provide = $ip->{"$group"}->{"$subgroup"}->{"$pkg"}->{"$ver"}->{"provides"};
+		if($provide)
+		{
+			$do_provide = $provide;
+		}
+		else
+		{
+			$do_provide = ""; #$pkg;
+		}
+		if($do_provide eq $name || $pkg eq $name)
+		{
+			return "$group/$subgroup/$pkg";
+		}
+	}
+
+	return 0;
+}
+
+
+sub find_in_i_package_by_name_and_version
+{
+	my $self = shift;
+	my $name = shift;
+	my $version = shift;
+
+	return $self->_find_in_i_package_by_name_and_version($name, $version);
+}
+
+sub _find_in_i_package_by_name_and_version
+{
+	my $self = shift;
+	my $name = shift;
+	my $version = shift;
+	my ($provide, $do_provide);
 	
 	my $ip = $installed_packages;
 
@@ -848,8 +905,19 @@ sub _find_in_i_package_by_name
 		next if($group eq "__global-information");
 		foreach my $subgroup (keys %{$ip->{$group}}) {
 			foreach my $pkg ( keys %{$ip->{$group}->{$subgroup}}) {
-				if($pkg eq $name) {
-					return "$group/$subgroup/$pkg";
+				foreach my $ver (keys %{$ip->{$group}->{$subgroup}->{$pkg}}) {
+					$provide = $ip->{"$group"}->{"$subgroup"}->{"$pkg"}->{"$ver"}->{"provides"};
+					if($provide)
+					{
+						$do_provide = $provide;
+					}
+					else
+					{
+						$do_provide = ""; #$pkg;
+					}
+					if($ver eq $version && ($do_provide eq $name || $pkg eq $name)) {
+						return "$group/$subgroup/$pkg/$ver";
+					}
 				}
 			}
 		}
@@ -858,7 +926,7 @@ sub _find_in_i_package_by_name
 	return 0;
 }
 
-sub _find_in_i_package_by_name_and_version
+sub ___find_in_i_package_by_name_and_version
 {
 	my $self = shift;
 	my $name = shift;
@@ -906,6 +974,19 @@ sub _get_versions_from_pkg
 	my @versions = ();
 	my ($group, $subgroup, $pkg) = split(/\//, $package);	
 	foreach(keys %{$pkgdb->{$group}->{$subgroup}->{$pkg}}) {
+		push(@versions, $_);
+	}
+
+	return @versions;
+}
+
+sub get_in_versions_from_pkg
+{
+	my $self = shift;
+	my $package = shift;
+	my @versions = ();
+	my ($group, $subgroup, $pkg) = split(/\//, $package);	
+	foreach(keys %{$installed_packages->{$group}->{$subgroup}->{$pkg}}) {
 		push(@versions, $_);
 	}
 
@@ -1253,6 +1334,37 @@ sub check_files_in_i_packages
 	}
 
 	return %req_p;
+}
+
+
+# bestes verfuegbares packet holen
+# uebergabe 1: packetname (pfad)
+# uebergabe 2: version (>=2.5, <2.3, ...)
+# @return hash packet
+sub get_best_version_available
+{
+	my $self = shift;
+	my $package = shift;
+	my $version = shift;
+	my @avail_v = ();
+
+	print "package: $package\n";
+	print "version: $version\n";
+	print "\n";
+
+	my($group, $subgroup, $pkg) = split(/\//, $package);
+
+	foreach my $ver (keys %{$pkgdb->{$group}->{$subgroup}->{$pkg}})
+	{
+		if($self->_check_version_vs_version($version, $ver))
+		{
+			push(@avail_v, $ver);
+		}
+	}
+
+	my @sorted = sort { versioncmp($a, $b) } @avail_v;
+
+	return $self->get_package_by_path("$package/" . $sorted[-1]);
 }
 
 1;

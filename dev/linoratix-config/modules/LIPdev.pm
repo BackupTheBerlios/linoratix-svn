@@ -156,7 +156,7 @@ sub read_spec_file
 		}
 	}
 
-	if($base->get_in_package_by_path_and_version($build_script{"name"}, $build_script{"version"}))
+	if($base->get_in_package_by_path($build_script{"name"}."/".$build_script{"version"}))
 	{
 		$self->warning("Package $build_script{name}, $build_script{version} allready installed.\n");
 		exit 2;
