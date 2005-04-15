@@ -8,7 +8,7 @@
 %build-required: ()
 %description: A fork of the XFree86 Project with a GPL-compatible license
 %name: xorg
-%version: 6.8.2-r1
+%version: 6.8.2
 %build: $DATA
 %sourcefile: X11R6.8.2-src.tar.bz2
 %source-url: ("http://ftp.skynet.be/pub/ftp.x.org/pub/X11R6.8.2/src-single")

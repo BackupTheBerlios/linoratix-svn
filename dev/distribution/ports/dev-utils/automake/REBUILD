@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: dev-util -
 %sub-group: automake -
-%required: ("perl >=5.8.3", "autoconf >=2.59")
+%required: ("dev-lang/perl/perl >=5.8.6", "dev-utils/autoconf/autoconf >=2.59")
 %build-required: ()
 %description: The automake package contains programs to generate Makefiles for use with autoconf.
 %name: automake

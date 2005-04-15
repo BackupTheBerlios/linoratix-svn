@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: con-libs -
 %sub-group: gpm -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: GPM (General Purpose Mouse) is a mouse server for the console and xterm, with sample clients included (emacs, etc).
 %name: libgpm

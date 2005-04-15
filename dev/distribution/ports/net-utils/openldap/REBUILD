@@ -4,7 +4,7 @@
 %author: ogu
 %package-group: net-utils -
 %sub-group: openldap -
-%required: ("libglibc >=2.3.3", "libdb4 >=4.2.52", "libopenssl >=0.9.7e", "tcp_wrappers >=7.6")
+%required: ("sys-libs/bdb4/libdb4 >=4.2.52", "crypto-libs/openssl/libopenssl >=0.9.7e", "net-utils/tcp_wrappers/tcp_wrappers >=7.6")
 %build-required: ()
 %description: LDAP Server
 %name: openldap

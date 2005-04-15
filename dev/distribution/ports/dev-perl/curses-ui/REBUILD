@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: dev-perl -
 %sub-group: curses-ui -
-%required: ("libglibc >=2.3.r-r1", "perl >=5.8.6", "libncurses >=5.4", "curses >=1.08b-r1")
+%required: ("dev-perl/curses/curses >=1.08b-r1")
 %build-required: ()
 %description: A curses based OO user interface framework
 %name: curses-ui

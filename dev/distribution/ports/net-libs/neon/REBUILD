@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-libs -
 %sub-group: neon -
-%required: ("libopenssl >=0.9.7c")
+%required: ("crypto-libs/openssl/libopenssl >=0.9.7e")
 %description: HTTP and WebDAV client library
 %name: libneon
 %version: 0.24.7

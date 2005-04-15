@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-base -
 %sub-group: hotplug -
-%required: ("bash >=2.05b", "pciutils >=2.1.11", "usbutils >=0.11")
+%required: ("sys-shell/bash/bash >=3.0", "sys-utils/pciutils/pciutils >=2.1.11", "sys-utils/usbutils/usbutils >=0.11")
 %build-required: ()
 %description: The hotplug user space utilities.
 %name: hotplug

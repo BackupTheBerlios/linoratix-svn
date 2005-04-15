@@ -4,8 +4,8 @@
 %author: jfried
 %package-group: dev-util -
 %sub-group: m4 -
-%required: ("libglibc >=2.3.3")
-%build-required: ("make >=3.80")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
+%build-required: ()
 %description: M4 macro processor.
 %name: m4
 %version: 1.4

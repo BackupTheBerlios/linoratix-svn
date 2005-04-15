@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: dev-perl -
 %sub-group: sortversions -
-%required: ("libglibc >=2.3.4-r1", "perl >=5.8.6")
+%required: ("dev-lang/perl/perl >=5.8.6")
 %build-required: ()
 %description: A perl module for simple terminal control.
 %name: sortversions

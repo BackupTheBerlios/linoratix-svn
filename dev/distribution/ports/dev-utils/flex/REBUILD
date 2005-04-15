@@ -4,8 +4,8 @@
 %author: jfried
 %package-group: dev-util -
 %sub-group: flex -
-%required: ("libglibc >=2.3.3")
-%build-required: ("m4 >=1.4","help2man >=1.27")
+%required: ("sys-libs/glibc/libglibc >=2.3.3")
+%build-required: ()
 %description: A tool for generating text-scanning programs.
 %name: flex
 %version: 2.5.31-r1

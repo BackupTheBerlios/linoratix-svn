@@ -4,8 +4,8 @@
 %author: jfried
 %package-group: sys-base -
 %sub-group: udev -
-%required: ("libglibc >=2.3.3")
-%build-required: ("make >=3.80")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
+%build-required: ()
 %description: Dynamic creation of device nodes
 %name: udev
 %version: 050

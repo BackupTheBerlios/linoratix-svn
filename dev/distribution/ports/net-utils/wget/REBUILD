@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-utils -
 %sub-group: wget
-%required: ("libglibc >=2.3.3", "libopenssl >=0.9.7e")
+%required: ("crypto-libs/openssl/libopenssl >=0.9.7e")
 %build-required: ()
 %description: GNU Wget is a utility for noninteractive download of files from the Web. It supports HTTP and FTP protocols, as well as retrieval through HTTP proxies. It can follow HTML links, download many pages, and convert the links for local viewing. It can also mirror FTP hierarchies or only those files that have changed. Wget has been designed for robustness over slow network connections; if a download fails due to a network problem, it will keep retrying until the whole file has been retrieved.
 %name: wget

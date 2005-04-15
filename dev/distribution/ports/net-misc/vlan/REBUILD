@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-misc -
 %sub-group: vlan -
-%required: ("libglibc >=2.3.4", "iproute2 >=2.6.9")
+%required: ("net-utils/iproute2/iproute2 >=2.6.9")
 %build-required: ()
 %description: VLAN is an implementation of the 802.1Q VLAN protocol for Linux. It allows one to have Virtual LANs on a single ethernet cable, giving you the ability to segregate LANs efficiently. It should support up to 4094 vlan interfaces per ethernet device.
 %name: vlan

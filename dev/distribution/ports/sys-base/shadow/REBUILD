@@ -1,7 +1,7 @@
 %author: jfried
 %package-group: sys-base -
 %sub-group: shadow -
-%required: ("libpam >=0.77")
+%required: ("sys-libs/pam/libpam >=0.77")
 %build-required: ()
 %description: shadow password file utilities.
 %name: shadow

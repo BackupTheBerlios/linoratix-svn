@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-utils -
 %sub-group: inetutils -
-%required: ("libglibc >=2.3.4", "libncurses >=5.4")
+%required: ("sys-libs/ncurses/libncurses >=5.4")
 %build-required: ()
 %description:  The Inetutils package contains programs for basic networking.
 %name: inetutils

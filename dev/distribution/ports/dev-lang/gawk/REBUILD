@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: dev-lang -
 %sub-group: gawk -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: A pattern scanning and processing language.
 %name: gawk

@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-base -
 %sub-group: binutils -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: Provides programs to assemble and manipulate binary and object files.
 %name: binutils

@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-print -
 %sub-group: cups -
-%required: ("libglibc >=2.3.3", "libpam >=0.77", "libopenssl >=0.9.7c", "libgettext >=0.14.1")
+%required: ("sys-libs/pam/libpam >=0.77", "crypto-libs/openssl/libopenssl >=0.9.7e", "sys-libs/gettext/libgettext >=0.14.1")
 %build-required: ()
 %description: at and batch.
 %name: at

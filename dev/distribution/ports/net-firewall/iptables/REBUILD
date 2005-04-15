@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-firewall -
 %sub-group: iptables -
-%required: ("libglibc >=2.3.4")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: iptables is built on top of netfilter: the new packet alteration framework for Linux 2.4. It is an enhancement on ipchains, and is used to control packet filtering, Network Address Translation (masquerading, portforwarding, transparent proxying), and special effects.
 %name: iptables

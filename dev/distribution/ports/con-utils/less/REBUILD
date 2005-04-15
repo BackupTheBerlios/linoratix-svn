@@ -4,8 +4,8 @@
 %author: jfried
 %package-group: con-utils -
 %sub-group: less -
-%required: ("libglibc >=2.3.4", "libncurses >=5.4")
-%build-required: ("gcc3 >=3.4.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2", "sys-libs/ncurses/libncurses >=5.4")
+%build-required: ()
 %description: The less utilitie
 %name: less
 %version: 382

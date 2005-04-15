@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-firewall -
 %sub-group: portsentry -
-%required: ("tcsh >=6.13.00")
+%required: ("sys-shell/tcsh/tcsh >=6.13.00")
 %build-required: ()
 %description: Automated port scan detector and response tool
 %name: portsentry

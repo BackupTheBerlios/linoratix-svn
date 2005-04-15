@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-base -
 %sub-group: sysvinit -
-%required: ("libglibc >=2.3.4-r1")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: The Linux System V Init
 %name: sysvinit

@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: app-documentation -
 %sub-group: help2man -
-%required: ("perl >=5.8.3")
+%required: ("dev-lang/perl/perl >=5.8.6")
 %build-required: ()
 %description: Program to create man pages.
 %name: help2man

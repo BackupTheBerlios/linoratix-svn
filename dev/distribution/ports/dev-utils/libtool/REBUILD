@@ -4,8 +4,8 @@
 %author: jfried
 %package-group: dev-utils -
 %sub-group: libtool -
-%required: ("libglibc >=2.3.4", "bash >=3.0")
-%build-required: ("python >=2.4")
+%required: ("sys-shell/bash/bash >=3.0")
+%build-required: ("dev-lang/python/python >=2.4")
 %description: A shared library tool for developers.
 %name: libtool
 %version: 1.5.14

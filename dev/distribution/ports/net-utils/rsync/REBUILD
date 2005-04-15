@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-utils -
 %sub-group: rsync -
-%required: ("libpopt >=1.7")
+%required: ("dev-libs/popt/libpopt >=1.7")
 %build-required: ()
 %description: A file transfer program to keep remote files in sync.
 %name: rsync

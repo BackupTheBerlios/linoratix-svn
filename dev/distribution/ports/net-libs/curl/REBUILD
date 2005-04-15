@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-libs -
 %sub-group: curl -
-%required: ("inetutils >=1.4.2", "libopenssl >=0.9.7e")
+%required: ("net-utils/inetutils/inetutils >=1.4.2", "crypto-libs/openssl/libopenssl >=0.9.7e")
 %build-required: ()
 %description: The curl library
 %name: libcurl

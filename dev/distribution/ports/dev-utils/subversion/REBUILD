@@ -4,8 +4,8 @@
 %author: jfried
 %package-group: dev-utils -
 %sub-group: subversion -
-%required: ("inetutils >=1.4.2", "net-tools >=1.60", "openssh >=3.9_p1", "nano >=1.2.3", "libzlib >=1.2.1", "libdb4 >=4.2.52", "python >=2.4", "libgdbm >=1.8.3")
-%build-required: ("libtool >=1.5.10", "python >=2.4")
+%required: ("net-utils/inetutils/inetutils >=1.4.2", "net-utils/net-tools/net-tools >=1.60", "net-misc/openssh/openssh >=3.9_p1", "con-editos/nano/nano >=1.2.3", "sys-libs/zlib/libzlib >=1.2.1", "sys-libs/bdb4/libdb4 >=4.2.52", "dev-lang/python/python >=2.4", "dev-libs/gdbm/libgdbm >=1.8.3")
+%build-required: ("dev-utils/libtool/libtool >=1.5.10", "dev-lang/python/python >=2.4")
 %description: A version control system like CVS.
 %name: subversion
 %version: 1.1.0

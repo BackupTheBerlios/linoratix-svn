@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-mail -
 %sub-group: ssmtp -
-%required: ("libglibc >=2.3.3", "libopenssl >=0.9.7e")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2", "crypto-libs/openssl/libopenssl >=0.9.7e")
 %build-required: ()
 %description: A secure, effective and simple way of getting mail off a system to your mail hup.
 %name: ssmtp

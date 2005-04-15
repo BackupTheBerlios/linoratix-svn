@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: net-utils -
 %sub-group: net-tools -
-%required: ("libglibc >=2.3.4")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: Programs for basic networking.
 %name: net-tools

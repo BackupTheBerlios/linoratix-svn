@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-base -
 %sub-group: kbd -
-%required: ("gzip >=1.3.5")
+%required: ("app-arch/gzip/gzip >=1.3.5")
 %build-required: ()
 %description: keytable files and keyboard utilities.
 %name: kbd

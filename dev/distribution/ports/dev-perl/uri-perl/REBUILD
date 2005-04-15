@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: dev-perl -
 %sub-group: uri-perl -
-%required: ("libglibc >=2.3.4", "perl >=5.8.6")
+%required: ("dev-lang/perl/perl >=5.8.6")
 %build-required: ()
 %description: Uniform Resource Identifiers
 %name: uri-perl

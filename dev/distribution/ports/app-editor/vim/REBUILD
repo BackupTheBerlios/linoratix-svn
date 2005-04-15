@@ -4,8 +4,8 @@
 %author: jfried
 %package-group: app-editor -
 %sub-group: vim -
-%required: ("libglibc >=2.3.3")
-%build-required: ("libexpat >=1.95.6", "libgettext >=0.14.1", "libglib1 >=1.2.10", "libiconv >=1.9.1", "perl >=5.8.3", "pkgconfig >=0.15.0")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
+%build-required: ()
 %description: The VIM Editor
 %name: vim
 %version: 6.3

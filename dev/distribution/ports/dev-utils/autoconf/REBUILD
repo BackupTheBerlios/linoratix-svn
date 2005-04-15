@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: dev-util -
 %sub-group: autoconf -
-%required: ("m4 >=1.4", "gawk >=3.1.3", "sed >=4.0.9", "bash >=2.05b", "grep >=2.5.1")
+%required: ("dev-util/m4/m4 >=1.4", "dev-lang/gawk/gawk >=3.1.3", "sys-utils/sed/sed >=4.0.9", "sys-shell/bash/bash >=3.0", "sys-utils/grep/grep >=2.5.1")
 %build-required: ()
 %description: The autoconf package contains programs for producing shell scripts that can automatically configure sourcecode.
 %name: autoconf

@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: crypto-libs -
 %sub-group: openssl -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: The Open Source toolkit for Secure Sockets Layer and Transport Layer Security.
 %name: libopenssl

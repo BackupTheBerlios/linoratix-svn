@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: dev-util -
 %sub-group: patch -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibs/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: Apply a diff file to an original source.
 %name: patch

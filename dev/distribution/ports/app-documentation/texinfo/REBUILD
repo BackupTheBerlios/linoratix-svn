@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: app-documentation -
 %sub-group: texinfo -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: A collection of core GNU utils.
 %name: texinfo
