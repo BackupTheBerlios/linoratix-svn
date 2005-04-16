@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: bc -
-%required: ("libglibc >=2.3.3", "libncurses >=5.4", "libreadline >=4.3")
+%required: ("sys-libs/ncurses/libncurses >=5.4", "sys-libs/readline/libreadline >=4.3")
 %build-required: ()
 %description: interactive algebra language
 %name: bc

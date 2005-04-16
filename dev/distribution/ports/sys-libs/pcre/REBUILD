@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-libs -
 %sub-group: pcre -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: A library that implements Perl-5 like regular expresions.
 %name: libpcre

@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: grep -
-%required: ("libpcre >=4.5")
+%required: ("sys-libs/pcre/libpcre >=4.5")
 %build-required: ()
 %description: GNU grep
 %name: grep

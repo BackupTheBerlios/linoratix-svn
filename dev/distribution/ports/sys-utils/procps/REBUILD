@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: procps -
-%required: ("libglibc >=2.3.4", "libncurses >=5.4", "libselinux >=1.14")
+%required: ("sys-libs/ncurses/libncurses >=5.4")
 %build-required: ()
 %description: The procps package contains programs to monitor processes.
 %name: procps

@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-logd -
 %sub-group: metalog -
-%required: ("libpcre >=4.5")
+%required: ("sys-libs/pcre/libpcre >=4.5")
 %build-required: ()
 %description: A modern replacement for sysklogd.
 %name: metalog

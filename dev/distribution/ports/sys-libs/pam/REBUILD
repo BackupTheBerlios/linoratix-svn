@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-libs -
 %sub-group: pam -
-%required: ("libglibc >=2.3.4-r1", "libcracklib >=2.7")
+%required: ("sys-libs/cracklib/libcracklib >=2.7")
 %build-required: ()
 %description: Linux PAM authetication.
 %name: libpam

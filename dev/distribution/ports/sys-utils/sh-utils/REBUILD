@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: sh-utils -
-%required: ("libglibc >=2.3.3", "util-linux >=2.12")
+%required: ("sys-base/util-linux/util-linux >=2.12")
 %build-required: ()
 %description: some base applications
 %name: sh-utils

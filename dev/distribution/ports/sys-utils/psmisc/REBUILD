@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: psmisc -
-%required: ("libglibc >=2.3.4", "libncurses >=5.4")
+%required: ("sys-libs/ncurses/libncurses >=5.4")
 %build-required: ()
 %description: The psmisc package contains programs for displaying information on processes.
 %name: psmisc

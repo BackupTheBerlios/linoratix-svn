@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-libs -
 %sub-group: bdb4 -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: The berkeley db from sleepycat
 %name: libdb4

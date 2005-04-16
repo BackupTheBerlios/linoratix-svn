@@ -4,7 +4,7 @@
 %author: ogu
 %package-group: sys-libs -
 %sub-group: glib -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: Common C routines used by Gtk+ and other libs
 %name: libglib

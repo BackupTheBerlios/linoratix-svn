@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-shell -
 %sub-group: tcsh -
-%required: ("libglibc >=2.3.4")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description:  The Tcsh package contains \"an enhanced but completely compatible version of the Berkeley Unix C shell (csh)\". This is useful as an alternative shell for those who prefer C syntax to that of the bash shell, and also because some programs require the C shell in order to install.
 %name: tcsh

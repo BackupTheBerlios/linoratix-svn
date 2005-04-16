@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: fcron -
-%required: ("libglibc >=2.3.3", "libpam >=0.77", "system-logger >=0", "ssmtp >=2.61", "libselinux >=1.14")
+%required: ("sys-libs/pam/libpam >=0.77", "sys-logd/*", "net-mail/*")
 %build-required: ()
 %description: cronjo utility
 %name: fcron

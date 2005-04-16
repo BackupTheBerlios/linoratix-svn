@@ -4,11 +4,11 @@
 %author: jfried
 %package-group: sys-libs -
 %sub-group: glibc -
-%required: ("dev >=0.4")
-%build-required: ("libgettext >=0.14.1", "headers =2.6.10")
+%required: ()
+%build-required: ("sys-libs/gettext/libgettext >=0.14.1", "sys-kernel/headers/headers =2.6.10")
 %description: The C library used in the GNU system.
 %name: libglibc
-%version: 2.3.4-r1
+%version: 2.3.4-r2
 %build: $DATA
 %sourcefile: glibc-2.3.4.tar.bz2
 %ld.so.conf: $LDSOCONF

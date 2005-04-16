@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: at -
-%required: ("libglibc >=2.3.3", "mail-transport-agent >=0")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2", "net-mail/*")
 %build-required: ()
 %description: at and batch.
 %name: at

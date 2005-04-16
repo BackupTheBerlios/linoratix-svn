@@ -4,7 +4,7 @@
 %author: ogu
 %package-group: sys-libs -
 %sub-group: ungif -
-%required: ("libglibc >=2.3.3")
+%required: ("sys-libs/glibc/libglibc >=2.3.4-r2")
 %build-required: ()
 %description: A library for reading and writing gif images without LZW compression
 %name: libungif

@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: file -
-%required: ("libzlib >=1.2.1")
+%required: ("sys-libs/zlib/libzlib >=1.2.1")
 %build-required: ()
 %description: File type identification utility.
 %name: file

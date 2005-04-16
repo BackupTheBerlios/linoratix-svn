@@ -4,7 +4,7 @@
 %author: jfried
 %package-group: sys-utils -
 %sub-group: parted -
-%required: ("libglibc >=2.3.3", "e2fsprogs >=1.35", "libncurses >=5.4", "libreadline >=4.3")
+%required: ("sys-base/e2fsprogs/e2fsprogs >=1.35", "sys-libs/ncurses/libncurses >=5.4", "sys-libs/readline/libreadline >=4.3")
 %build-required: ()
 %description: Create, destroy, resize, check, copy partitions and file systems
 %name: parted
