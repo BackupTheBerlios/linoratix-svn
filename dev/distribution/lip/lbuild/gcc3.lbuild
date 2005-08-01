@@ -36,19 +36,15 @@ SourceFile[3] = gcc-g77-3.4.3.tar.bz2
 SourceFile[4] = gcc-java-3.4.3.tar.bz2
 SourceFile[5] = gcc-objc-3.4.3.tar.bz2
 
-[Patches]
-Patches = 3
-Patch[0] = http://www.linuxfromscratch.org/patches/lfs/6.1/gcc-3.4.3-linkonce-1.patch
-PatchCommand[0] = patch -Np1 -i
-Patch[1] = http://www.linuxfromscratch.org/patches/lfs/6.1/gcc-3.4.3-no_fixincludes-1.patch
-PatchCommand[1] = patch -Np1 -i
-Patch[2] = http://www.linuxfromscratch.org/patches/lfs/6.1/gcc-3.4.3-specs-2.patch
-PatchCommand[2] = patch -Np1 -i
-
 [PrepareBuild]
 if [ "${BUILD_BUILD_ENV}" ]; then
 	tar xvjf gcc-3.4.3.tar.bz2
 	tar xvjf gcc-core-3.4.3.tar.bz2
+	cd gcc-3.4.3
+	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-linkonce-1.patch
+	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-no_fixincludes-1.patch
+	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-specs-2.patch
+	cd ..
 	mkdir gcc-build
 	cd gcc-build
 	../gcc-3.4.3/configure --prefix=/tools \

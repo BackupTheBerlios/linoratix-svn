@@ -2,14 +2,14 @@
 
 # exportierte / uebergebene parameter
 #BUILD_BUILD_ENV=
-BUILD_PATH=/tmp/build/${1/\.lbuild/}
+export BUILD_PATH=/tmp/build/${1/\.lbuild/}
+export PATCH_DIR=/home/jfried/Projects/lbuild/patches
+export LBUILD_FILE=$1
+export LBUILD_INFO=./parser.pl
+export CURRENT_PATH=$(pwd)
+
 mkdir -p ${BUILD_PATH}
 
-LBUILD_FILE=$1
-LBUILD_INFO=./parser.pl
-INSTALL_PATCH=./lbuild_patch.pl
-
-CURRENT_PATH=$(pwd)
 
 ####
 # Meta Informationen
@@ -102,14 +102,18 @@ for sourcefile in $(${LBUILD_INFO} -f ${LBUILD_FILE} -g SourceFiles/SourceFile);
 	cd ${CURRENT_PATH}
 done
 
-ANZAHL_PATCHES=$(${LBUILD_INFO} -f ${LBUILD_FILE} -g Patches/Patches)
-if [ "${ANZAHL_PATCHES}" ]; then
-	cd ${BUILD_PATH}
-	mkdir ../../patches
-	for ((patches=0; patches <= ${ANZAHL_PATCHES} ; patches++ )); do
-		 ${INSTALL_PATCH} "`${LBUILD_INFO} -f ${LBUILD_FILE} -g Patches/${patches}/PatchCommand}`" "`${LBUILD_INFO} -f ${LBUILD_FILE} -g Patches/${patches}/Patch}`"
-	done
-fi
+#ANZAHL_PATCHES=$(${LBUILD_INFO} -f ${LBUILD_FILE} -g Patches/Patches)
+
+#if [ "${ANZAHL_PATCHES}" ]; then
+#	cd ${BUILD_PATH}
+#	mkdir ../../patches
+#	for ((patches=0; patches <= ${ANZAHL_PATCHES} ; patches++ )); do
+#		echo "patching ... "
+#		echo ${INSTALL_PATCH} "`${LBUILD_INFO} -f ${LBUILD_FILE} -g Patches/${patches}/PatchCommand}`" "`${LBUILD_INFO} -f ${LBUILD_FILE} -g Patches/${patches}/Patch}`"
+#		sleep 10
+#		${INSTALL_PATCH} "`${LBUILD_INFO} -f ${LBUILD_FILE} -g Patches/${patches}/PatchCommand}`" "`${LBUILD_INFO} -f ${LBUILD_FILE} -g Patches/${patches}/Patch}`"
+#	done
+#fi
 
 cd ${CURRENT_PATH}
 echo "#!/bin/bash" > ${BUILD_PATH}/l_configure.sh
