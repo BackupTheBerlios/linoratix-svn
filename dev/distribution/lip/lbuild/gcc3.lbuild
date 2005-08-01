@@ -1,0 +1,73 @@
+[Meta]
+Group = dev-gcc/gcc3
+Name = gcc3
+Version = 3.4.3
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Die GNU Compiler Kollektion
+en = The GNU compiler collection
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[DownloadServer]
+Main = http://ftp.gnu.org/gnu/gcc/gcc-3.4.3/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 6
+SourceFile[0] = gcc-3.4.3.tar.bz2
+SourceFile[1] = gcc-core-3.4.3.tar.bz2
+SourceFile[2] = gcc-g++-3.4.3.tar.bz2
+SourceFile[3] = gcc-g77-3.4.3.tar.bz2
+SourceFile[4] = gcc-java-3.4.3.tar.bz2
+SourceFile[5] = gcc-objc-3.4.3.tar.bz2
+
+[Patches]
+Patches = 3
+Patch[0] = http://www.linuxfromscratch.org/patches/lfs/6.1/gcc-3.4.3-linkonce-1.patch
+PatchCommand[0] = patch -Np1 -i
+Patch[1] = http://www.linuxfromscratch.org/patches/lfs/6.1/gcc-3.4.3-no_fixincludes-1.patch
+PatchCommand[1] = patch -Np1 -i
+Patch[2] = http://www.linuxfromscratch.org/patches/lfs/6.1/gcc-3.4.3-specs-2.patch
+PatchCommand[2] = patch -Np1 -i
+
+[PrepareBuild]
+if [ "${BUILD_BUILD_ENV}" ]; then
+	tar xvjf gcc-3.4.3.tar.bz2
+	tar xvjf gcc-core-3.4.3.tar.bz2
+	mkdir gcc-build
+	cd gcc-build
+	../gcc-3.4.3/configure --prefix=/tools \
+	    --libexecdir=/tools/lib --with-local-prefix=/tools \
+	    --disable-nls --enable-shared --enable-languages=c
+fi
+
+
+[Build]
+if [ "${BUILD_BUILD_ENV}" ]; then
+	cd gcc-build
+	make bootstrap
+	make
+fi
+
+
+[Install]
+if [ "${BUILD_BUILD_ENV}" ]; then
+	cd gcc-build
+	make install
+	ln -s gcc /tools/bin/cc
+fi

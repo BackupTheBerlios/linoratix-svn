@@ -1,0 +1,57 @@
+[Meta]
+Group = sys-base/binutils
+Name = binutils
+Version = 2.15.94.0.2.2
+Languages = [de, en]
+Homepage = http://www.kernel.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Basisprogramme die Linux braucht
+en = Baseutilities needed by Linux
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-util/gcc = >=3.4
+
+[DownloadServer]
+Main = http://www.kernel.org/pub/linux/devel/binutils/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = binutils-2.15.94.0.2.2.tar.bz2
+
+[PrepareBuild]
+tar xvjf binutils-2.15.94.0.2.2.tar.bz2
+mkdir binutils-build
+cd binutils-build
+if [ "${BUILD_BUILD_ENV}" ]; then
+	../binutils-2.15.94.0.2.2/configure --prefix=/tools --disable-nls
+fi
+
+[Build]
+cd binutils-build
+
+make
+
+[Install]
+cd binutils-build
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	make install
+	make -C ld clean
+	make -C ld LIB_PATH=/tools/lib
+fi
