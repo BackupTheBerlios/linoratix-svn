@@ -31,20 +31,30 @@ Mirror[0] = http://download.linoratix.com/distfiles/
 SourceFiles = 6
 SourceFile[0] = gcc-3.4.3.tar.bz2
 SourceFile[1] = gcc-core-3.4.3.tar.bz2
-SourceFile[2] = gcc-g++-3.4.3.tar.bz2
-SourceFile[3] = gcc-g77-3.4.3.tar.bz2
-SourceFile[4] = gcc-java-3.4.3.tar.bz2
-SourceFile[5] = gcc-objc-3.4.3.tar.bz2
 
 [PrepareBuild]
+
+#SourceFile[2] = gcc-g++-3.4.3.tar.bz2
+#SourceFile[3] = gcc-g77-3.4.3.tar.bz2
+#SourceFile[4] = gcc-java-3.4.3.tar.bz2
+#SourceFile[5] = gcc-objc-3.4.3.tar.bz2
+
 if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
 	tar xvjf gcc-3.4.3.tar.bz2
 	tar xvjf gcc-core-3.4.3.tar.bz2
-	cd gcc-3.4.3
-	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-linkonce-1.patch
-	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-no_fixincludes-1.patch
-	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-specs-2.patch
-	cd ..
+	
+	#cd gcc-3.4.3
+	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-linkonce-1.patch
+	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-no_fixincludes-1.patch
+	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-specs-2.patch
+	#cd ..
+	
 	mkdir gcc-build
 	cd gcc-build
 	../gcc-3.4.3/configure --prefix=/tools \
@@ -55,6 +65,12 @@ fi
 
 [Build]
 if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
 	cd gcc-build
 	make bootstrap
 	make
@@ -63,6 +79,12 @@ fi
 
 [Install]
 if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+
 	cd gcc-build
 	make install
 	ln -s gcc /tools/bin/cc
