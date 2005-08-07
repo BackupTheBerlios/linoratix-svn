@@ -1,9 +1,9 @@
 [Meta]
-Group = dev-gcc/gcc3
-Name = gcc3
-Version = 3.4.3
+Group = dev-utils/fakeroot
+Name = fakeroot
+Version = 1.4.2
 Languages = [de, en]
-Homepage = http://www.gnu.org/
+Homepage = http://www.debian.org/
 License = GPL
 
 [Maintainer]
@@ -23,21 +23,18 @@ en = The GNU compiler collection
 sys-libs/glibc = >=2.3.4
 
 [DownloadServer]
-Main = http://ftp.gnu.org/gnu/gcc/gcc-3.4.3/
+Main = http://ftp.debian.org/debian/pool/main/f/fakeroot/
 Mirrors = 1
 Mirror[0] = http://download.linoratix.com/distfiles/
 
 [SourceFiles]
-SourceFiles = 6
-SourceFile[0] = gcc-3.4.3.tar.bz2
-SourceFile[1] = gcc-core-3.4.3.tar.bz2
-SourceFile[2] = gcc-g++-3.4.3.tar.bz2
-SourceFile[3] = gcc-g77-3.4.3.tar.bz2
-SourceFile[4] = gcc-java-3.4.3.tar.bz2
-SourceFile[5] = gcc-objc-3.4.3.tar.bz2
+SourceFiles = 1
+SourceFile[0] = fakeroot_1.4.2.tar.gz
 
 [PrepareBuild]
 
+tar xvzf fakeroot_1.4.2.tar.gz
+cd fakeroot-1.4.2
 
 if [ "${BUILD_BUILD_ENV}" ]; then
 	set +h
@@ -46,24 +43,16 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
 	
-	tar xvjf gcc-3.4.3.tar.bz2
-	tar xvjf gcc-core-3.4.3.tar.bz2
-	
-	#cd gcc-3.4.3
-	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-linkonce-1.patch
-	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-no_fixincludes-1.patch
-	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-specs-2.patch
-	#cd ..
-	
-	mkdir gcc-build
-	cd gcc-build
-	../gcc-3.4.3/configure --prefix=/tools \
+	./configure --prefix=/tools \
 	    --libexecdir=/tools/lib --with-local-prefix=/tools \
-	    --disable-nls --enable-shared --enable-languages=c
+	    --disable-nls --enable-shared
 fi
 
 
 [Build]
+
+cd fakeroot-1.4.2
+
 if [ "${BUILD_BUILD_ENV}" ]; then
 	set +h
 	umask 022
@@ -71,13 +60,14 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
 	
-	cd gcc-build
-	make bootstrap -j${PARALLEL_BUILDS}
 	make -j${PARALLEL_BUILDS}
 fi
 
 
 [Install]
+
+cd fakeroot-1.4.2
+
 if [ "${BUILD_BUILD_ENV}" ]; then
 	set +h
 	umask 022
@@ -85,7 +75,5 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
 
-	cd gcc-build
 	make install
-	ln -s gcc /tools/bin/cc
 fi

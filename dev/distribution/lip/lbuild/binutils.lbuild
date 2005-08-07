@@ -45,13 +45,13 @@ fi
 [Build]
 cd binutils-build
 
-make
+make -j${PARALLEL_BUILDS}
 
 [Install]
 cd binutils-build
 
 if [ "${BUILD_BUILD_ENV}" ]; then
 	make install
-	make -C ld clean
-	make -C ld LIB_PATH=/tools/lib
+	make -C ld clean -j${PARALLEL_BUILDS}
+	make -C ld LIB_PATH=/tools/lib -j${PARALLEL_BUILDS}
 fi

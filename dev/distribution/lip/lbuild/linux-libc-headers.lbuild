@@ -1,0 +1,49 @@
+[Meta]
+Group = dev-kernel/linux-libc-headers
+Name = linux-libc-headers
+Version = 2.6.11.2
+Languages = [de, en]
+Homepage = http://www.kernel.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Die Linux Kernel Header
+en = Linux Kernel Header files
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[DownloadServer]
+Main = http://ep09.pld-linux.org/~mmazur/linux-libc-headers/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = linux-libc-headers-2.6.11.2.tar.bz2
+
+[PrepareBuild]
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
+	tar xvjf linux-libc-headers-2.6.11.2.tar.bz2
+
+	cd linux-libc-headers-2.6.11.2
+	cp -R include/asm-i386 /tools/include/asm
+	cp -R include/linux /tools/include	
+	cd ..
+fi

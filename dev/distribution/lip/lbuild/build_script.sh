@@ -2,8 +2,10 @@
 
 # exportierte / uebergebene parameter
 #BUILD_BUILD_ENV=
-export BUILD_PATH=/tmp/build/${1/\.lbuild/}
-export PATCH_DIR=/home/jfried/svn/linoratix/dev/distribution/lip/lbuild/patches
+
+# konfiguration einlesen
+. ./build.conf
+
 export LBUILD_FILE=$1
 export LBUILD_INFO=./parser.pl
 export CURRENT_PATH=$(pwd)

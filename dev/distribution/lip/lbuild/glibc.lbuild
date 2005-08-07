@@ -1,0 +1,96 @@
+[Meta]
+Group = sys-base/glibc
+Name = glibc
+Version = 2.3.4
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Basis C Library
+en = Main C Library
+
+[Dependencies]
+
+[BuildDependencies]
+dev-util/gcc = >=3.4
+
+[DownloadServer]
+Main = http://ftp.gnu.org/gnu/glibc/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 2
+SourceFile[0] = glibc-2.3.4.tar.bz2
+SourceFile[1] = glibc-linuxthreads-2.3.4.tar.bz2
+
+[PrepareBuild]
+tar xvjf glibc-2.3.4.tar.bz2
+
+cd glibc-2.3.4
+tar xvjf ../glibc-linuxthreads-2.3.4.tar.bz2
+
+patch -Np1 -i ${PATCH_DIR}/glibc-2.3.4-fix_test-1.patch
+cd ..
+
+mkdir glibc-build
+cd glibc-build
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
+	../glibc-2.3.4/configure --prefix=/tools --disable-profile --enable-add-ons --enable-kernel=2.6.0 --with-binutils=/tools/bin --without-gd --with-headers=/tools/include --without-selinux
+fi
+
+[Build]
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+fi
+
+cd glibc-build
+CC=gcc make
+CC=gcc make check
+
+[PreInstall]
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
+	mkdir /tools/etc
+	touch /tools/etc/ld.so.conf
+fi
+
+[Install]
+
+cd glibc-build
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+fi
+
+make install

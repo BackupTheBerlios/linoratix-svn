@@ -1,0 +1,75 @@
+[Meta]
+Group = dev-utils/distcc
+Name = distcc
+Version = 2.18.3
+Languages = [de, en]
+Homepage = http://distcc.samba.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Verteilter C Kompiler
+en = Distributed C Compiler
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[DownloadServer]
+Main = http://distcc.samba.org/ftp/distcc/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = distcc-2.18.3.tar.bz2
+
+[PrepareBuild]
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
+	tar xvjf distcc-2.18.3.tar.bz2
+	
+	cd distcc-2.18.3
+	./configure --prefix=/tools \
+	    --libexecdir=/tools/lib --with-local-prefix=/tools \
+	    --disable-nls --enable-shared
+fi
+
+
+[Build]
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
+	cd distcc-2.18.3
+	make -j${PARALLEL_BUILDS}
+fi
+
+
+[Install]
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+
+	cd distcc-2.18.3
+	make install
+fi
