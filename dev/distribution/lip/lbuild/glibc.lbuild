@@ -53,7 +53,7 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
 	
-	../glibc-2.3.4/configure --prefix=/tools --disable-profile --enable-add-ons --enable-kernel=2.6.0 --with-binutils=/tools/bin --without-gd --with-headers=/tools/include --without-selinux
+	CC=gcc ../glibc-2.3.4/configure --prefix=/tools --disable-profile --enable-add-ons --enable-kernel=2.6.0 --with-binutils=/tools/bin --without-gd --with-headers=/tools/include --without-selinux
 fi
 
 [Build]
@@ -94,3 +94,4 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 fi
 
 make install
+

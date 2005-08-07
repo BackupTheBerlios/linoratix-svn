@@ -57,7 +57,7 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	
 	mkdir gcc-build
 	cd gcc-build
-	../gcc-3.4.3/configure --prefix=/tools \
+	CC=gcc ../gcc-3.4.3/configure --prefix=/tools \
 	    --libexecdir=/tools/lib --with-local-prefix=/tools \
 	    --disable-nls --enable-shared --enable-languages=c
 fi

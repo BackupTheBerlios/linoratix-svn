@@ -152,6 +152,8 @@ sub script
 	
 	my $ret = "#!/bin/bash\n";
 	$ret .= "\n# Section: $section\n\n";
+	$ret .= "# Funktionen einbinden\n";
+	$ret .= ". \${INCLUDE_PATH}/functions.sh\n\n";
 	my $count=0;
 	
 	foreach my $key (keys %{$self->{"struct"}->{$section}})

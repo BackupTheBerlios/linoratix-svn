@@ -38,8 +38,9 @@ SourceFile[0] = binutils-2.15.94.0.2.2.tar.bz2
 tar xvjf binutils-2.15.94.0.2.2.tar.bz2
 mkdir binutils-build
 cd binutils-build
+
 if [ "${BUILD_BUILD_ENV}" ]; then
-	../binutils-2.15.94.0.2.2/configure --prefix=/tools --disable-nls
+	CC=gcc ../binutils-2.15.94.0.2.2/configure --prefix=/tools --disable-nls || ldie "Error configuring binutils!!"
 fi
 
 [Build]
@@ -52,6 +53,6 @@ cd binutils-build
 
 if [ "${BUILD_BUILD_ENV}" ]; then
 	make install
-	make -C ld clean -j${PARALLEL_BUILDS}
-	make -C ld LIB_PATH=/tools/lib -j${PARALLEL_BUILDS}
+	make -C ld clean
+	make -C ld LIB_PATH=/tools/lib
 fi

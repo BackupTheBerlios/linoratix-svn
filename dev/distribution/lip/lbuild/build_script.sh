@@ -5,6 +5,7 @@
 
 # konfiguration einlesen
 . ./build.conf
+. ${INCLUDE_PATH}/functions.sh
 
 export LBUILD_FILE=$1
 export LBUILD_INFO=./parser.pl
@@ -123,7 +124,7 @@ echo "" >> ${BUILD_PATH}/l_configure.sh
 ${LBUILD_INFO} -f ${LBUILD_FILE} -g PrepareBuild >> ${BUILD_PATH}/l_configure.sh
 chmod 755 ${BUILD_PATH}/l_configure.sh
 cd ${BUILD_PATH}/linoratix/build
-${BUILD_PATH}/l_configure.sh
+. ${BUILD_PATH}/l_configure.sh
 
 cd ${CURRENT_PATH}
 echo "#!/bin/bash" > ${BUILD_PATH}/l_make.sh
@@ -131,7 +132,7 @@ echo "" >> ${BUILD_PATH}/l_make.sh
 ${LBUILD_INFO} -f ${LBUILD_FILE} -g Build >> ${BUILD_PATH}/l_make.sh
 chmod 755 ${BUILD_PATH}/l_make.sh
 cd ${BUILD_PATH}/linoratix/build
-${BUILD_PATH}/l_make.sh
+. ${BUILD_PATH}/l_make.sh
 
 cd ${CURRENT_PATH}
 echo "#!/bin/bash" > ${BUILD_PATH}/l_preinstall.sh
@@ -139,7 +140,7 @@ echo "" >> ${BUILD_PATH}/l_preinstall.sh
 ${LBUILD_INFO} -f ${LBUILD_FILE} -g PreInstall >> ${BUILD_PATH}/l_preinstall.sh
 chmod 755 ${BUILD_PATH}/l_preinstall.sh
 cd ${BUILD_PATH}/linoratix/build
-${BUILD_PATH}/l_preinstall.sh
+. ${BUILD_PATH}/l_preinstall.sh
 
 cd ${CURRENT_PATH}
 echo "#!/bin/bash" > ${BUILD_PATH}/l_install.sh
@@ -147,7 +148,7 @@ echo "" >> ${BUILD_PATH}/l_install.sh
 ${LBUILD_INFO} -f ${LBUILD_FILE} -g Install >> ${BUILD_PATH}/l_install.sh
 chmod 755 ${BUILD_PATH}/l_install.sh
 cd ${BUILD_PATH}/linoratix/build
-${BUILD_PATH}/l_install.sh
+. ${BUILD_PATH}/l_install.sh
 
 cd ${CURRENT_PATH}
 echo "#!/bin/bash" > ${BUILD_PATH}/l_postinstall.sh
@@ -155,4 +156,4 @@ echo "" >> ${BUILD_PATH}/l_postinstall.sh
 ${LBUILD_INFO} -f ${LBUILD_FILE} -g PostInstall >> ${BUILD_PATH}/l_postinstall.sh
 chmod 755 ${BUILD_PATH}/l_postinstall.sh
 cd ${BUILD_PATH}/linoratix/build
-${BUILD_PATH}/l_postinstall.sh
+. ${BUILD_PATH}/l_postinstall.sh
