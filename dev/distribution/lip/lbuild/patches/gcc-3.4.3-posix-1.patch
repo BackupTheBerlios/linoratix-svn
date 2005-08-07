@@ -1,0 +1,233 @@
+Submitted By: Jim Gifford (patches at jg555 dot com)
+Date: 2004-12-20
+Initial Package Version: 3.4.3
+Origin: Jim Gifford
+Upstream Status: On Hold
+Description: Makes GCC Posix Compliant
+ 
+diff -Naur gcc-3.4.3.orig/contrib/test_summary gcc-3.4.3/contrib/test_summary
+--- gcc-3.4.3.orig/contrib/test_summary	2004-08-26 05:49:13.000000000 +0000
++++ gcc-3.4.3/contrib/test_summary	2004-12-20 23:19:39.652260336 +0000
+@@ -106,7 +106,7 @@
+     srcdir = configflags;
+     sub(/\/configure .*/, "", srcdir);
+     printf "LAST_UPDATED: ";
+-    system("tail -1 " srcdir "/LAST_UPDATED");
++    system("tail -n 1 " srcdir "/LAST_UPDATED");
+     print "";
+ 
+     sub(/^[^ ]*\/configure */, " ", configflags);
+diff -Naur gcc-3.4.3.orig/gcc/configure gcc-3.4.3/gcc/configure
+--- gcc-3.4.3.orig/gcc/configure	2004-11-05 04:14:05.000000000 +0000
++++ gcc-3.4.3/gcc/configure	2004-12-20 23:20:41.084921152 +0000
+@@ -10631,7 +10631,7 @@
+   # and we got the correct data, then succeed.
+   if test x$gcc_cv_objdump != x \
+   && $gcc_cv_objdump -s -j .eh_frame conftest.o 2>/dev/null \
+-     | tail -3 > conftest.got \
++     | tail -n 3 > conftest.got \
+   && { cmp conftest.lit conftest.got > /dev/null 2>&1 \
+     || cmp conftest.big conftest.got > /dev/null 2>&1; }
+   then
+diff -Naur gcc-3.4.3.orig/gcc/configure.ac gcc-3.4.3/gcc/configure.ac
+--- gcc-3.4.3.orig/gcc/configure.ac	2004-09-24 00:43:53.000000000 +0000
++++ gcc-3.4.3/gcc/configure.ac	2004-12-20 23:20:49.551634016 +0000
+@@ -2008,7 +2008,7 @@
+   # and we got the correct data, then succeed.
+   if test x$gcc_cv_objdump != x \
+   && $gcc_cv_objdump -s -j .eh_frame conftest.o 2>/dev/null \
+-     | tail -3 > conftest.got \
++     | tail -n 3 > conftest.got \
+   && { cmp conftest.lit conftest.got > /dev/null 2>&1 \
+     || cmp conftest.big conftest.got > /dev/null 2>&1; }
+   then
+diff -Naur gcc-3.4.3.orig/libjava/acinclude.m4 gcc-3.4.3/libjava/acinclude.m4
+--- gcc-3.4.3.orig/libjava/acinclude.m4	2003-12-31 08:58:29.000000000 +0000
++++ gcc-3.4.3/libjava/acinclude.m4	2004-12-20 23:21:10.859394744 +0000
+@@ -250,8 +250,8 @@
+ AC_MSG_CHECKING(whether 'ld' is at least 2.13)
+ LD_PROG=`$CC --print-prog-name=ld`
+ LD_VERSION=`$LD_PROG --version`
+-LD_VERSION_MAJOR=`echo "$LD_VERSION" | head -1 | cut -d '.' -f 1 | cut -d ' ' -f 4`
+-LD_VERSION_MINOR=`echo "$LD_VERSION" | head -1 | cut -d '.' -f 2`
++LD_VERSION_MAJOR=`echo "$LD_VERSION" | head -n 1 | cut -d '.' -f 1 | cut -d ' ' -f 4`
++LD_VERSION_MINOR=`echo "$LD_VERSION" | head -n 1 | cut -d '.' -f 2`
+ if expr "$LD_VERSION_MAJOR" \> 2 > /dev/null; then
+   LD_OK="ok"
+ else
+diff -Naur gcc-3.4.3.orig/libjava/aclocal.m4 gcc-3.4.3/libjava/aclocal.m4
+--- gcc-3.4.3.orig/libjava/aclocal.m4	2004-11-05 04:14:05.000000000 +0000
++++ gcc-3.4.3/libjava/aclocal.m4	2004-12-20 23:21:52.624045552 +0000
+@@ -262,8 +262,8 @@
+ AC_MSG_CHECKING(whether 'ld' is at least 2.13)
+ LD_PROG=`$CC --print-prog-name=ld`
+ LD_VERSION=`$LD_PROG --version`
+-LD_VERSION_MAJOR=`echo "$LD_VERSION" | head -1 | cut -d '.' -f 1 | cut -d ' ' -f 4`
+-LD_VERSION_MINOR=`echo "$LD_VERSION" | head -1 | cut -d '.' -f 2`
++LD_VERSION_MAJOR=`echo "$LD_VERSION" | head -n 1 | cut -d '.' -f 1 | cut -d ' ' -f 4`
++LD_VERSION_MINOR=`echo "$LD_VERSION" | head -n 1 | cut -d '.' -f 2`
+ if expr "$LD_VERSION_MAJOR" \> 2 > /dev/null; then
+   LD_OK="ok"
+ else
+diff -Naur gcc-3.4.3.orig/libjava/configure gcc-3.4.3/libjava/configure
+--- gcc-3.4.3.orig/libjava/configure	2004-11-05 04:14:05.000000000 +0000
++++ gcc-3.4.3/libjava/configure	2004-12-20 23:14:26.331892272 +0000
+@@ -3015,8 +3015,8 @@
+ echo "configure:3016: checking whether 'ld' is at least 2.13" >&5
+ LD_PROG=`$CC --print-prog-name=ld`
+ LD_VERSION=`$LD_PROG --version`
+-LD_VERSION_MAJOR=`echo "$LD_VERSION" | head -1 | cut -d '.' -f 1 | cut -d ' ' -f 4`
+-LD_VERSION_MINOR=`echo "$LD_VERSION" | head -1 | cut -d '.' -f 2`
++LD_VERSION_MAJOR=`echo "$LD_VERSION" | head -n 1 | cut -d '.' -f 1 | cut -d ' ' -f 4`
++LD_VERSION_MINOR=`echo "$LD_VERSION" | head -n 1 | cut -d '.' -f 2`
+ if expr "$LD_VERSION_MAJOR" \> 2 > /dev/null; then
+   LD_OK="ok"
+ else
+diff -Naur gcc-3.4.3.orig/libstdc++-v3/acinclude.m4 gcc-3.4.3/libstdc++-v3/acinclude.m4
+--- gcc-3.4.3.orig/libstdc++-v3/acinclude.m4	2004-10-28 21:52:33.000000000 +0000
++++ gcc-3.4.3/libstdc++-v3/acinclude.m4	2004-12-20 23:22:28.452598784 +0000
+@@ -273,7 +273,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+   changequote(,)
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+   changequote([,])
+   glibcxx_gnu_ld_version=`echo $ldver | \
+diff -Naur gcc-3.4.3.orig/libstdc++-v3/aclocal.m4 gcc-3.4.3/libstdc++-v3/aclocal.m4
+--- gcc-3.4.3.orig/libstdc++-v3/aclocal.m4	2004-10-28 21:52:37.000000000 +0000
++++ gcc-3.4.3/libstdc++-v3/aclocal.m4	2004-12-20 23:22:41.381633272 +0000
+@@ -286,7 +286,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+   changequote(,)
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+   changequote([,])
+   glibcxx_gnu_ld_version=`echo $ldver | \
+diff -Naur gcc-3.4.3.orig/libstdc++-v3/configure gcc-3.4.3/libstdc++-v3/configure
+--- gcc-3.4.3.orig/libstdc++-v3/configure	2004-10-28 21:52:02.000000000 +0000
++++ gcc-3.4.3/libstdc++-v3/configure	2004-12-20 23:15:37.415085984 +0000
+@@ -7726,7 +7726,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+@@ -46898,7 +46898,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+@@ -65558,7 +65558,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+@@ -67696,7 +67696,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+@@ -69710,7 +69710,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+@@ -72436,7 +72436,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+@@ -74403,7 +74403,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+@@ -76269,7 +76269,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+@@ -79948,7 +79948,7 @@
+   # Start by getting the version number.  I think the libtool test already
+   # does some of this, but throws away the result.
+ 
+-  ldver=`$LD --version 2>/dev/null | head -1 | \
++  ldver=`$LD --version 2>/dev/null | head -n 1 | \
+          sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+ 
+   glibcxx_gnu_ld_version=`echo $ldver | \
+diff -Naur gcc-3.4.3.orig/libstdc++-v3/scripts/check_survey.in gcc-3.4.3/libstdc++-v3/scripts/check_survey.in
+--- gcc-3.4.3.orig/libstdc++-v3/scripts/check_survey.in	2003-07-05 06:00:05.000000000 +0000
++++ gcc-3.4.3/libstdc++-v3/scripts/check_survey.in	2004-12-20 23:23:24.699048024 +0000
+@@ -182,9 +182,9 @@
+     function size_command()
+     {
+       case $1 in
+-        TEXT)  TEXT=$(size -B $EXENAME | tail -1 | awk '{print $1}')  ;;
+-        DATA)  DATA=$(size -B $EXENAME | tail -1 | awk '{print $2}')  ;;
+-        SIZE)  SIZE=$(size -B $EXENAME | tail -1 | awk '{print $4}')  ;;
++        TEXT)  TEXT=$(size -B $EXENAME | tail -n 1 | awk '{print $1}')  ;;
++        DATA)  DATA=$(size -B $EXENAME | tail -n 1 | awk '{print $2}')  ;;
++        SIZE)  SIZE=$(size -B $EXENAME | tail -n 1 | awk '{print $4}')  ;;
+       esac
+     }
+   else
+diff -Naur gcc-3.4.3.orig/ltcf-c.sh gcc-3.4.3/ltcf-c.sh
+--- gcc-3.4.3.orig/ltcf-c.sh	2003-11-19 05:29:32.000000000 +0000
++++ gcc-3.4.3/ltcf-c.sh	2004-12-20 23:23:40.046714824 +0000
+@@ -153,7 +153,7 @@
+     # If the export-symbols file already is a .def file (1st line
+     # is EXPORTS), use it as is.
+     # If DATA tags from a recent dlltool are present, honour them!
+-    archive_expsym_cmds='if test "x`head -1 $export_symbols`" = xEXPORTS; then
++    archive_expsym_cmds='if test "x`head -n 1 $export_symbols`" = xEXPORTS; then
+         cp $export_symbols $output_objdir/$soname-def;
+       else
+         echo EXPORTS > $output_objdir/$soname-def;
+diff -Naur gcc-3.4.3.orig/ltcf-gcj.sh gcc-3.4.3/ltcf-gcj.sh
+--- gcc-3.4.3.orig/ltcf-gcj.sh	2003-11-19 05:29:32.000000000 +0000
++++ gcc-3.4.3/ltcf-gcj.sh	2004-12-20 23:23:55.849312464 +0000
+@@ -156,7 +156,7 @@
+     # If the export-symbols file already is a .def file (1st line
+     # is EXPORTS), use it as is.
+     # If DATA tags from a recent dlltool are present, honour them!
+-    archive_expsym_cmds='if test "x`head -1 $export_symbols`" = xEXPORTS; then
++    archive_expsym_cmds='if test "x`head -n 1 $export_symbols`" = xEXPORTS; then
+         cp $export_symbols $output_objdir/$soname-def;
+       else
+         echo EXPORTS > $output_objdir/$soname-def;

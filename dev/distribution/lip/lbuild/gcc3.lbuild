@@ -28,15 +28,15 @@ Mirrors = 1
 Mirror[0] = http://download.linoratix.com/distfiles/
 
 [SourceFiles]
-SourceFiles = 6
+SourceFiles = 2
 SourceFile[0] = gcc-3.4.3.tar.bz2
 SourceFile[1] = gcc-core-3.4.3.tar.bz2
-SourceFile[2] = gcc-g++-3.4.3.tar.bz2
-SourceFile[3] = gcc-g77-3.4.3.tar.bz2
-SourceFile[4] = gcc-java-3.4.3.tar.bz2
-SourceFile[5] = gcc-objc-3.4.3.tar.bz2
-
 [PrepareBuild]
+
+#SourceFile[2] = gcc-g++-3.4.3.tar.bz2
+#SourceFile[3] = gcc-g77-3.4.3.tar.bz2
+#SourceFile[4] = gcc-java-3.4.3.tar.bz2
+#SourceFile[5] = gcc-objc-3.4.3.tar.bz2
 
 
 if [ "${BUILD_BUILD_ENV}" ]; then
@@ -48,6 +48,17 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	
 	tar xvjf gcc-3.4.3.tar.bz2
 	tar xvjf gcc-core-3.4.3.tar.bz2
+
+	cd gcc-3.4.3
+	if [ `uname -m` = "sparc64" ]; then
+		patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-specs-2.patch
+		patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-posix-1.patch
+		patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-fix_configure_for_target_native-1.patch
+		sed -i '/#define STANDARD_INCLUDE_DIR/s@"/usr/include"@0@g' gcc/cppdefault.c
+		sed -i 's@\(^NATIVE_SYSTEM_HEADER_DIR =\).*@\1 /tools/include@g' \
+			gcc/Makefile.in
+	fi
+	cd ..
 	
 	#cd gcc-3.4.3
 	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-linkonce-1.patch
@@ -57,9 +68,17 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	
 	mkdir gcc-build
 	cd gcc-build
-	CC=gcc ../gcc-3.4.3/configure --prefix=/tools \
-	    --libexecdir=/tools/lib --with-local-prefix=/tools \
-	    --disable-nls --enable-shared --enable-languages=c
+
+	if [ `uname -m` = "sparc64" ]; then
+		../gcc-3.4.3/configure --prefix=/tools --libdir=/tools/lib64 \
+			--libexecdir=/tools/lib64 --with-local-prefix=/tools --enable-long-long \
+			--enable-c99 --enable-shared --enable-threads=posix --enable-__cxa_atexit \
+			--disable-nls --enable-languages=c
+	else
+		CC=gcc ../gcc-3.4.3/configure --prefix=/tools \
+			--libexecdir=/tools/lib --with-local-prefix=/tools \
+			--disable-nls --enable-shared --enable-languages=c
+	fi
 fi
 
 

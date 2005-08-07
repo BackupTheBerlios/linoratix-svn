@@ -21,7 +21,7 @@ fakeroot ./build_script.sh linux-libc-headers.lbuild || ldie "Error building lin
 fakeroot ./build_script.sh fakeroot.lbuild || ldie "Error building fakeroot"
 
 # glibc kann nicht mit fakeroot gebaut werden
-./build_script.sh glibc.lbuild
+./build_script.sh glibc.lbuild || ldie "Error building glibc"
 
 
 

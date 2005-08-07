@@ -37,14 +37,33 @@ SourceFile[0] = binutils-2.15.94.0.2.2.tar.bz2
 [PrepareBuild]
 tar xvjf binutils-2.15.94.0.2.2.tar.bz2
 mkdir binutils-build
-cd binutils-build
 
+if [ `uname -m` = "sparc64" ]; then
+	cd binutils-2.15.94.0.2.2
+	patch -Np1 -i ${PATCH_DIR}/binutils-2.15.94.0.2.2-posix-1.patch
+	patch -Np1 -i ${PATCH_DIR}/binutils-2.16-genscripts_multilib-1.patch
+	cd ..
+fi
+
+cd binutils-build
 if [ "${BUILD_BUILD_ENV}" ]; then
-	CC=gcc ../binutils-2.15.94.0.2.2/configure --prefix=/tools --disable-nls || ldie "Error configuring binutils!!"
+	if [ `uname -m`= "sparc64" ]; then
+		CC=gcc ../binutils-2.16.1/configure --prefix=/tools \
+			--libdir=/tools/lib64 --with-lib-path=/tools/lib \
+			--disable-nls --enable-shared --enable-64-bit-bfd
+	else
+		CC=gcc ../binutils-2.15.94.0.2.2/configure \
+			--prefix=/tools --disable-nls \
+			|| ldie "Error configuring binutils!!"
+	fi
 fi
 
 [Build]
 cd binutils-build
+
+if [ `uname -m` = "sparc64" ]; then
+	make headers -C bfd -j${PARALLEL_BUILDS}
+fi
 
 make -j${PARALLEL_BUILDS}
 
@@ -53,6 +72,11 @@ cd binutils-build
 
 if [ "${BUILD_BUILD_ENV}" ]; then
 	make install
-	make -C ld clean
-	make -C ld LIB_PATH=/tools/lib
+
+	if [ `uname -m` = "sparc64" ]; then
+		cp ../binutils-2.15.94.0.2.2/include/libiberty.h /tools/include
+	else
+		make -C ld clean
+		make -C ld LIB_PATH=/tools/lib
+	fi
 fi
