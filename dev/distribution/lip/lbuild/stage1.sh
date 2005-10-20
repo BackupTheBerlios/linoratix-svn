@@ -49,6 +49,9 @@ fi
 
 rm test.c a.out
 
+fakeroot ./build_script.sh tcl.lbuil
+TCLPATH=/tmp/build/tcl/linoratix/build/tcl8.4.11 fakeroot ./build_script.sh expect.lbuild
+
 echo
 echo "Buildenv wurde erfolgreich gebaut!"
 echo "Stage 0 wurde erreicht!"

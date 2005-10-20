@@ -1,10 +1,10 @@
 [Meta]
-Group = dev-utils/fakeroot
-Name = fakeroot
-Version = 1.5.4
+Group = dev-utils/expect
+Name = expect
+Version = 5.43.0
 Languages = [de, en]
-Homepage = http://www.debian.org/
-License = GPL
+Homepage = http://http://expect.nist.gov/
+License = PublicDomain
 
 [Maintainer]
 Maintainers = 1
@@ -16,25 +16,29 @@ Homepage[0] = http://developer.linoratix.com/~jfried/
 Nick[0] = jfried
 
 [Description]
-de = Fakeroot
-en = Fakeroot
+de = Expect.
+en = Lets you automate telnet, ftp, passwd, fsck, rlogin, tip, etc.
 
 [Dependencies]
-sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-util/gcc = >=3.4
 
 [DownloadServer]
-Main = http://ftp.debian.org/debian/pool/main/f/fakeroot/
+Main = http://expect.nist.gov/src/
 Mirrors = 1
 Mirror[0] = http://download.linoratix.com/distfiles/
 
 [SourceFiles]
 SourceFiles = 1
-SourceFile[0] = fakeroot_1.5.4.tar.gz
+SourceFile[0] = expect-5.43.0.tar.gz
 
 [PrepareBuild]
+tar xvzf expect-5.43.0.tar.gz
 
-tar xvzf fakeroot_1.5.4.tar.gz
-cd fakeroot-1.5.4
+cd expect-5.43
+
+patch -Np1 -i ${PATCH_DIR}/expect-5.43.0-spawn-1.patch
 
 if [ "${BUILD_BUILD_ENV}" ]; then
 	set +h
@@ -43,31 +47,26 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
 	
-	./configure --prefix=/tools \
-	    --libexecdir=/tools/lib --with-local-prefix=/tools \
-	    --disable-nls --enable-shared
+	./configure --prefix=/tools --with-tcl=/tools/lib --with-tclinclude=${TCLPATH} --with-x=no
 fi
-
 
 [Build]
 
-cd fakeroot-1.5.4
-
 if [ "${BUILD_BUILD_ENV}" ]; then
 	set +h
 	umask 022
 	
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
-	
-	make -j${PARALLEL_BUILDS}
 fi
+
+cd expect-5.43
+make
 
 
 [Install]
 
-cd fakeroot-1.5.4
-
+cd expect-5.43
 if [ "${BUILD_BUILD_ENV}" ]; then
 	set +h
 	umask 022
@@ -75,5 +74,9 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
 
+	make SCRIPTS="" install
+else
 	make install
 fi
+
+

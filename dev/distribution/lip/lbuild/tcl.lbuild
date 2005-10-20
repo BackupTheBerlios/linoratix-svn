@@ -1,0 +1,89 @@
+[Meta]
+Group = dev-lang/tcl
+Name = tcl
+Version = 8.4.11
+Languages = [de, en]
+Homepage = http://tcl.sourceforge.net/
+License = BSD
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Tool Command Language ist eine sehr portable interpretierte Scriptsprache.
+en = Tool Command Language (Tcl) is an interpreted language and very portable interpreter for that language.
+
+[Dependencies]
+
+[BuildDependencies]
+dev-util/gcc = >=3.4
+
+[DownloadServer]
+Main = http://heanet.dl.sourceforge.net/sourceforge/tcl/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = tcl8.4.11-src.tar.gz
+
+[PrepareBuild]
+tar xvzf tcl8.4.11-src.tar.gz
+
+cd tcl8.4.11/unix
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
+	./configure --prefix=/tools
+fi
+
+[Build]
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+fi
+
+cd tcl8.4.11/unix
+make
+
+
+[Install]
+
+cd tcl8.4.11/unix
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+fi
+
+make install
+
+[PostInstall]
+cd tcl8.4.11/unix
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	ln -s tclsh8.4 /tools/bin/tclsh
+fi
+
