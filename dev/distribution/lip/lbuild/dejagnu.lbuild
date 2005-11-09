@@ -1,0 +1,78 @@
+[Meta]
+Group = dev-utils/dejagnu
+Name = dejagnu
+Version = 1.4.4
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Ein Framework um andere Programme zu testen.
+en = The DejaGNU package contains a framework for testing other programs.
+
+[Dependencies]
+
+[BuildDependencies]
+dev-util/gcc = >=3.4
+
+[DownloadServer]
+Main = http://ftp.gnu.org/gnu/dejagnu/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = dejagnu-1.4.4.tar.gz
+
+[PrepareBuild]
+tar xvzf dejagnu-1.4.4.tar.gz
+
+cd dejagnu-1.4.4
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+	
+	./configure --prefix=/tools
+fi
+
+[Build]
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+fi
+
+cd dejagnu-1.4.4
+make
+
+
+[Install]
+
+cd dejagnu-1.4.4
+if [ "${BUILD_BUILD_ENV}" ]; then
+	set +h
+	umask 022
+	
+	export PATH=/tools/bin:$PATH
+	export LC_ALL=POSIX
+fi
+
+make install
+
+
