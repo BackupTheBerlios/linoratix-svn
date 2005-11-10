@@ -52,9 +52,15 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 			--libdir=/tools/lib64 --with-lib-path=/tools/lib \
 			--disable-nls --enable-shared --enable-64-bit-bfd
 	else
-		CC=gcc ../binutils-2.15.94.0.2.2/configure \
-			--prefix=/tools --disable-nls \
-			|| ldie "Error configuring binutils!!"
+		if [ "${STAGE}" = "0" ]; then
+			CC=gcc ../binutils-2.15.94.0.2.2/configure \
+				--prefix=/tools --disable-nls --with-lib-path=/tools/lib \
+				|| ldie "Error configuring binutils!!"
+		elif [ "${STAGE}" = "1" ]; then
+			CC=gcc ../binutils-2.15.94.0.2.2/configure \
+                                --prefix=/tools --disable-nls --enable-shared --with-lib-path=/tools/lib \
+                                || ldie "Error configuring binutils!!"
+		fi
 	fi
 fi
 
@@ -77,6 +83,10 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 		cp ../binutils-2.15.94.0.2.2/include/libiberty.h /tools/include
 	else
 		make -C ld clean
-		make -C ld LIB_PATH=/tools/lib
+		if [ "${STAGE}" = "0" ]; then
+			make -C ld LIB_PATH=/tools/lib
+		elif [ "${STAGE}" = "1" ]; then
+			make -C ld LIB_PATH=/usr/lib:/lib
+		fi
 	fi
 fi

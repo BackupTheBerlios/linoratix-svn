@@ -101,7 +101,7 @@ fi
 for sourcefile in $(${LBUILD_INFO} -f ${LBUILD_FILE} -g SourceFiles/SourceFile); do
 	server=$(${LBUILD_INFO} -f ${LBUILD_FILE} -g DownloadServer/Main)
 	cd ${BUILD_PATH}/linoratix/build
-	wget --passive-ftp ${server}/${sourcefile}
+	wget -c --passive-ftp ${server}/${sourcefile}
 	cd ${CURRENT_PATH}
 done
 

@@ -31,9 +31,10 @@ Mirror[0] = http://download.linoratix.com/distfiles/
 SourceFiles = 2
 SourceFile[0] = gcc-3.4.3.tar.bz2
 SourceFile[1] = gcc-core-3.4.3.tar.bz2
+SourceFile[2] = gcc-g++-3.4.3.tar.bz2
+
 [PrepareBuild]
 
-#SourceFile[2] = gcc-g++-3.4.3.tar.bz2
 #SourceFile[3] = gcc-g77-3.4.3.tar.bz2
 #SourceFile[4] = gcc-java-3.4.3.tar.bz2
 #SourceFile[5] = gcc-objc-3.4.3.tar.bz2
@@ -49,6 +50,10 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	tar xvjf gcc-3.4.3.tar.bz2
 	tar xvjf gcc-core-3.4.3.tar.bz2
 
+	if [ "${STAGE}" = "1" ]; then
+		tar xvjf gcc-g++3.4.3.tar.bz2
+	fi
+
 	cd gcc-3.4.3
 	if [ `uname -m` = "sparc64" ]; then
 		patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-specs-2.patch
@@ -57,14 +62,14 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 		sed -i '/#define STANDARD_INCLUDE_DIR/s@"/usr/include"@0@g' gcc/cppdefault.c
 		sed -i 's@\(^NATIVE_SYSTEM_HEADER_DIR =\).*@\1 /tools/include@g' \
 			gcc/Makefile.in
+	else
+		if [ "${STAGE}" = "1" ]; then
+			# patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-linkonce-1.patch
+			patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-no_fixincludes-1.patch
+			patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-specs-2.patch
+		fi
 	fi
 	cd ..
-	
-	#cd gcc-3.4.3
-	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-linkonce-1.patch
-	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-no_fixincludes-1.patch
-	#	patch -Np1 -i ${PATCH_DIR}/gcc-3.4.3-specs-2.patch
-	#cd ..
 	
 	mkdir gcc-build
 	cd gcc-build
@@ -75,9 +80,19 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 			--enable-c99 --enable-shared --enable-threads=posix --enable-__cxa_atexit \
 			--disable-nls --enable-languages=c
 	else
-		CC=gcc ../gcc-3.4.3/configure --prefix=/tools \
-			--libexecdir=/tools/lib --with-local-prefix=/tools \
-			--disable-nls --enable-shared --enable-languages=c
+		if [ "${STAGE}" = "0" ]; then
+			CC=gcc ../gcc-3.4.3/configure --prefix=/tools \
+				--libexecdir=/tools/lib --with-local-prefix=/tools \
+				--disable-nls --enable-shared --enable-languages=c
+		fi
+
+		if [ "${STAGE}" = "1" ]; then
+			CC=gcc ../gcc-3.4.3/configure --prefix=/tools \
+				--libexecdir=/tools/lib --with-local-prefix=/tools \
+				--enable-clocale=gnu --enable-shared \
+				--enable-threads=posix --enable-__cxa_atexit \
+				--enable-languages=c,c++ --disable-libstdcxx-pch
+		fi
 	fi
 fi
 
@@ -91,8 +106,13 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export LC_ALL=POSIX
 	
 	cd gcc-build
-	make bootstrap -j${PARALLEL_BUILDS}
-	make -j${PARALLEL_BUILDS}
+	if [ "${STAGE}" = "0" ]; then
+		make bootstrap -j${PARALLEL_BUILDS}
+		make -j${PARALLEL_BUILDS}
+	elif [ "${STAGE}" = "1" ]; then
+		make
+		# -- no check yet make -k check
+	fi
 fi
 
 
@@ -106,5 +126,5 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 
 	cd gcc-build
 	make install
-	ln -s gcc /tools/bin/cc
+	[ "${STAGE}" = "0" ] && ln -s gcc /tools/bin/cc
 fi

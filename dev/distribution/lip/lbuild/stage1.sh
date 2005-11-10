@@ -5,6 +5,7 @@
 #
 
 export BUILD_BUILD_ENV=1 
+export STAGE=0
 
 set +h
 umask 022
@@ -59,4 +60,14 @@ echo
 echo "Buildenv wurde erfolgreich gebaut!"
 echo "Stage 0 wurde erreicht!"
 echo
+
+export STAGE=1
+
+rm -rf /tmp/build/gcc3/linoratix/build/gcc-build
+rm -rf /tmp/build/gcc3/linoratix/build/gcc-3.4.3
+rm -rf /tmp/build/binutils/linoratix/build/binutils-2.15.94.0.2.2
+rm -rf /tmp/build/binutils/linoratix/build/binutils-build
+
+fakeroot ./build_script.sh gcc3.lbuild || ldie "Error building gcc (Stage: ${STAGE})"
+fakeroot ./build_script.sh binutils.lbuild || ldie "Error building binutils (Stage: ${STAGE})"
 
