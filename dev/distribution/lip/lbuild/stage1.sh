@@ -4,6 +4,8 @@
 # script um stage 0 und 1 zu bauen
 #
 
+rm -f current_stage
+
 export BUILD_BUILD_ENV=1 
 export STAGE=0
 
@@ -60,6 +62,8 @@ echo
 echo "Buildenv wurde erfolgreich gebaut!"
 echo "Stage 0 wurde erreicht!"
 echo
+
+echo "0" > current_stage
 
 export STAGE=1
 

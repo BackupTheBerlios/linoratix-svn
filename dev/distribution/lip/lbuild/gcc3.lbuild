@@ -83,7 +83,8 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 		if [ "${STAGE}" = "0" ]; then
 			CC=gcc ../gcc-3.4.3/configure --prefix=/tools \
 				--libexecdir=/tools/lib --with-local-prefix=/tools \
-				--disable-nls --enable-shared --enable-languages=c
+				--disable-nls --enable-shared --enable-languages=c \
+				--without-multilib --disable-multilib
 		fi
 
 		if [ "${STAGE}" = "1" ]; then
@@ -107,7 +108,7 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	
 	cd gcc-build
 	if [ "${STAGE}" = "0" ]; then
-		make bootstrap -j${PARALLEL_BUILDS}
+		make bootstrap
 		make -j${PARALLEL_BUILDS}
 	elif [ "${STAGE}" = "1" ]; then
 		make
