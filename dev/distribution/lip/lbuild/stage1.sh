@@ -17,11 +17,11 @@ export LC_ALL=POSIX
 
 . ./functions.sh
 
-fakeroot ./build_script.sh binutils.lbuild || ldie "Error building binutils"
-fakeroot ./build_script.sh gcc3.lbuild || ldie "Error building gcc"
-fakeroot ./build_script.sh distcc.lbuild || ldie "Error building distcc"
-fakeroot ./build_script.sh linux-libc-headers.lbuild || ldie "Error building linux-libc-headers"
-fakeroot ./build_script.sh fakeroot.lbuild || ldie "Error building fakeroot"
+./build_script.sh binutils.lbuild || ldie "Error building binutils"
+./build_script.sh gcc3.lbuild || ldie "Error building gcc"
+./build_script.sh distcc.lbuild || ldie "Error building distcc"
+./build_script.sh linux-libc-headers.lbuild || ldie "Error building linux-libc-headers"
+#./build_script.sh fakeroot.lbuild || ldie "Error building fakeroot"
 
 # glibc kann nicht mit fakeroot gebaut werden
 ./build_script.sh glibc.lbuild || ldie "Error building glibc"
@@ -29,6 +29,8 @@ fakeroot ./build_script.sh fakeroot.lbuild || ldie "Error building fakeroot"
 
 
 # linker pfad anpassen
+script_dir=`pwd`
+
 cd /tmp/build/binutils/linoratix/build/binutils-build
 make -C ld install
 
@@ -52,11 +54,13 @@ fi
 
 rm test.c a.out
 
-fakeroot ./build_script.sh tcl.lbuil
-TCLPATH=/tmp/build/tcl/linoratix/build/tcl8.4.11 fakeroot ./build_script.sh expect.lbuild
+cd $script_dir
 
-fakeroot ./build_script.sh expect.lbuild
-fakeroot ./build_script.sh dejagnu.lbuild
+./build_script.sh tcl.lbuil
+TCLPATH=/tmp/build/tcl/linoratix/build/tcl8.4.11 ./build_script.sh expect.lbuild
+
+./build_script.sh expect.lbuild
+./build_script.sh dejagnu.lbuild
 
 echo
 echo "Buildenv wurde erfolgreich gebaut!"
@@ -72,6 +76,7 @@ rm -rf /tmp/build/gcc3/linoratix/build/gcc-3.4.3
 rm -rf /tmp/build/binutils/linoratix/build/binutils-2.15.94.0.2.2
 rm -rf /tmp/build/binutils/linoratix/build/binutils-build
 
-fakeroot ./build_script.sh gcc3.lbuild || ldie "Error building gcc (Stage: ${STAGE})"
-fakeroot ./build_script.sh binutils.lbuild || ldie "Error building binutils (Stage: ${STAGE})"
+./build_script.sh gcc3.lbuild || ldie "Error building gcc (Stage: ${STAGE})"
+./build_script.sh binutils.lbuild || ldie "Error building binutils (Stage: ${STAGE})"
+
 
