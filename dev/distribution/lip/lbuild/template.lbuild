@@ -1,0 +1,74 @@
+[Meta]
+Group = app-editor/nano
+Name = nano
+Version = 1.2.4
+Languages = [de, en]
+Homepage = http://www.nano-editor.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Der Nano Editor
+en = The Nano Editor
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+sys-libs/ncurses = >=5.4
+
+[BuildDependencies]
+dev-util/gcc = >=3.4
+
+[Recommendations]
+sys-shell/bash = >=3.0
+
+[Conflicts]
+app-editor/pico = >=0
+
+[DownloadServer]
+Main = http://www.nano-editor.org/dist/v1.2/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = nano-1.2.4.tar.gz
+
+[Patches]
+Patches = 1
+Patch[0] = http://domain.edu/patch-name.patch
+PatchCommand[0] = patch -Np1 -i
+; Patch[1] = http://domain.edu/patch2-name.patch
+; PatchCommand[1] = patch -p0 <
+
+[PrepareBuild]
+./configure --prefix=/usr
+
+[Build]
+make
+
+[Install]
+make install DESTDIR=@INSTALL_DIR@
+
+[PreInstall]
+groupadd sshd
+useradd -s /bin/false -d /dev/null -g sshd sshd
+
+[PostInstall]
+update-rc.d sshd defaults
+/etc/rc.d/sshd start
+
+[PreUninstall]
+update-rc.d -r sshd
+
+if [ "${CLEAN_ALL}" ]; then
+	userdel sshd
+	groupdel sshd
+fi

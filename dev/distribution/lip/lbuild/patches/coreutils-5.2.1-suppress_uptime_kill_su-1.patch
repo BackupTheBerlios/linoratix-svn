@@ -1,0 +1,286 @@
+Submitted By: DJ Lucas <dj at linuxfromscratch dot org>
+Date: 2004-08-28
+Initial Package Version: 5.2.1
+Origin: original suppress_hotname_uptame_kill_su patch (Robert Connolly)
+Upstream Status: N/A
+Description: This patch supresses the building of uptime, and kill.  The su 
+command is built so the testsuite can run, use './src/su', but it will not 
+be installed. Also see: 
+           http://www.linuxfromscratch.org/patches/downloads/coreutils/
+           coreutils-5.0-dupes-2.patch
+
+
+diff -Naur coreutils-5.2.1-orig/Makefile.in coreutils-5.2.1/Makefile.in
+--- coreutils-5.2.1-orig/Makefile.in	2004-03-11 02:57:59.000000000 -0600
++++ coreutils-5.2.1/Makefile.in	2004-06-28 23:18:40.886092760 -0500
+@@ -127,7 +127,7 @@
+ 	$(top_srcdir)/m4/uintmax_t.m4 $(top_srcdir)/m4/ulonglong.m4 \
+ 	$(top_srcdir)/m4/unicodeio.m4 $(top_srcdir)/m4/unistd-safer.m4 \
+ 	$(top_srcdir)/m4/unlink-busy.m4 \
+-	$(top_srcdir)/m4/unlocked-io.m4 $(top_srcdir)/m4/uptime.m4 \
++	$(top_srcdir)/m4/unlocked-io.m4 \
+ 	$(top_srcdir)/m4/userspec.m4 $(top_srcdir)/m4/utimbuf.m4 \
+ 	$(top_srcdir)/m4/utime.m4 $(top_srcdir)/m4/utimens.m4 \
+ 	$(top_srcdir)/m4/utimes-null.m4 $(top_srcdir)/m4/utimes.m4 \
+diff -Naur coreutils-5.2.1-orig/README coreutils-5.2.1/README
+--- coreutils-5.2.1-orig/README	2004-01-18 01:59:41.000000000 -0600
++++ coreutils-5.2.1/README	2004-06-28 23:18:58.562405552 -0500
+@@ -9,11 +9,11 @@
+ 
+   [ basename cat chgrp chmod chown chroot cksum comm cp csplit cut date dd
+   df dir dircolors dirname du echo env expand expr factor false fmt fold
+-  ginstall groups head hostid hostname id join kill link ln logname ls
++  ginstall groups head hostid hostname id join link ln logname ls
+   md5sum mkdir mkfifo mknod mv nice nl nohup od paste pathchk pinky pr
+   printenv printf ptx pwd readlink rm rmdir seq sha1sum shred sleep sort
+   split stat stty su sum sync tac tail tee test touch tr true tsort tty
+-  uname unexpand uniq unlink uptime users vdir wc who whoami yes
++  uname unexpand uniq unlink users vdir wc who whoami yes
+ 
+ See the file NEWS for a list of major changes in the current release.
+ 
+diff -Naur coreutils-5.2.1-orig/configure coreutils-5.2.1/configure
+--- coreutils-5.2.1-orig/configure	2004-03-11 02:58:11.000000000 -0600
++++ coreutils-5.2.1/configure	2004-06-28 23:18:40.952082728 -0500
+@@ -47462,8 +47462,7 @@
+ echo "$as_me:$LINENO: result: $gnulib_cv_have_boot_time" >&5
+ echo "${ECHO_T}$gnulib_cv_have_boot_time" >&6
+   if test $gnulib_cv_have_boot_time = yes; then
+-  OPTIONAL_BIN_PROGS="$OPTIONAL_BIN_PROGS uptime\$(EXEEXT)"
+-  MAN="$MAN uptime.1"
++echo "uptime is surpressed"
+ fi
+ 
+ 
+diff -Naur coreutils-5.2.1-orig/man/Makefile.in coreutils-5.2.1/man/Makefile.in
+--- coreutils-5.2.1-orig/man/Makefile.in	2004-03-11 02:58:00.000000000 -0600
++++ coreutils-5.2.1/man/Makefile.in	2004-06-28 23:22:02.953373864 -0500
+@@ -122,7 +122,7 @@
+ 	$(top_srcdir)/m4/uintmax_t.m4 $(top_srcdir)/m4/ulonglong.m4 \
+ 	$(top_srcdir)/m4/unicodeio.m4 $(top_srcdir)/m4/unistd-safer.m4 \
+ 	$(top_srcdir)/m4/unlink-busy.m4 \
+-	$(top_srcdir)/m4/unlocked-io.m4 $(top_srcdir)/m4/uptime.m4 \
++	$(top_srcdir)/m4/unlocked-io.m4 \
+ 	$(top_srcdir)/m4/userspec.m4 $(top_srcdir)/m4/utimbuf.m4 \
+ 	$(top_srcdir)/m4/utime.m4 $(top_srcdir)/m4/utimens.m4 \
+ 	$(top_srcdir)/m4/utimes-null.m4 $(top_srcdir)/m4/utimes.m4 \
+@@ -266,13 +266,13 @@
+   basename.1 cat.1 chgrp.1 chmod.1 chown.1 chroot.1 cksum.1 comm.1 \
+   cp.1 csplit.1 cut.1 date.1 dd.1 df.1 dir.1 dircolors.1 dirname.1 du.1 \
+   echo.1 env.1 expand.1 expr.1 factor.1 false.1 fmt.1 fold.1 groups.1 \
+-  head.1 hostid.1 hostname.1 id.1 install.1 join.1 kill.1 \
++  head.1 hostid.1 hostname.1 id.1 install.1 join.1 \
+   link.1 ln.1 logname.1 \
+   ls.1 md5sum.1 mkdir.1 mkfifo.1 mknod.1 mv.1 nice.1 nl.1 nohup.1 od.1 \
+   paste.1 pathchk.1 pinky.1 pr.1 printenv.1 printf.1 ptx.1 pwd.1 readlink.1 \
+   rm.1 rmdir.1 seq.1 sha1sum.1 shred.1 sleep.1 sort.1 split.1 stat.1 stty.1 \
+   su.1 sum.1 sync.1 tac.1 tail.1 tee.1 test.1 touch.1 tr.1 true.1 tsort.1 \
+-  tty.1 uname.1 unexpand.1 uniq.1 unlink.1 uptime.1 users.1 vdir.1 wc.1 \
++  tty.1 uname.1 unexpand.1 uniq.1 unlink.1 users.1 vdir.1 wc.1 \
+   who.1 whoami.1 yes.1
+ 
+ man_aux = $(dist_man_MANS:.1=.x)
+@@ -535,11 +535,10 @@
+ groups.1:	$(common_dep)	$(srcdir)/groups.x	../src/groups.sh
+ head.1:		$(common_dep)	$(srcdir)/head.x	../src/head.c
+ hostid.1:	$(common_dep)	$(srcdir)/hostid.x	../src/hostid.c
+-hostname.1:	$(common_dep)	$(srcdir)/hostname.x	../src/hostname.c
++hostname.1:	$(common dep)	$(srcdir)/hostname.x	../src/hostname.c
+ id.1:		$(common_dep)	$(srcdir)/id.x		../src/id.c
+ install.1:	$(common_dep)	$(srcdir)/install.x	../src/install.c
+ join.1:		$(common_dep)	$(srcdir)/join.x	../src/join.c
+-kill.1:		$(common_dep)	$(srcdir)/kill.x	../src/kill.c
+ link.1:		$(common_dep)	$(srcdir)/link.x	../src/link.c
+ ln.1:		$(common_dep)	$(srcdir)/ln.x		../src/ln.c
+ logname.1:	$(common_dep)	$(srcdir)/logname.x	../src/logname.c
+@@ -588,7 +587,6 @@
+ unexpand.1:	$(common_dep)	$(srcdir)/unexpand.x	../src/unexpand.c
+ uniq.1:		$(common_dep)	$(srcdir)/uniq.x	../src/uniq.c
+ unlink.1:	$(common_dep)	$(srcdir)/unlink.x	../src/unlink.c
+-uptime.1:	$(common_dep)	$(srcdir)/uptime.x	../src/uptime.c
+ users.1:	$(common_dep)	$(srcdir)/users.x	../src/users.c
+ vdir.1:		$(common_dep)	$(srcdir)/vdir.x	../src/ls.c
+ wc.1:		$(common_dep)	$(srcdir)/wc.x		../src/wc.c
+@@ -619,7 +617,7 @@
+ check-x-vs-1:
+ 	PATH=../src$(PATH_SEPARATOR)$$PATH; export PATH;		\
+ 	t=ls-files.$$$$;						\
+-	(cd $(srcdir) && ls -1 *.x) | sed 's/\.x$$//' | $(ASSORT) > $$t;\
++	(cd $(srcdir) && ls -1 *.x) | grep -v 'uptime.x' | grep -v 'kill.x' | sed 's/\.x$$//' | $(ASSORT) > $$t;      \
+ 	echo $(dist_man_MANS) | tr -s ' ' '\n' | sed 's/\.1$$//'	\
+ 	  | $(ASSORT) | diff - $$t || { rm $$t; exit 1; };		\
+ 	rm $$t
+diff -Naur coreutils-5.2.1-orig/src/Makefile.in coreutils-5.2.1/src/Makefile.in
+--- coreutils-5.2.1-orig/src/Makefile.in	2004-03-11 02:59:23.000000000 -0600
++++ coreutils-5.2.1/src/Makefile.in	2004-06-28 23:28:14.117948272 -0500
+@@ -16,7 +16,7 @@
+ 
+ 
+ 
+-SOURCES = $(__SOURCES) basename.c cat.c $(chgrp_SOURCES) chmod.c $(chown_SOURCES) chroot.c cksum.c comm.c $(cp_SOURCES) csplit.c cut.c date.c dd.c df.c $(dir_SOURCES) dircolors.c dirname.c du.c echo.c env.c expand.c expr.c factor.c false.c fmt.c fold.c $(ginstall_SOURCES) head.c hostid.c hostname.c id.c join.c kill.c link.c ln.c logname.c $(ls_SOURCES) $(md5sum_SOURCES) mkdir.c mkfifo.c mknod.c $(mv_SOURCES) nice.c nl.c nohup.c od.c paste.c pathchk.c pinky.c pr.c printenv.c printf.c ptx.c pwd.c readlink.c $(rm_SOURCES) rmdir.c seq.c setuidgid.c $(sha1sum_SOURCES) shred.c sleep.c sort.c split.c stat.c stty.c su.c sum.c sync.c tac.c tail.c tee.c test.c touch.c tr.c true.c tsort.c tty.c uname.c unexpand.c uniq.c unlink.c uptime.c users.c $(vdir_SOURCES) wc.c who.c whoami.c yes.c
++SOURCES = $(__SOURCES) basename.c cat.c $(chgrp_SOURCES) chmod.c $(chown_SOURCES) chroot.c cksum.c comm.c $(cp_SOURCES) csplit.c cut.c date.c dd.c df.c $(dir_SOURCES) dircolors.c dirname.c du.c echo.c env.c expand.c expr.c factor.c false.c fmt.c fold.c $(ginstall_SOURCES) head.c hostid.c hostname.c id.c join.c link.c ln.c logname.c $(ls_SOURCES) $(md5sum_SOURCES) mkdir.c mkfifo.c mknod.c $(mv_SOURCES) nice.c nl.c nohup.c od.c paste.c pathchk.c pinky.c pr.c printenv.c printf.c ptx.c pwd.c readlink.c $(rm_SOURCES) rmdir.c seq.c setuidgid.c $(sha1sum_SOURCES) shred.c sleep.c sort.c split.c stat.c stty.c su.c sum.c sync.c tac.c tail.c tee.c test.c touch.c tr.c true.c tsort.c tty.c uname.c unexpand.c uniq.c unlink.c users.c $(vdir_SOURCES) wc.c who.c whoami.c yes.c
+ 
+ srcdir = @srcdir@
+ top_srcdir = @top_srcdir@
+@@ -40,7 +40,7 @@
+ host_triplet = @host@
+ EXTRA_PROGRAMS = chroot$(EXEEXT) df$(EXEEXT) hostid$(EXEEXT) \
+ 	nice$(EXEEXT) pinky$(EXEEXT) stty$(EXEEXT) su$(EXEEXT) \
+-	uname$(EXEEXT) uptime$(EXEEXT) users$(EXEEXT) who$(EXEEXT)
++	uname$(EXEEXT) users$(EXEEXT) who$(EXEEXT)
+ bin_PROGRAMS = [$(EXEEXT) chgrp$(EXEEXT) chown$(EXEEXT) chmod$(EXEEXT) \
+ 	cp$(EXEEXT) dd$(EXEEXT) dircolors$(EXEEXT) du$(EXEEXT) \
+ 	ginstall$(EXEEXT) link$(EXEEXT) ln$(EXEEXT) dir$(EXEEXT) \
+@@ -57,7 +57,7 @@
+ 	uniq$(EXEEXT) wc$(EXEEXT) basename$(EXEEXT) date$(EXEEXT) \
+ 	dirname$(EXEEXT) echo$(EXEEXT) env$(EXEEXT) expr$(EXEEXT) \
+ 	factor$(EXEEXT) false$(EXEEXT) hostname$(EXEEXT) id$(EXEEXT) \
+-	kill$(EXEEXT) logname$(EXEEXT) pathchk$(EXEEXT) \
++	logname$(EXEEXT) pathchk$(EXEEXT) \
+ 	printenv$(EXEEXT) printf$(EXEEXT) pwd$(EXEEXT) seq$(EXEEXT) \
+ 	sleep$(EXEEXT) tee$(EXEEXT) test$(EXEEXT) true$(EXEEXT) \
+ 	tty$(EXEEXT) whoami$(EXEEXT) yes$(EXEEXT) $(am__EXEEXT_1) \
+@@ -151,7 +151,7 @@
+ 	$(top_srcdir)/m4/uintmax_t.m4 $(top_srcdir)/m4/ulonglong.m4 \
+ 	$(top_srcdir)/m4/unicodeio.m4 $(top_srcdir)/m4/unistd-safer.m4 \
+ 	$(top_srcdir)/m4/unlink-busy.m4 \
+-	$(top_srcdir)/m4/unlocked-io.m4 $(top_srcdir)/m4/uptime.m4 \
++	$(top_srcdir)/m4/unlocked-io.m4 \
+ 	$(top_srcdir)/m4/userspec.m4 $(top_srcdir)/m4/utimbuf.m4 \
+ 	$(top_srcdir)/m4/utime.m4 $(top_srcdir)/m4/utimens.m4 \
+ 	$(top_srcdir)/m4/utimes-null.m4 $(top_srcdir)/m4/utimes.m4 \
+@@ -335,11 +335,6 @@
+ join_LDADD = $(LDADD)
+ join_DEPENDENCIES = ../lib/libfetish.a $(am__DEPENDENCIES_1) \
+ 	../lib/libfetish.a
+-kill_SOURCES = kill.c
+-kill_OBJECTS = kill.$(OBJEXT)
+-kill_LDADD = $(LDADD)
+-kill_DEPENDENCIES = ../lib/libfetish.a $(am__DEPENDENCIES_1) \
+-	../lib/libfetish.a
+ link_SOURCES = link.c
+ link_OBJECTS = link.$(OBJEXT)
+ link_LDADD = $(LDADD)
+@@ -574,9 +569,6 @@
+ unlink_LDADD = $(LDADD)
+ unlink_DEPENDENCIES = ../lib/libfetish.a $(am__DEPENDENCIES_1) \
+ 	../lib/libfetish.a
+-uptime_SOURCES = uptime.c
+-uptime_OBJECTS = uptime.$(OBJEXT)
+-uptime_DEPENDENCIES = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
+ users_SOURCES = users.c
+ users_OBJECTS = users.$(OBJEXT)
+ users_LDADD = $(LDADD)
+@@ -627,7 +619,7 @@
+ @AMDEP_TRUE@	./$(DEPDIR)/head.Po ./$(DEPDIR)/hostid.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/hostname.Po ./$(DEPDIR)/id.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/install.Po ./$(DEPDIR)/join.Po \
+-@AMDEP_TRUE@	./$(DEPDIR)/kill.Po ./$(DEPDIR)/lbracket.Po \
++@AMDEP_TRUE@	./$(DEPDIR)/lbracket.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/link.Po ./$(DEPDIR)/ln.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/logname.Po ./$(DEPDIR)/ls-dir.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/ls-ls.Po ./$(DEPDIR)/ls-vdir.Po \
+@@ -655,7 +647,7 @@
+ @AMDEP_TRUE@	./$(DEPDIR)/tsort.Po ./$(DEPDIR)/tty.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/uname.Po ./$(DEPDIR)/unexpand.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/uniq.Po ./$(DEPDIR)/unlink.Po \
+-@AMDEP_TRUE@	./$(DEPDIR)/uptime.Po ./$(DEPDIR)/users.Po \
++@AMDEP_TRUE@	./$(DEPDIR)/users.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/wc.Po ./$(DEPDIR)/who.Po \
+ @AMDEP_TRUE@	./$(DEPDIR)/whoami.Po ./$(DEPDIR)/yes.Po
+ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+@@ -667,28 +659,28 @@
+ 	csplit.c cut.c date.c dd.c df.c $(dir_SOURCES) dircolors.c \
+ 	dirname.c du.c echo.c env.c expand.c expr.c factor.c false.c \
+ 	fmt.c fold.c $(ginstall_SOURCES) head.c hostid.c hostname.c \
+-	id.c join.c kill.c link.c ln.c logname.c $(ls_SOURCES) \
++	id.c join.c link.c ln.c logname.c $(ls_SOURCES) \
+ 	$(md5sum_SOURCES) mkdir.c mkfifo.c mknod.c $(mv_SOURCES) \
+ 	nice.c nl.c nohup.c od.c paste.c pathchk.c pinky.c pr.c \
+ 	printenv.c printf.c ptx.c pwd.c readlink.c $(rm_SOURCES) \
+ 	rmdir.c seq.c setuidgid.c $(sha1sum_SOURCES) shred.c sleep.c \
+ 	sort.c split.c stat.c stty.c su.c sum.c sync.c tac.c tail.c \
+ 	tee.c test.c touch.c tr.c true.c tsort.c tty.c uname.c \
+-	unexpand.c uniq.c unlink.c uptime.c users.c $(vdir_SOURCES) \
++	unexpand.c uniq.c unlink.c users.c $(vdir_SOURCES) \
+ 	wc.c who.c whoami.c yes.c
+ DIST_SOURCES = $(__SOURCES) basename.c cat.c $(chgrp_SOURCES) chmod.c \
+ 	$(chown_SOURCES) chroot.c cksum.c comm.c $(cp_SOURCES) \
+ 	csplit.c cut.c date.c dd.c df.c $(dir_SOURCES) dircolors.c \
+ 	dirname.c du.c echo.c env.c expand.c expr.c factor.c false.c \
+ 	fmt.c fold.c $(ginstall_SOURCES) head.c hostid.c hostname.c \
+-	id.c join.c kill.c link.c ln.c logname.c $(ls_SOURCES) \
++	id.c join.c link.c ln.c logname.c $(ls_SOURCES) \
+ 	$(md5sum_SOURCES) mkdir.c mkfifo.c mknod.c $(mv_SOURCES) \
+ 	nice.c nl.c nohup.c od.c paste.c pathchk.c pinky.c pr.c \
+ 	printenv.c printf.c ptx.c pwd.c readlink.c $(rm_SOURCES) \
+ 	rmdir.c seq.c setuidgid.c $(sha1sum_SOURCES) shred.c sleep.c \
+ 	sort.c split.c stat.c stty.c su.c sum.c sync.c tac.c tail.c \
+ 	tee.c test.c touch.c tr.c true.c tsort.c tty.c uname.c \
+-	unexpand.c uniq.c unlink.c uptime.c users.c $(vdir_SOURCES) \
++	unexpand.c uniq.c unlink.c users.c $(vdir_SOURCES) \
+ 	wc.c who.c whoami.c yes.c
+ HEADERS = $(noinst_HEADERS)
+ ETAGS = etags
+@@ -860,7 +852,6 @@
+ 
+ sleep_LDADD = $(nanosec_libs)
+ tail_LDADD = $(nanosec_libs)
+-uptime_LDADD = $(LDADD) $(GETLOADAVG_LIBS)
+ su_LDADD = $(LDADD) $(LIB_CRYPT)
+ SUFFIXES = .sh
+ installed_su = $(DESTDIR)$(bindir)/`echo su|sed '$(transform)'`
+@@ -1083,7 +1074,7 @@
+ hostid$(EXEEXT): $(hostid_OBJECTS) $(hostid_DEPENDENCIES) 
+ 	@rm -f hostid$(EXEEXT)
+ 	$(LINK) $(hostid_LDFLAGS) $(hostid_OBJECTS) $(hostid_LDADD) $(LIBS)
+-hostname$(EXEEXT): $(hostname_OBJECTS) $(hostname_DEPENDENCIES) 
++hostname$(EXEEXT): $(hostname_OBJECTS) $(hostname_DEPENDENCIES)
+ 	@rm -f hostname$(EXEEXT)
+ 	$(LINK) $(hostname_LDFLAGS) $(hostname_OBJECTS) $(hostname_LDADD) $(LIBS)
+ id$(EXEEXT): $(id_OBJECTS) $(id_DEPENDENCIES) 
+@@ -1092,9 +1083,6 @@
+ join$(EXEEXT): $(join_OBJECTS) $(join_DEPENDENCIES) 
+ 	@rm -f join$(EXEEXT)
+ 	$(LINK) $(join_LDFLAGS) $(join_OBJECTS) $(join_LDADD) $(LIBS)
+-kill$(EXEEXT): $(kill_OBJECTS) $(kill_DEPENDENCIES) 
+-	@rm -f kill$(EXEEXT)
+-	$(LINK) $(kill_LDFLAGS) $(kill_OBJECTS) $(kill_LDADD) $(LIBS)
+ link$(EXEEXT): $(link_OBJECTS) $(link_DEPENDENCIES) 
+ 	@rm -f link$(EXEEXT)
+ 	$(LINK) $(link_LDFLAGS) $(link_OBJECTS) $(link_LDADD) $(LIBS)
+@@ -1242,9 +1230,6 @@
+ unlink$(EXEEXT): $(unlink_OBJECTS) $(unlink_DEPENDENCIES) 
+ 	@rm -f unlink$(EXEEXT)
+ 	$(LINK) $(unlink_LDFLAGS) $(unlink_OBJECTS) $(unlink_LDADD) $(LIBS)
+-uptime$(EXEEXT): $(uptime_OBJECTS) $(uptime_DEPENDENCIES) 
+-	@rm -f uptime$(EXEEXT)
+-	$(LINK) $(uptime_LDFLAGS) $(uptime_OBJECTS) $(uptime_LDADD) $(LIBS)
+ users$(EXEEXT): $(users_OBJECTS) $(users_DEPENDENCIES) 
+ 	@rm -f users$(EXEEXT)
+ 	$(LINK) $(users_LDFLAGS) $(users_OBJECTS) $(users_LDADD) $(LIBS)
+@@ -1337,7 +1322,6 @@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/install.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/join.Po@am__quote@
+-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kill.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lbracket.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/link.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ln.Po@am__quote@
+@@ -1393,7 +1377,6 @@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unexpand.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uniq.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unlink.Po@am__quote@
+-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uptime.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/users.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wc.Po@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/who.Po@am__quote@
+@@ -1623,7 +1606,7 @@
+ 	  && can_create_suid_root_executable=yes; \
+ 	rm -f $$TMPFILE; \
+ 	if test $$can_create_suid_root_executable = yes; then \
+-	  $(INSTALL_SU); \
++	  echo "Installation of su is surpressed"; \
+ 	else \
+ 	  echo "WARNING: insufficient access; not installing su"; \
+ 	  echo "NOTE: to install su, run 'make install-root' as root"; \

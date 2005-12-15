@@ -1,0 +1,81 @@
+[Meta]
+Group = sys-base/coreutils
+Name = coreutils
+Version = 5.2.1
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Standard Systemwerkzeuge
+en = The Coreutils package contains utilities for showing and setting the basic system characteristics.
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+dev-utils/gawk >=3.1.4
+
+[DownloadServer]
+Main = http://ftp.gnu.org/gnu/coreutils/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = coreutils-5.2.1.tar.bz2
+
+[PrepareBuild]
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	tar xjvf coreutils-5.2.1.tar.bz2
+	cd coreutils-5.2.1
+
+	# patches
+	patch -Np1 -i ${PATCH_DIR}/coreutils-5.2.1-suppress_uptime_kill_su-1.patch
+	patch -Np1 -i ${PATCH_DIR}/coreutils-5.2.1-uname-2.patch
+
+	DEFAULT_POSIX2_VERSION=199209 ./configure --prefix=/tools
+fi
+
+
+[Build]
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+fi
+
+cd coreutils-5.2.1
+make
+
+[Install]
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+fi
+
+cd coreutils-5.2.1
+
+make install
+

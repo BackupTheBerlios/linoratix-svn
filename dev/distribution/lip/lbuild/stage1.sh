@@ -78,5 +78,8 @@ rm -rf /tmp/build/binutils/linoratix/build/binutils-build
 
 ./build_script.sh gcc3.lbuild || ldie "Error building gcc (Stage: ${STAGE})"
 ./build_script.sh binutils.lbuild || ldie "Error building binutils (Stage: ${STAGE})"
-
+./build_script.sh gawk.lbuild || ldie "Error building gawk (Stage: ${STAGE})"
+./build_script.sh coreutils.lbuild || ldie "Error building coreutils (Stage: ${STAGE})"
+./build_script.sh bzip2.lbuild || ldie "Error building bzip2 (Stage: ${STAGE})"
+./build_script.sh gzip.lbuild || ldie "Error building gzip (Stage: ${STAGE})"
 
