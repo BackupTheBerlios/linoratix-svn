@@ -82,4 +82,9 @@ rm -rf /tmp/build/binutils/linoratix/build/binutils-build
 ./build_script.sh coreutils.lbuild || ldie "Error building coreutils (Stage: ${STAGE})"
 ./build_script.sh bzip2.lbuild || ldie "Error building bzip2 (Stage: ${STAGE})"
 ./build_script.sh gzip.lbuild || ldie "Error building gzip (Stage: ${STAGE})"
+./build_script.sh diffutils.lbuild || ldie "Error building diffutils (Stage: ${STAGE})"
+./build_script.sh findutils.lbuild || ldie "Error building findutils (Stage: ${STAGE})"
+./build_script.sh make.lbuild || ldie "Error building make (Stage: ${STAGE})"
+./build_script.sh grep.lbuild || ldie "Error building grep (Stage: ${STAGE})"
+./build_script.sh sed.lbuild || ldie "Error building sed (Stage: ${STAGE})"
 
