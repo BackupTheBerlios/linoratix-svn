@@ -87,4 +87,9 @@ rm -rf /tmp/build/binutils/linoratix/build/binutils-build
 ./build_script.sh make.lbuild || ldie "Error building make (Stage: ${STAGE})"
 ./build_script.sh grep.lbuild || ldie "Error building grep (Stage: ${STAGE})"
 ./build_script.sh sed.lbuild || ldie "Error building sed (Stage: ${STAGE})"
+./build_script.sh gettext.lbuild || ldie "Error building gettext (Stage: ${STAGE})"
+./build_script.sh ncurses.lbuild || ldie "Error building ncurses (Stage: ${STAGE})"
+./build_script.sh patch.lbuild || ldie "Error building patch (Stage: ${STAGE})"
+./build_script.sh tar.lbuild || ldie "Error building tar (Stage: ${STAGE})"
+./build_script.sh texinfo.lbuild || ldie "Error building texinfo (Stage: ${STAGE})"
 

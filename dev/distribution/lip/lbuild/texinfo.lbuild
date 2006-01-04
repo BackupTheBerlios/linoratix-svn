@@ -1,0 +1,84 @@
+[Meta]
+Group = documentation/utils
+Name = texinfo
+Version = 4.8
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Programme zum lesen, schreiben und konvertieren von info Seiten
+en = programs for reading, writing, and converting info pages
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = http://ftp.gnu.org/gnu/texinfo/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = texinfo-4.8.tar.gz
+
+[PrepareBuild]
+
+tar xzvf texinfo-4.8.tar.gz
+cd texinfo-4.8
+
+# patches
+patch -Np1 -i ${PATCH_DIR}/texinfo-4.8-tempfile_fix-2.patch
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	./configure --prefix=/tools
+fi
+
+
+
+[Build]
+
+cd texinfo-4.8
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+fi
+
+make
+
+[Install]
+
+cd texinfo-4.8
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+	
+fi
+
+make install

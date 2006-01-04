@@ -1,0 +1,80 @@
+[Meta]
+Group = dev-utils/patch
+Name = patch
+Version = 2.5.4
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Patch
+en = The Patch package contains a program for modifying or creating files by applying a “patch” file typically created by the diff program.
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = http://ftp.gnu.org/gnu/patch/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = patch-2.5.4.tar.gz
+
+[PrepareBuild]
+
+tar xzvf patch-2.5.4.tar.gz
+cd patch-2.5.4
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	CPPFLAGS=-D_GNU_SOURCE ./configure --prefix=/tools
+fi
+
+
+[Build]
+
+cd patch-2.5.4
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+fi
+
+make
+
+[Install]
+
+cd patch-2.5.4
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+	
+fi
+
+make install

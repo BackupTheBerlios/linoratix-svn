@@ -1,0 +1,81 @@
+[Meta]
+Group = sys-libs/gettext
+Name = gettext
+Version = 0.14.3
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Tools für Internationalisierung und Lokalisierung von Programmen.
+en = Utilities for internationalization and localization.
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = http://ftp.gnu.org/gnu/gettext/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = gettext-0.14.3.tar.gz
+
+[PrepareBuild]
+
+tar xzvf gettext-0.14.3.tar.gz
+cd gettext-0.14.3
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	./configure --prefix=/tools --disable-libasprintf \
+		--without-csharp
+fi
+
+
+[Build]
+
+cd gettext-0.14.3
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+fi
+
+make
+
+[Install]
+
+cd gettext-0.14.3
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+	
+fi
+
+make install
