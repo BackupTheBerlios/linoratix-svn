@@ -1,0 +1,88 @@
+[Meta]
+Group = sys-base/util-linux
+Name = util-linux
+Version = 2.12r
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = verschiedene wichtige Basisprogramme
+en = The Util-linux package contains miscellaneous utility programs. Among them are utilities for handling file systems, consoles, partitions, and messages.
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = http://www.kernel.org/pub/linux/utils/util-linux/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = util-linux-2.12r.tar.gz
+
+[PrepareBuild]
+
+tar xzvf util-linux-2.12r.tar.gz
+cd util-linux-2.12r
+
+# patches
+patch -Np1 -i ${PATCH_DIR}/util-linux-2.12r-cramfs-1.patch
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	sed -i 's@/usr/include@/tools/include@g' configure
+	./configure --prefix=/tools
+fi
+
+
+
+[Build]
+
+cd util-linux-2.12r
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	make -C lib
+
+	make -C mount mount umount
+	make -C text-utils more
+fi
+
+[Install]
+
+cd util-linux-2.12r
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+	
+	cp mount/{,u}mount text-utils/more /tools/bin
+fi
+

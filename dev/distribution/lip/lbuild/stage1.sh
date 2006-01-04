@@ -92,4 +92,24 @@ rm -rf /tmp/build/binutils/linoratix/build/binutils-build
 ./build_script.sh patch.lbuild || ldie "Error building patch (Stage: ${STAGE})"
 ./build_script.sh tar.lbuild || ldie "Error building tar (Stage: ${STAGE})"
 ./build_script.sh texinfo.lbuild || ldie "Error building texinfo (Stage: ${STAGE})"
+./build_script.sh bash.lbuild || ldie "Error building bash (Stage: ${STAGE})"
+./build_script.sh m4.lbuild || ldie "Error building m4 (Stage: ${STAGE})"
+./build_script.sh util-linux.lbuild || ldie "Error building util-linux (Stage: ${STAGE})"
+./build_script.sh perl.lbuild || ldie "Error building perl (Stage: ${STAGE})"
+
+strip --strip-debug /tools/lib/*
+strip --strip-unneeded /tools/{,s}bin/*
+
+rm -rf /tools/{info,man}
+
+
+echo
+echo "Buildenv wurde erfolgreich gebaut!"
+echo "Stage 1 wurde erreicht!"
+echo
+
+echo "1" > current_stage
+
+export STAGE=2
+
 

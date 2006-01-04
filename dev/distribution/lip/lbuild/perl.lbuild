@@ -1,0 +1,88 @@
+[Meta]
+Group = dev-perl/perl
+Name = perl
+Version = 5.8.7
+Languages = [de, en]
+Homepage = http://www.perl.com/
+License = Artistic License
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Die Programmiersprache Perl
+en = The Perl package contains the Practical Extraction and Report Language.
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = http://ftp.funet.fi/pub/CPAN/src/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = perl-5.8.7.tar.bz2
+
+[PrepareBuild]
+
+tar xjvf perl-5.8.7.tar.bz2
+cd perl-5.8.7
+
+# patches
+patch -Np1 -i ${PATCH_DIR}/perl-5.8.7-libc-1.patch
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	./configure.gnu --prefix=/tools \
+		-Dstatic_ext='Data/Dumper Fcntl IO POSIX'
+fi
+
+
+
+[Build]
+
+cd perl-5.8.7
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	make perl utilities
+fi
+
+
+[Install]
+
+cd perl-5.8.7
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+	
+	cp -v perl pod/pod2man /tools/bin
+	mkdir -pv /tools/lib/perl5/5.8.7
+	cp -Rv lib/* /tools/lib/perl5/5.8.7
+fi
+
