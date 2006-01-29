@@ -3,7 +3,7 @@ Group = dev-utils/expect
 Name = expect
 Version = 5.43.0
 Languages = [de, en]
-Homepage = http://http://expect.nist.gov/
+Homepage = http://expect.nist.gov/
 License = PublicDomain
 
 [Maintainer]
@@ -27,7 +27,7 @@ dev-util/gcc = >=3.4
 [DownloadServer]
 Main = http://expect.nist.gov/src/
 Mirrors = 1
-Mirror[0] = http://download.linoratix.com/distfiles/
+Mirror[0] = http://slackwarec.ada.net.tr/source/tcl/expect/
 
 [SourceFiles]
 SourceFiles = 1
