@@ -102,6 +102,9 @@ for sourcefile in $(${LBUILD_INFO} -f ${LBUILD_FILE} -g SourceFiles/SourceFile);
 	server=$(${LBUILD_INFO} -f ${LBUILD_FILE} -g DownloadServer/Main)
 	cd ${BUILD_PATH}/linoratix/build
 	wget -c --passive-ftp ${server}/${sourcefile}
+	if [ "$?" != "0" ]; then
+		get_from_mirror ${sourcefile}
+	fi
 	cd ${CURRENT_PATH}
 done
 
