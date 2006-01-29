@@ -96,7 +96,7 @@ rm -rf /tmp/build/binutils/linoratix/build/binutils-build
 ./build_script.sh m4.lbuild || ldie "Error building m4 (Stage: ${STAGE})"
 ./build_script.sh util-linux.lbuild || ldie "Error building util-linux (Stage: ${STAGE})"
 ./build_script.sh perl.lbuild || ldie "Error building perl (Stage: ${STAGE})"
-./build_script.sh soapbox.lbuild || ldie "Error building soapbox (Stage: ${STAGE})"
+### kommt erst im stage2 dran -- ./build_script.sh soapbox.lbuild || ldie "Error building soapbox (Stage: ${STAGE})"
 
 strip --strip-debug /tools/lib/*
 strip --strip-unneeded /tools/{,s}bin/*
