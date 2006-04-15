@@ -1,0 +1,49 @@
+[Meta]
+Group = sys-doc/man-pages
+Name = man-pages
+Version = 2.29
+Languages = [de, en]
+Homepage = http://www.kernel.org/pub/linux/docs/manpages/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Die Manpages
+en = The man pages.
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = http://www.kernel.org/pub/linux/docs/manpages/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = man-pages-2.29.tar.gz
+
+[PrepareBuild]
+
+tar xzvf man-pages-2.29.tar.gz
+
+[Build]
+
+echo nothing to do
+
+[Install]
+
+cd man-pages-2.29
+make install
+echo Fertig

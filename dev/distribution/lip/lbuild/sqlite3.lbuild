@@ -1,0 +1,53 @@
+[Meta]
+Group = sys-libs/sqlite
+Name = sqlite3
+Version = 3.3.4
+Languages = [de, en]
+Homepage = http://www.sqlite.org/
+License = Public Domain
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Eine SQL Datenbank als C Library
+en = An embeddable SQL engine in a C library.
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = http://www.sqlite.org/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = sqlite-3.3.4.tar.gz
+
+[PrepareBuild]
+
+tar xzvf sqlite-3.3.4.tar.gz
+cd sqlite-3.3.4
+
+./configure --prefix=/usr
+
+
+[Build]
+
+cd sqlite-3.3.4
+make
+
+[Install]
+
+cd sqlite-3.3.4
+make install

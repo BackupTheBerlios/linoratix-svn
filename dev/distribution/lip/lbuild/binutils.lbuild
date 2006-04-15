@@ -62,6 +62,9 @@ if [ "${BUILD_BUILD_ENV}" ]; then
                                 || ldie "Error configuring binutils!!"
 		fi
 	fi
+else
+	../binutils-2.15.94.0.2.2/configure --prefix=/usr \
+		--enable-shared
 fi
 
 [Build]
@@ -71,7 +74,12 @@ if [ `uname -m` = "sparc64" ]; then
 	make headers -C bfd -j${PARALLEL_BUILDS}
 fi
 
-make -j${PARALLEL_BUILDS}
+if [ "${STAGE}" != "2" ]; then
+	make -j${PARALLEL_BUILDS}
+else
+	make tooldir=/usr
+	make check
+fi
 
 [Install]
 cd binutils-build
@@ -89,4 +97,8 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 			make -C ld LIB_PATH=/usr/lib:/lib
 		fi
 	fi
+else
+	make tooldir=/usr install
+	cp -v ../binutils-2.15.94.0.2.2/include/libiberty.h /usr/include
 fi
+

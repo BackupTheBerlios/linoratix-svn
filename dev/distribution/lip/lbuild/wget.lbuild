@@ -1,0 +1,55 @@
+[Meta]
+Group = net-www/wget
+Name = wget
+Version = 1.10.2
+Languages = [de, en]
+Homepage = http://www.gnu.org/software/wget/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Ein Downloadmanager für die Console
+en = GNU Wget is a utility for noninteractive download of files from the Web. 
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = ftp://ftp.gnu.org/gnu/wget/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = wget-1.10.2.tar.gz
+
+[PrepareBuild]
+
+tar xzvf wget-1.10.2.tar.gz
+cd wget-1.10.2
+
+./configure --prefix=/usr --sysconfdir=/etc/wget
+
+
+[Build]
+
+cd wget-1.10.2
+make
+
+[Install]
+
+cd wget-1.10.2
+make install
+
+

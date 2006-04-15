@@ -1,9 +1,9 @@
 [Meta]
-Group = dev-kernel/linux-libc-headers
+Group = sys-kernel/linux-libc-headers
 Name = linux-libc-headers
 Version = 2.6.11.2
 Languages = [de, en]
-Homepage = http://www.kernel.org/
+Homepage = http://ep09.pld-linux.org/~mmazur/linux-libc-headers/
 License = GPL
 
 [Maintainer]
@@ -16,11 +16,14 @@ Homepage[0] = http://developer.linoratix.com/~jfried/
 Nick[0] = jfried
 
 [Description]
-de = Die Linux Kernel Header
-en = Linux Kernel Header files
+de = Die Libc-Kernel Header
+en = Libc-Header Files
 
 [Dependencies]
 sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
 
 [DownloadServer]
 Main = http://ep09.pld-linux.org/~mmazur/linux-libc-headers/
@@ -33,17 +36,23 @@ SourceFile[0] = linux-libc-headers-2.6.11.2.tar.bz2
 
 [PrepareBuild]
 
-if [ "${BUILD_BUILD_ENV}" ]; then
-	set +h
-	umask 022
-	
-	export PATH=/tools/bin:$PATH
-	export LC_ALL=POSIX
-	
-	tar xvjf linux-libc-headers-2.6.11.2.tar.bz2
+tar xvjf linux-libc-headers-2.6.11.2.tar.bz2
 
-	cd linux-libc-headers-2.6.11.2
-	cp -R include/asm-i386 /tools/include/asm
-	cp -R include/linux /tools/include	
-	cd ..
-fi
+
+[Build]
+
+cd linux-libc-headers-2.6.11.2
+
+
+[Install]
+
+cd linux-libc-headers-2.6.11.2
+cp -Rv include/asm-i386 /usr/include/asm
+cp -Rv include/linux /usr/include
+chown -Rv root:root /usr/include/{asm,linux}
+
+find /usr/include/{asm,linux} -type d -exec chmod -v 755 {} \;
+find /usr/include/{asm,linux} -type f -exec chmod -v 644 {} \;
+
+
+

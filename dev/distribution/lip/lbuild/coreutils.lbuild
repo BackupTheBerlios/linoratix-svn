@@ -36,6 +36,15 @@ SourceFiles = 1
 SourceFile[0] = coreutils-5.2.1.tar.bz2
 
 [PrepareBuild]
+tar xjvf coreutils-5.2.1.tar.bz2
+
+cd coreutils-5.2.1
+
+# patches
+lecho "Patching ..."
+patch -Np1 -i ${PATCH_DIR}/coreutils-5.2.1-suppress_uptime_kill_su-1.patch
+patch -Np1 -i ${PATCH_DIR}/coreutils-5.2.1-uname-2.patch
+
 if [ "${BUILD_BUILD_ENV}" ]; then
         set +h
         umask 022
@@ -43,14 +52,9 @@ if [ "${BUILD_BUILD_ENV}" ]; then
         export PATH=/tools/bin:$PATH
         export LC_ALL=POSIX
 
-	tar xjvf coreutils-5.2.1.tar.bz2
-	cd coreutils-5.2.1
-
-	# patches
-	patch -Np1 -i ${PATCH_DIR}/coreutils-5.2.1-suppress_uptime_kill_su-1.patch
-	patch -Np1 -i ${PATCH_DIR}/coreutils-5.2.1-uname-2.patch
-
 	DEFAULT_POSIX2_VERSION=199209 ./configure --prefix=/tools
+else
+	DEFAULT_POSIX2_VERSION=199209 ./configure --prefix=/usr
 fi
 
 
@@ -66,6 +70,20 @@ fi
 cd coreutils-5.2.1
 make
 
+#[PreInstall]
+#cd coreutils-5.2.1
+#if [ ! ${BUILD_BUILD_ENV}  ]; then
+#	lecho "Running tests..."
+#	echo "dummy1:x:1000:" >> /etc/group
+#	echo "dummy2:x:1001:dummy" >> /etc/group
+#	echo "dummy:x:1000:1000:::/bin/bash" >> /etc/passwd
+#
+#	make NON_ROOT_USERNAME=dummy check-root || ldie "Fehler Zeile 81"
+#	src/su dummy -c "make RUN_EXPENSIVE_TESTS=yes check" || ldie "Fehler Zeile 82"
+#
+#	sed -i '/dummy/d' /etc/passwd /etc/group
+#fi
+
 [Install]
 if [ "${BUILD_BUILD_ENV}" ]; then
         set +h
@@ -78,4 +96,14 @@ fi
 cd coreutils-5.2.1
 
 make install
+
+if [ ! ${BUILD_BUILD_ENV} ]; then
+	lecho "Moving files to the right location..."
+	mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
+	mv -v /usr/bin/{false,hostname,ln,ls,mkdir,mknod,mv,pwd,rm} /bin
+	hash -r
+	mv -v /usr/bin/{rmdir,stty,sync,true,uname} /bin
+	mv -v /usr/bin/chroot /usr/sbin
+	mv -v /usr/bin/{head,sleep} /bin
+fi
 

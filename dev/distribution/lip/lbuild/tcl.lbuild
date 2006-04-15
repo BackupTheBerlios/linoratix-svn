@@ -46,6 +46,8 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export LC_ALL=POSIX
 	
 	./configure --prefix=/tools
+else
+	./configure --prefix=/usr
 fi
 
 [Build]
@@ -85,5 +87,7 @@ if [ "${BUILD_BUILD_ENV}" ]; then
         export LC_ALL=POSIX
 
 	ln -s tclsh8.4 /tools/bin/tclsh
+else
+	ln -s tclsh8.4 /usr/bin/tclsh
 fi
 

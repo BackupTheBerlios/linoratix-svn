@@ -40,7 +40,17 @@ tar xvjf glibc-2.3.4.tar.bz2
 cd glibc-2.3.4
 tar xvjf ../glibc-linuxthreads-2.3.4.tar.bz2
 
+
+if [ "${STAGE}" != "1" ]; then
+	patch -Np1 -i ${PATCH_DIR}/glibc-2.3.4-rtld_search_dirs-1.patch
+fi
+
 patch -Np1 -i ${PATCH_DIR}/glibc-2.3.4-fix_test-1.patch
+
+if [ "${STAGE}" != "1" ]; then
+	patch -Np1 -i ${PATCH_DIR}/glibc-2.3.4-tls_assert-1.patch
+fi
+
 cd ..
 
 mkdir glibc-build
@@ -53,7 +63,22 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
 	
-	CC=gcc ../glibc-2.3.4/configure --prefix=/tools --disable-profile --enable-add-ons --enable-kernel=2.6.0 --with-binutils=/tools/bin --without-gd --with-headers=/tools/include --without-selinux
+	CC=gcc ../glibc-2.3.4/configure \
+		--prefix=/tools \
+		--disable-profile \
+		--enable-add-ons \
+		--enable-kernel=2.6.0 \
+		--with-binutils=/tools/bin \
+		--without-gd \
+		--with-headers=/tools/include \
+		--without-selinux
+else
+	CC=gcc ../glibc-2.3.4/configure \
+		--prefix=/usr \
+		--disable-profile \
+		--enable-add-ons \
+	        --enable-kernel=2.6.0 \
+		--libexecdir=/usr/lib/glibc
 fi
 
 [Build]
@@ -68,7 +93,12 @@ fi
 
 cd glibc-build
 CC=gcc make
-CC=gcc make check
+
+if [ "${STAGE}" = "1" ]; then
+	CC=gcc make check
+fi
+
+make -C ../glibc-2.3.4/linuxthreads/man
 
 [PreInstall]
 if [ "${BUILD_BUILD_ENV}" ]; then
@@ -82,8 +112,8 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	touch /tools/etc/ld.so.conf
 fi
 
-[Install]
 
+[Install]
 cd glibc-build
 if [ "${BUILD_BUILD_ENV}" ]; then
 	set +h
@@ -94,4 +124,48 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 fi
 
 make install
+
+if [ "${STAGE}" != "1" ]; then
+	make localedata/install-locales
+fi
+
+make -C ../glibc-2.3.4/linuxthreads/man install
+
+
+[PostInstall]
+cd glibc-build
+mkdir -pv /usr/lib/locale
+
+localedef -i de_DE -f ISO-8859-1 de_DE
+localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
+localedef -i en_HK -f ISO-8859-1 en_HK
+localedef -i en_PH -f ISO-8859-1 en_PH
+localedef -i en_US -f ISO-8859-1 en_US
+localedef -i es_MX -f ISO-8859-1 es_MX
+localedef -i fa_IR -f UTF-8 fa_IR
+localedef -i fr_FR -f ISO-8859-1 fr_FR
+localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
+
+cat > /etc/nsswitch.conf << "EOF"
+# Begin /etc/nsswitch.conf
+
+passwd: files
+group: files
+shadow: files
+
+hosts: files dns
+networks: files
+
+protocols: files
+services: files
+ethers: files
+rpc: files
+
+# End /etc/nsswitch.conf
+EOF
+
+TZ=$(tzselect)
+cp -v --remove-destination /usr/share/zoneinfo/${TZ} \
+	/etc/localtime
+
 
