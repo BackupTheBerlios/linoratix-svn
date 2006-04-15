@@ -1,0 +1,84 @@
+[Meta]
+Group = dev-utils/flex
+Name = flex
+Version = 2.5.31
+Languages = [de, en]
+Homepage = http://www.gnu.org/
+License = GPL
+
+[Maintainer]
+Maintainers = 1
+BugreportMail = bugs@linoratix.com
+Name[0] = Gehring
+Surname[0] = Jan
+EMail[0] = jfried@linoratix.com
+Homepage[0] = http://developer.linoratix.com/~jfried/
+Nick[0] = jfried
+
+[Description]
+de = Flex.
+en = The Flex package contains a utility for generating programs that recognize patterns in text.
+
+[Dependencies]
+sys-libs/glibc = >=2.3.4
+
+[BuildDependencies]
+dev-gcc/gcc = >=3.4
+
+[DownloadServer]
+Main = http://heanet.dl.sourceforge.net/sourceforge/flex/
+Mirrors = 1
+Mirror[0] = http://download.linoratix.com/distfiles/
+
+[SourceFiles]
+SourceFiles = 1
+SourceFile[0] = flex-2.5.31.tar.gz
+
+[PrepareBuild]
+
+tar xzvf flex-2.5.31.tar.gz
+cd flex-2.5.31
+
+patch -Np1 -i ${PATCH_DIR}/flex-2.5.31-debian_fixes-3.patch
+touch doc/flex.1
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+
+	./configure --prefix=/tools
+fi
+
+
+[Build]
+
+cd flex-2.5.31
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+fi
+
+make
+
+[Install]
+
+cd flex-2.5.31
+
+if [ "${BUILD_BUILD_ENV}" ]; then
+        set +h
+        umask 022
+
+        export PATH=/tools/bin:$PATH
+        export LC_ALL=POSIX
+	
+fi
+
+make install
+

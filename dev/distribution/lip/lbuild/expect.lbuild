@@ -47,7 +47,7 @@ if [ "${BUILD_BUILD_ENV}" ]; then
 	export PATH=/tools/bin:$PATH
 	export LC_ALL=POSIX
 	
-	./configure --prefix=/tools --with-tcl=/tools/lib --with-tclinclude=${TCLPATH} --with-x=no
+	./configure --prefix=/tools --with-tcl=/tools/lib --with-tclinclude=/tmp/build/tcl/linoratix/build/tcl8.4.11 --with-x=no
 fi
 
 [Build]
