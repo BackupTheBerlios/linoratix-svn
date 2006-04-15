@@ -24,6 +24,7 @@ mkdir -p /tools/root
 echo "#!/bin/bash" > /tools/stage2.sh
 echo "set +h" >> /tools/stage2.sh
 echo "echo Welcome to STAGE 2" >> /tools/stage2.sh
+echo "/bin/bash" >> /tools/stage2.sh
 
 chmod 700 /tools/stage2.sh
 
